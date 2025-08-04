@@ -459,6 +459,237 @@ const generateSystemReports = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc    Approve doctor application
+// @route   PUT /api/admin/doctors/:id/approve
+// @access  Private (Admin only)
+const approveDoctor = asyncHandler(async (req, res, next) => {
+  const doctor = await User.findById(req.params.id);
+
+  if (!doctor) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Doctor not found'
+    });
+  }
+
+  if (doctor.role !== 'doctor') {
+    return res.status(400).json({
+      status: 'error',
+      message: 'User is not a doctor'
+    });
+  }
+
+  if (doctor.status === 'active') {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Doctor is already approved'
+    });
+  }
+
+  // Approve the doctor
+  doctor.status = 'active';
+  doctor.isVerified = true;
+  
+  // Skip validation during approval since professional fields may be empty
+  // The doctor can complete their profile after approval
+  await doctor.save({ validateBeforeSave: false });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Doctor approved successfully',
+    data: {
+      doctor
+    }
+  });
+});
+
+// @desc    Reject doctor application
+// @route   PUT /api/admin/doctors/:id/reject
+// @access  Private (Admin only)
+const rejectDoctor = asyncHandler(async (req, res, next) => {
+  const { rejectionReason } = req.body;
+
+  if (!rejectionReason || rejectionReason.trim().length < 10) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Rejection reason is required and must be at least 10 characters'
+    });
+  }
+
+  const doctor = await User.findById(req.params.id);
+
+  if (!doctor) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Doctor not found'
+    });
+  }
+
+  if (doctor.role !== 'doctor') {
+    return res.status(400).json({
+      status: 'error',
+      message: 'User is not a doctor'
+    });
+  }
+
+  // Reject the doctor
+  doctor.status = 'rejected';
+  doctor.rejectionReason = rejectionReason.trim();
+  doctor.rejectedAt = new Date();
+  await doctor.save();
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Doctor application rejected',
+    data: {
+      doctor
+    }
+  });
+});
+
+// @desc    Suspend user account
+// @route   PUT /api/admin/users/:id/suspend
+// @access  Private (Admin only)
+const suspendUser = asyncHandler(async (req, res, next) => {
+  const { suspensionReason } = req.body;
+
+  if (!suspensionReason || suspensionReason.trim().length < 10) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Suspension reason is required and must be at least 10 characters'
+    });
+  }
+
+  const user = await User.findById(req.params.id);
+
+  if (!user) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'User not found'
+    });
+  }
+
+  if (user.role === 'admin') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Cannot suspend admin users'
+    });
+  }
+
+  if (user.status === 'suspended') {
+    return res.status(400).json({
+      status: 'error',
+      message: 'User is already suspended'
+    });
+  }
+
+  // Suspend the user
+  user.status = 'suspended';
+  user.suspensionReason = suspensionReason.trim();
+  user.suspendedAt = new Date();
+  await user.save();
+
+  res.status(200).json({
+    status: 'success',
+    message: 'User suspended successfully',
+    data: {
+      user
+    }
+  });
+});
+
+// @desc    Reactivate suspended user
+// @route   PUT /api/admin/users/:id/reactivate
+// @access  Private (Admin only)
+const reactivateUser = asyncHandler(async (req, res, next) => {
+  const { reactivationNotes } = req.body;
+
+  const user = await User.findById(req.params.id);
+
+  if (!user) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'User not found'
+    });
+  }
+
+  if (user.status !== 'suspended') {
+    return res.status(400).json({
+      status: 'error',
+      message: 'User is not suspended'
+    });
+  }
+
+  // Reactivate the user
+  user.status = 'active';
+  user.reactivationNotes = reactivationNotes ? reactivationNotes.trim() : '';
+  user.reactivatedAt = new Date();
+  // Clear suspension data
+  user.suspensionReason = undefined;
+  user.suspendedAt = undefined;
+  await user.save();
+
+  res.status(200).json({
+    status: 'success',
+    message: 'User reactivated successfully',
+    data: {
+      user
+    }
+  });
+});
+
+// @desc    Get pending doctors for approval
+// @route   GET /api/admin/pending-doctors
+// @access  Private/Admin
+const getPendingDoctors = asyncHandler(async (req, res, next) => {
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
+  const startIndex = (page - 1) * limit;
+
+  // Get pending doctors
+  const pendingDoctors = await User.find({
+    role: 'doctor',
+    status: 'pending'
+  })
+    .select('-password')
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .skip(startIndex);
+
+  // Get total count for pagination
+  const total = await User.countDocuments({
+    role: 'doctor',
+    status: 'pending'
+  });
+
+  const pagination = {};
+  const endIndex = page * limit;
+
+  if (endIndex < total) {
+    pagination.next = {
+      page: page + 1,
+      limit
+    };
+  }
+
+  if (startIndex > 0) {
+    pagination.prev = {
+      page: page - 1,
+      limit
+    };
+  }
+
+  res.status(200).json({
+    status: 'success',
+    count: pendingDoctors.length,
+    total,
+    pagination,
+    data: {
+      doctors: pendingDoctors
+    }
+  });
+});
+
 module.exports = {
   getDashboardStats,
   getUsers,
@@ -466,5 +697,10 @@ module.exports = {
   updateUserStatus,
   deleteUser,
   getActivityLogs,
-  generateSystemReports
+  generateSystemReports,
+  approveDoctor,
+  rejectDoctor,
+  suspendUser,
+  reactivateUser,
+  getPendingDoctors
 };

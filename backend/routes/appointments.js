@@ -8,9 +8,22 @@ const {
   cancelAppointment,
   getPatientAppointments,
   getDoctorAppointments,
-  getAvailableSlots
+  getAvailableSlots,
+  getAvailableDoctors
 } = require('../controllers/appointmentController');
-const { protect, authorize, authorizePatientAccess, authorizeDoctorAccess } = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
+const {
+  requirePermission,
+  requirePatientAccess,
+  requireDoctorAccess,
+  requireAppointmentAccess,
+  requireAdmin,
+  requireDoctor,
+  requirePatient,
+  requireVerified,
+  requireActive,
+  auditLog
+} = require('../middleware/rbac');
 
 const router = express.Router();
 
@@ -35,8 +48,8 @@ const createAppointmentValidation = [
     .withMessage('Invalid appointment type'),
   body('reason')
     .trim()
-    .isLength({ min: 10, max: 500 })
-    .withMessage('Reason must be between 10 and 500 characters'),
+    .isLength({ min: 3, max: 500 })
+    .withMessage('Reason must be between 3 and 500 characters'),
   body('symptoms')
     .optional()
     .isArray()
@@ -54,59 +67,126 @@ const createAppointmentValidation = [
 ];
 
 const updateAppointmentValidation = [
-  body('reason')
+  body('appointmentDate')
     .optional()
-    .trim()
-    .isLength({ min: 10, max: 500 })
-    .withMessage('Reason must be between 10 and 500 characters'),
-  body('symptoms')
+    .isISO8601()
+    .withMessage('Valid appointment date is required'),
+  body('appointmentTime')
     .optional()
-    .isArray()
-    .withMessage('Symptoms must be an array'),
-  body('patientNotes')
+    .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+    .withMessage('Valid appointment time is required (HH:MM format)'),
+  body('status')
     .optional()
-    .trim()
-    .isLength({ max: 1000 })
-    .withMessage('Patient notes must not exceed 1000 characters'),
+    .isIn(['scheduled', 'confirmed', 'in-progress', 'completed', 'cancelled', 'no-show'])
+    .withMessage('Invalid appointment status'),
   body('doctorNotes')
     .optional()
     .trim()
-    .isLength({ max: 1000 })
-    .withMessage('Doctor notes must not exceed 1000 characters'),
-  body('status')
+    .isLength({ max: 2000 })
+    .withMessage('Doctor notes must not exceed 2000 characters'),
+  body('diagnosis')
     .optional()
-    .isIn(['pending', 'confirmed', 'cancelled', 'completed', 'no-show'])
-    .withMessage('Invalid status'),
-  body('followUpDate')
-    .optional()
-    .isISO8601()
-    .withMessage('Valid follow-up date is required')
-];
-
-const cancelAppointmentValidation = [
-  body('cancellationReason')
     .trim()
-    .isLength({ min: 10, max: 300 })
-    .withMessage('Cancellation reason must be between 10 and 300 characters')
+    .isLength({ max: 1000 })
+    .withMessage('Diagnosis must not exceed 1000 characters'),
+  body('treatment')
+    .optional()
+    .trim()
+    .isLength({ max: 1000 })
+    .withMessage('Treatment must not exceed 1000 characters')
 ];
 
-// Apply protection to all routes
-router.use(protect);
+// Public routes - No authentication required
+// GET /api/appointments/available-doctors - Get available doctors for appointment booking
+// Must be BEFORE parameterized routes to avoid conflicts
+router.get('/available-doctors', getAvailableDoctors);
 
-// Admin routes
-router.get('/', authorize('admin'), getAppointments);
+// Apply authentication and active status to all other routes
+router.use(protect, requireActive);
 
-// General appointment routes
-router.post('/', authorize('patient'), createAppointmentValidation, createAppointment);
-router.get('/:id', getAppointment);
-router.put('/:id', updateAppointmentValidation, updateAppointment);
-router.put('/:id/cancel', cancelAppointmentValidation, cancelAppointment);
+// GET /api/appointments - Get appointments (role-based filtering)
+// Admin: all appointments, Doctor: assigned appointments, Patient: own appointments
+router.get('/', getAppointments);
 
-// Patient-specific routes
-router.get('/patient/:patientId', authorizePatientAccess, getPatientAppointments);
-
-// Doctor-specific routes
-router.get('/doctor/:doctorId', authorizeDoctorAccess, getDoctorAppointments);
+// GET /api/appointments/available-slots/:doctorId - Get available time slots for a doctor
+// Public access for booking appointments
 router.get('/available-slots/:doctorId', getAvailableSlots);
+
+// GET /api/appointments/patient/:patientId - Get appointments for a specific patient
+// Patient: own appointments only, Doctor: assigned patients only, Admin: all
+router.get('/patient/:patientId', 
+  requirePatientAccess,
+  auditLog('VIEW_PATIENT_APPOINTMENTS'),
+  getPatientAppointments
+);
+
+// GET /api/appointments/doctor/:doctorId - Get appointments for a specific doctor
+// Doctor: own appointments only, Admin: all
+router.get('/doctor/:doctorId', 
+  requireDoctorAccess,
+  auditLog('VIEW_DOCTOR_APPOINTMENTS'),
+  getDoctorAppointments
+);
+
+// POST /api/appointments - Create new appointment
+// Patient: create for themselves, Admin: create for any patient
+router.post('/', 
+  createAppointmentValidation,
+  requirePatient,
+  requireVerified,
+  auditLog('CREATE_APPOINTMENT'),
+  createAppointment
+);
+
+// GET /api/appointments/:id - Get specific appointment
+// Patient: own appointments, Doctor: assigned appointments, Admin: all
+router.get('/:id', 
+  requireAppointmentAccess,
+  getAppointment
+);
+
+// PUT /api/appointments/:id - Update appointment
+// Patient: reschedule own appointments, Doctor: update assigned appointments, Admin: all
+router.put('/:id', 
+  updateAppointmentValidation,
+  requireAppointmentAccess,
+  auditLog('UPDATE_APPOINTMENT'),
+  updateAppointment
+);
+
+// PUT /api/appointments/:id/status - Update appointment status only
+// Doctor: update status of assigned appointments, Admin: all
+router.put('/:id/status', 
+  body('status')
+    .isIn(['pending', 'confirmed', 'completed', 'cancelled', 'no-show'])
+    .withMessage('Invalid appointment status'),
+  requireAppointmentAccess,
+  auditLog('UPDATE_APPOINTMENT_STATUS'),
+  updateAppointment
+);
+
+// DELETE /api/appointments/:id - Cancel appointment
+// Patient: cancel own appointments, Doctor: cancel assigned appointments, Admin: all
+router.delete('/:id', 
+  requireAppointmentAccess,
+  auditLog('CANCEL_APPOINTMENT'),
+  cancelAppointment
+);
+
+// Admin-only routes
+router.use('/admin', requireAdmin);
+
+// GET /api/appointments/admin/all - Get all appointments with full details (Admin only)
+router.get('/admin/all', 
+  auditLog('VIEW_ALL_APPOINTMENTS_ADMIN'),
+  getAppointments
+);
+
+// PUT /api/appointments/admin/:id/force-update - Force update any appointment (Admin only)
+router.put('/admin/:id/force-update', 
+  updateAppointmentValidation,
+  auditLog('FORCE_UPDATE_APPOINTMENT'),
+  updateAppointment
+);
 
 module.exports = router;

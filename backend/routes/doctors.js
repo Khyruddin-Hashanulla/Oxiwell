@@ -80,16 +80,18 @@ const updateProfileValidation = [
 
 // Public routes
 router.get('/', getDoctors);
-router.get('/:id', getDoctor);
 
-// Protected routes
+// Protected routes - Apply protection middleware
 router.use(protect);
 
-// Doctor-only routes
+// Doctor-only routes - MUST come before /:id route to avoid conflicts
 router.get('/dashboard/stats', authorize('doctor'), getDoctorStats);
 router.put('/profile', authorize('doctor'), updateProfileValidation, updateDoctorProfile);
 router.get('/patients', authorize('doctor'), getDoctorPatients);
 router.get('/patients/:patientId/history', authorize('doctor'), getPatientHistory);
 router.get('/schedule', authorize('doctor'), getDoctorSchedule);
+
+// Generic routes - MUST come after specific routes
+router.get('/:id', getDoctor);
 
 module.exports = router;

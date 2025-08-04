@@ -88,79 +88,166 @@ const getAppointment = asyncHandler(async (req, res, next) => {
 // @route   POST /api/appointments
 // @access  Private (Patient only)
 const createAppointment = asyncHandler(async (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      status: 'error',
-      message: 'Validation failed',
-      errors: errors.array()
-    });
-  }
+  console.log('📝 Appointment creation endpoint hit');
+  console.log('📊 Request body:', req.body);
+  console.log('👤 User:', req.user.email);
 
-  const {
-    doctor,
-    appointmentDate,
-    appointmentTime,
-    duration,
-    appointmentType,
-    reason,
-    symptoms,
-    patientNotes
-  } = req.body;
-
-  // Verify doctor exists and is active
-  const doctorUser = await User.findOne({ _id: doctor, role: 'doctor', status: 'active' });
-  if (!doctorUser) {
-    return res.status(404).json({
-      status: 'error',
-      message: 'Doctor not found or not available'
-    });
-  }
-
-  // Check if the appointment slot is available
-  const isAvailable = await Appointment.isSlotAvailable(doctor, appointmentDate, appointmentTime, duration);
-  if (!isAvailable) {
-    return res.status(400).json({
-      status: 'error',
-      message: 'The selected time slot is not available'
-    });
-  }
-
-  // Check if appointment date is in the future
-  const appointmentDateTime = new Date(appointmentDate);
-  const [hours, minutes] = appointmentTime.split(':');
-  appointmentDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-
-  if (appointmentDateTime <= new Date()) {
-    return res.status(400).json({
-      status: 'error',
-      message: 'Appointment must be scheduled for a future date and time'
-    });
-  }
-
-  const appointment = await Appointment.create({
-    patient: req.user._id,
-    doctor,
-    appointmentDate,
-    appointmentTime,
-    duration: duration || 30,
-    appointmentType: appointmentType || 'consultation',
-    reason,
-    symptoms,
-    patientNotes,
-    consultationFee: doctorUser.consultationFee
-  });
-
-  const populatedAppointment = await Appointment.findById(appointment._id)
-    .populate('patient', 'firstName lastName email phone')
-    .populate('doctor', 'firstName lastName specialization consultationFee');
-
-  res.status(201).json({
-    status: 'success',
-    data: {
-      appointment: populatedAppointment
+  try {
+    // Validation check
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log('❌ Validation errors:', errors.array());
+      return res.status(400).json({
+        status: 'error',
+        message: 'Validation failed',
+        errors: errors.array()
+      });
     }
-  });
+
+    console.log('✅ Validation passed');
+
+    // Extract data from request body
+    const {
+      doctor,
+      appointmentDate,
+      appointmentTime,
+      duration,
+      appointmentType,
+      reason,
+      symptoms,
+      patientNotes
+    } = req.body;
+
+    console.log('🔍 DEBUG: Appointment data extracted:', {
+      doctor,
+      appointmentDate,
+      appointmentTime,
+      duration,
+      appointmentType,
+      reason,
+      patient: req.user._id
+    });
+
+    // Verify doctor exists and is active
+    console.log('🔍 Checking if doctor exists...');
+    const doctorUser = await User.findOne({ _id: doctor, role: 'doctor', status: 'active' });
+    if (!doctorUser) {
+      console.log('❌ Doctor not found:', doctor);
+      return res.status(404).json({
+        status: 'error',
+        message: 'Doctor not found or not available'
+      });
+    }
+
+    console.log('✅ Doctor found:', doctorUser.firstName, doctorUser.lastName);
+
+    // Check if the appointment slot is available
+    console.log('🔍 Checking if time slot is available...');
+    
+    // Simple availability check - just check if slot exists
+    const existingAppointment = await Appointment.findOne({
+      doctor,
+      appointmentDate,
+      appointmentTime,
+      status: { $ne: 'cancelled' }
+    });
+
+    if (existingAppointment) {
+      console.log('❌ Time slot not available - existing appointment found');
+      return res.status(400).json({
+        status: 'error',
+        message: 'The selected time slot is not available'
+      });
+    }
+
+    console.log('✅ Time slot available');
+
+    // Check if appointment date is in the future
+    console.log('🔍 Checking if appointment date is valid...');
+    const appointmentDateTime = new Date(appointmentDate);
+    const [hours, minutes] = appointmentTime.split(':');
+    appointmentDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+    if (appointmentDateTime <= new Date()) {
+      console.log('❌ Appointment date is in the past');
+      return res.status(400).json({
+        status: 'error',
+        message: 'Appointment must be scheduled for a future date and time'
+      });
+    }
+
+    console.log('✅ Appointment date is valid');
+
+    // Create appointment in database
+    console.log('🔄 Creating appointment in database...');
+    
+    const appointmentData = {
+      patient: req.user._id,
+      doctor,
+      appointmentDate,
+      appointmentTime,
+      duration: duration || 30,
+      appointmentType: appointmentType || 'consultation',
+      reason,
+      symptoms: symptoms || [],
+      patientNotes: patientNotes || '',
+      consultationFee: doctorUser.consultationFee || 0,
+      status: 'pending'
+    };
+
+    console.log('🔍 DEBUG: Appointment data to save:', appointmentData);
+
+    const appointment = await Appointment.create(appointmentData);
+
+    console.log('✅ Appointment created successfully:', appointment._id);
+    console.log('🔍 DEBUG: Created appointment details:', {
+      _id: appointment._id,
+      patient: appointment.patient,
+      doctor: appointment.doctor,
+      appointmentDate: appointment.appointmentDate,
+      appointmentTime: appointment.appointmentTime,
+      status: appointment.status
+    });
+
+    // Verify appointment was actually saved
+    const savedAppointment = await Appointment.findById(appointment._id);
+    if (!savedAppointment) {
+      console.log('❌ ERROR: Appointment was not saved to database');
+      return res.status(500).json({
+        status: 'error',
+        message: 'Failed to save appointment to database'
+      });
+    }
+
+    console.log('✅ Appointment verified in database');
+
+    // Populate the appointment with doctor and patient details
+    const populatedAppointment = await Appointment.findById(appointment._id)
+      .populate('patient', 'firstName lastName email phone')
+      .populate('doctor', 'firstName lastName specialization consultationFee');
+
+    console.log('✅ Appointment populated successfully');
+
+    // Return success response
+    res.status(201).json({
+      status: 'success',
+      data: {
+        appointment: populatedAppointment
+      }
+    });
+
+    console.log('✅ Success response sent');
+
+  } catch (error) {
+    console.log('❌ CRITICAL ERROR in appointment creation:', error.message);
+    console.log('❌ Error stack:', error.stack);
+    
+    return res.status(500).json({
+      status: 'error',
+      message: 'Failed to create appointment',
+      error: error.message
+    });
+  }
 });
 
 // @desc    Update appointment
@@ -315,6 +402,10 @@ const getPatientAppointments = asyncHandler(async (req, res, next) => {
   const limit = parseInt(req.query.limit, 10) || 10;
   const startIndex = (page - 1) * limit;
 
+  console.log('🔍 DEBUG: getPatientAppointments called');
+  console.log('🔍 DEBUG: patientId:', patientId);
+  console.log('🔍 DEBUG: query params:', req.query);
+
   let query = { patient: patientId };
 
   // Filter by status
@@ -322,13 +413,32 @@ const getPatientAppointments = asyncHandler(async (req, res, next) => {
     query.status = req.query.status;
   }
 
+  console.log('🔍 DEBUG: MongoDB query:', query);
+
+  // DEBUG: Let's see what appointments actually exist in the database
+  const allAppointments = await Appointment.find({}).select('patient doctor appointmentDate status').limit(5);
+  console.log('🔍 DEBUG: All appointments in database (sample):', allAppointments);
+  console.log('🔍 DEBUG: Sample appointment patient IDs:', allAppointments.map(apt => ({ 
+    id: apt._id, 
+    patient: apt.patient, 
+    patientType: typeof apt.patient,
+    patientString: apt.patient?.toString()
+  })));
+
   const appointments = await Appointment.find(query)
     .populate('doctor', 'firstName lastName specialization consultationFee')
     .sort({ appointmentDate: -1 })
     .limit(limit * 1)
     .skip(startIndex);
 
+  console.log('🔍 DEBUG: Found appointments count:', appointments.length);
+  if (appointments.length > 0) {
+    console.log('🔍 DEBUG: First appointment:', appointments[0]);
+    console.log('🔍 DEBUG: First appointment doctor:', appointments[0].doctor);
+  }
+
   const total = await Appointment.countDocuments(query);
+  console.log('🔍 DEBUG: Total appointments count:', total);
 
   res.status(200).json({
     status: 'success',
@@ -481,6 +591,26 @@ const getAvailableSlots = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc    Get available doctors for appointment booking
+// @route   GET /api/appointments/available-doctors
+// @access  Private (Authenticated users)
+const getAvailableDoctors = asyncHandler(async (req, res, next) => {
+  // Get all active and verified doctors
+  const doctors = await User.find({
+    role: 'doctor',
+    status: 'active',
+    isVerified: true
+  }).select('firstName lastName specialization experience phone location');
+
+  res.status(200).json({
+    status: 'success',
+    results: doctors.length,
+    data: {
+      doctors
+    }
+  });
+});
+
 module.exports = {
   getAppointments,
   getAppointment,
@@ -489,5 +619,6 @@ module.exports = {
   cancelAppointment,
   getPatientAppointments,
   getDoctorAppointments,
-  getAvailableSlots
+  getAvailableSlots,
+  getAvailableDoctors
 };

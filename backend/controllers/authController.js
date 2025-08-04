@@ -2,8 +2,10 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const User = require('../models/User');
+const OTP = require('../models/OTP');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { validationResult } = require('express-validator');
+const { generateOTP, sendOTPEmail, sendWelcomeEmail } = require('../services/emailService');
 
 // Generate JWT Token
 const signToken = (id) => {
@@ -37,13 +39,17 @@ const createSendToken = (user, statusCode, res) => {
   });
 };
 
-// @desc    Register user
+// @desc    Register user (Step 1: Send OTP)
 // @route   POST /api/auth/register
 // @access  Public
 const register = asyncHandler(async (req, res, next) => {
+  console.log('📝 Registration attempt started');
+  console.log('📧 Request body:', { ...req.body, password: '***' });
+
   // Check for validation errors
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    console.log('❌ Validation errors:', errors.array());
     return res.status(400).json({
       status: 'error',
       message: 'Validation failed',
@@ -51,81 +57,273 @@ const register = asyncHandler(async (req, res, next) => {
     });
   }
 
-  const {
-    firstName,
-    lastName,
-    email,
-    password,
-    phone,
-    role,
-    dateOfBirth,
-    gender,
-    bloodGroup,
-    address,
-    emergencyContact,
-    specialization,
-    licenseNumber,
-    experience,
-    qualifications,
-    consultationFee
-  } = req.body;
+  const { firstName, lastName, email, password, phone, dateOfBirth, gender, bloodGroup, role } = req.body;
 
   // Check if user already exists
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    return res.status(400).json({
-      status: 'error',
-      message: 'User already exists with this email'
-    });
+    if (existingUser.isVerified) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'User already exists with this email'
+      });
+    } else {
+      // Delete existing unverified user and their OTPs to allow re-registration
+      await User.findByIdAndDelete(existingUser._id);
+      await OTP.deleteMany({ email });
+      console.log('�️  Deleted existing unverified user');
+    }
   }
 
-  // Create user object based on role
-  let userData = {
-    firstName,
-    lastName,
-    email,
-    password,
-    phone,
-    role: role || 'patient',
-    address
-  };
+  // Generate OTP
+  const otp = generateOTP();
+  console.log('🔢 Generated OTP for:', email);
 
-  // Add role-specific fields
-  if (userData.role === 'patient') {
-    userData = {
-      ...userData,
+  try {
+    // Save OTP to database
+    await OTP.deleteMany({ email, purpose: 'email_verification' }); // Clear any existing OTPs
+    const otpRecord = new OTP({
+      email,
+      otp,
+      purpose: 'email_verification'
+    });
+    await otpRecord.save();
+
+    // Send OTP email
+    const emailResult = await sendOTPEmail(email, otp, firstName);
+    
+    if (!emailResult.success) {
+      return res.status(500).json({
+        status: 'error',
+        message: 'Failed to send verification email. Please try again.'
+      });
+    }
+
+    // Store user data temporarily (without saving to User collection yet)
+    // We'll create the user after OTP verification
+    const tempUserData = {
+      firstName,
+      lastName,
+      email,
+      password, // Will be hashed when user is created after verification
+      phone,
       dateOfBirth,
       gender,
       bloodGroup,
-      emergencyContact
+      role: role || 'patient' // Use provided role or default to patient
     };
-  } else if (userData.role === 'doctor') {
-    userData = {
-      ...userData,
-      specialization,
-      licenseNumber,
-      experience,
-      qualifications,
-      consultationFee
-    };
+
+    // Store in session or cache (for now, we'll use a simple approach)
+    // In production, you might want to use Redis or similar
+    global.tempUserData = global.tempUserData || {};
+    global.tempUserData[email] = tempUserData;
+
+    console.log('✅ OTP sent successfully');
+    res.status(200).json({
+      status: 'success',
+      message: 'Verification code sent to your email. Please check your inbox.',
+      data: {
+        email,
+        otpSent: true,
+        expiresIn: '10 minutes'
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Registration error:', error);
+    console.error('❌ Error stack:', error.stack);
+    console.error('❌ Error message:', error.message);
+    res.status(500).json({
+      status: 'error',
+      message: 'Registration failed. Please try again.',
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
+    });
+  }
+});
+
+// @desc    Verify OTP and complete registration (Step 2)
+// @route   POST /api/auth/verify-otp
+// @access  Public
+const verifyOTP = asyncHandler(async (req, res, next) => {
+  console.log('🔐 OTP verification attempt started');
+  console.log('📧 Request body:', req.body);
+  console.log('📧 Email received:', req.body.email);
+  console.log('🔢 OTP received:', req.body.otp);
+  console.log('🔢 OTP type:', typeof req.body.otp);
+  console.log('🔢 OTP length:', req.body.otp?.length);
+  
+  // Check for validation errors
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    console.log('❌ OTP Validation errors:', errors.array());
+    return res.status(400).json({
+      status: 'error',
+      message: 'Validation failed',
+      errors: errors.array()
+    });
   }
 
-  // Create user
-  const user = await User.create(userData);
+  const { email, otp } = req.body;
 
-  // Generate email verification token
-  const verificationToken = crypto.randomBytes(20).toString('hex');
-  user.emailVerificationToken = crypto
-    .createHash('sha256')
-    .update(verificationToken)
-    .digest('hex');
+  if (!email || !otp) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Email and OTP are required'
+    });
+  }
 
-  await user.save({ validateBeforeSave: false });
+  try {
+    // Find valid OTP
+    const otpRecord = await OTP.findValidOTP(email, otp, 'email_verification');
+    
+    if (!otpRecord) {
+      // Increment attempts for existing OTP
+      await OTP.updateOne(
+        { email, purpose: 'email_verification', isUsed: false },
+        { $inc: { attempts: 1 } }
+      );
+      
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid or expired OTP. Please request a new one.'
+      });
+    }
 
-  // TODO: Send verification email
-  // await sendVerificationEmail(user.email, verificationToken);
+    // Check if attempts exceeded
+    if (otpRecord.isAttemptsExceeded()) {
+      await OTP.deleteMany({ email, purpose: 'email_verification' });
+      return res.status(400).json({
+        status: 'error',
+        message: 'Too many failed attempts. Please request a new OTP.'
+      });
+    }
 
-  createSendToken(user, 201, res);
+    // Mark OTP as used
+    otpRecord.isUsed = true;
+    await otpRecord.save();
+
+    // Get temporary user data
+    const tempUserData = global.tempUserData?.[email];
+    if (!tempUserData) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Registration session expired. Please start registration again.'
+      });
+    }
+
+    // Create the user now that email is verified
+    const userData = {
+      ...tempUserData,
+      isVerified: true,
+      status: tempUserData.role === 'doctor' ? 'pending' : 'active',
+      emailVerifiedAt: new Date()
+    };
+
+    // Check if user already exists (in case of race condition)
+    let user = await User.findOne({ email });
+    if (user && user.isVerified) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'User already exists and is verified'
+      });
+    }
+
+    if (user && !user.isVerified) {
+      // Update existing unverified user
+      Object.assign(user, userData);
+      await user.save();
+    } else {
+      // Create new user
+      user = await User.create(userData);
+    }
+
+    // Clean up temporary data
+    delete global.tempUserData[email];
+
+    // Send welcome email
+    await sendWelcomeEmail(email, user.firstName);
+
+    console.log('✅ User registration completed:', user.email);
+
+    // Send token response (automatically log in the user)
+    createSendToken(user, 201, res);
+
+  } catch (error) {
+    console.error('❌ OTP verification error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Verification failed. Please try again.'
+    });
+  }
+});
+
+// @desc    Resend OTP
+// @route   POST /api/auth/resend-otp
+// @access  Public
+const resendOTP = asyncHandler(async (req, res, next) => {
+  console.log('🔄 OTP resend request');
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Email is required'
+    });
+  }
+
+  try {
+    // Check if there's temporary user data or existing unverified user
+    const tempUserData = global.tempUserData?.[email];
+    const existingUser = await User.findOne({ email, isVerified: false });
+    
+    if (!tempUserData && !existingUser) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'No pending registration found for this email'
+      });
+    }
+
+    // Generate new OTP
+    const otp = generateOTP();
+    
+    // Clear existing OTPs and create new one
+    await OTP.deleteMany({ email, purpose: 'email_verification' });
+    const otpRecord = new OTP({
+      email,
+      otp,
+      purpose: 'email_verification'
+    });
+    await otpRecord.save();
+
+    // Send OTP email
+    const firstName = tempUserData?.firstName || existingUser?.firstName || 'User';
+    const emailResult = await sendOTPEmail(email, otp, firstName);
+    
+    if (!emailResult.success) {
+      return res.status(500).json({
+        status: 'error',
+        message: 'Failed to send verification email. Please try again.'
+      });
+    }
+
+    console.log('✅ OTP resent successfully');
+    res.status(200).json({
+      status: 'success',
+      message: 'New verification code sent to your email.',
+      data: {
+        email,
+        otpSent: true,
+        expiresIn: '10 minutes'
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ OTP resend error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to resend OTP. Please try again.'
+    });
+  }
 });
 
 // @desc    Login user
@@ -167,7 +365,7 @@ const login = asyncHandler(async (req, res, next) => {
     console.log('❌ User not found');
     return res.status(401).json({
       status: 'error',
-      message: 'Invalid credentials'
+      message: 'No account found with this email address. Please check your email or register for a new account.'
     });
   }
 
@@ -179,7 +377,7 @@ const login = asyncHandler(async (req, res, next) => {
     console.log('❌ Password incorrect');
     return res.status(401).json({
       status: 'error',
-      message: 'Invalid credentials'
+      message: 'Incorrect password. Please check your password and try again.'
     });
   }
 
@@ -198,6 +396,19 @@ const login = asyncHandler(async (req, res, next) => {
     return res.status(401).json({
       status: 'error',
       message: 'Your account is inactive. Please contact administrator.'
+    });
+  }
+
+  if (user.status === 'pending') {
+    console.log('⏳ User pending approval');
+    const message = user.role === 'doctor' 
+      ? 'Your doctor account is pending admin approval. You will receive an email once approved.'
+      : 'Your account is pending approval. Please contact administrator.';
+    
+    return res.status(403).json({
+      status: 'error',
+      message: message,
+      code: 'PENDING_APPROVAL'
     });
   }
 
@@ -443,5 +654,7 @@ module.exports = {
   updatePassword,
   forgotPassword,
   resetPassword,
-  verifyEmail
+  verifyEmail,
+  verifyOTP,
+  resendOTP
 };

@@ -40,7 +40,10 @@ const userSchema = new mongoose.Schema({
     enum: ['active', 'inactive', 'blocked', 'pending'],
     default: 'pending'
   },
-  
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
   // Contact Information
   phone: {
     type: String,
@@ -81,13 +84,13 @@ const userSchema = new mongoose.Schema({
   specialization: {
     type: String,
     required: function() {
-      return this.role === 'doctor';
+      return this.role === 'doctor' && this.isVerified && this.status === 'active';
     }
   },
   licenseNumber: {
     type: String,
     required: function() {
-      return this.role === 'doctor';
+      return this.role === 'doctor' && this.isVerified && this.status === 'active';
     },
     unique: true,
     sparse: true
@@ -95,7 +98,7 @@ const userSchema = new mongoose.Schema({
   experience: {
     type: Number,
     required: function() {
-      return this.role === 'doctor';
+      return this.role === 'doctor' && this.isVerified && this.status === 'active';
     }
   },
   qualifications: [{
@@ -106,7 +109,7 @@ const userSchema = new mongoose.Schema({
   consultationFee: {
     type: Number,
     required: function() {
-      return this.role === 'doctor';
+      return this.role === 'doctor' && this.isVerified && this.status === 'active';
     }
   },
   availableSlots: [{
@@ -129,21 +132,15 @@ const userSchema = new mongoose.Schema({
   emergencyContact: {
     name: {
       type: String,
-      required: function() {
-        return this.role === 'patient';
-      }
+      // Made optional for registration - can be added later in profile
     },
     relationship: {
       type: String,
-      required: function() {
-        return this.role === 'patient';
-      }
+      // Made optional for registration - can be added later in profile
     },
     phone: {
       type: String,
-      required: function() {
-        return this.role === 'patient';
-      }
+      // Made optional for registration - can be added later in profile
     }
   },
   medicalHistory: [{

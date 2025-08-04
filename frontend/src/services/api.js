@@ -3,7 +3,10 @@ import toast from 'react-hot-toast'
 import Cookies from 'js-cookie'
 
 // Base API configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+
+console.log('🌐 API Base URL:', API_BASE_URL)
+console.log('🔧 Environment VITE_API_URL:', import.meta.env.VITE_API_URL)
 
 // Create axios instance
 const api = axios.create({
@@ -18,6 +21,12 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = Cookies.get('token')
+    console.log('🔍 API Request Debug:', {
+      url: config.url,
+      method: config.method,
+      hasToken: !!token,
+      tokenPreview: token ? `${token.substring(0, 20)}...` : 'No token'
+    })
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -38,16 +47,27 @@ api.interceptors.response.use(
 
     if (response) {
       const { status, data } = response
+      
+      console.log('🚨 API Response Error:', {
+        status,
+        url: response.config?.url,
+        method: response.config?.method,
+        data: data,
+        hasAuthHeader: !!response.config?.headers?.Authorization
+      })
 
       switch (status) {
         case 401:
           // Unauthorized - clear token and redirect to login
+          console.log('🔐 401 Unauthorized - clearing token and redirecting to login')
           Cookies.remove('token')
           delete api.defaults.headers.common['Authorization']
-          if (window.location.pathname !== '/login') {
-            toast.error('Session expired. Please login again.')
-            window.location.href = '/login'
-          }
+          // Temporarily comment out auto-redirect to debug
+          // if (window.location.pathname !== '/login') {
+          //   toast.error('Session expired. Please login again.')
+          //   window.location.href = '/login'
+          // }
+          toast.error('Authentication failed - check console for details')
           break
 
         case 403:
@@ -95,8 +115,10 @@ api.interceptors.response.use(
 export const authAPI = {
   login: (credentials) => api.post('/auth/login', credentials),
   register: (userData) => api.post('/auth/register', userData),
+  verifyOTP: (data) => api.post('/auth/verify-otp', data),
+  resendOTP: (data) => api.post('/auth/resend-otp', data),
   logout: () => api.post('/auth/logout'),
-  getProfile: () => api.get('/auth/profile'),
+  getProfile: () => api.get('/auth/me'),
   updateProfile: (data) => api.put('/auth/profile', data),
   updatePassword: (data) => api.put('/auth/password', data),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
@@ -111,8 +133,10 @@ export const appointmentsAPI = {
   getAppointment: (id) => api.get(`/appointments/${id}`),
   createAppointment: (data) => api.post('/appointments', data),
   updateAppointment: (id, data) => api.put(`/appointments/${id}`, data),
+  updateAppointmentStatus: (id, status) => api.put(`/appointments/${id}/status`, { status }),
   cancelAppointment: (id, reason) => api.put(`/appointments/${id}/cancel`, { reason }),
   getAvailableSlots: (doctorId, date) => api.get(`/appointments/slots/${doctorId}`, { params: { date } }),
+  getAvailableDoctors: () => api.get('/appointments/available-doctors'),
   getPatientAppointments: (patientId, params) => api.get(`/appointments/patient/${patientId}`, { params }),
   getDoctorAppointments: (doctorId, params) => api.get(`/appointments/doctor/${doctorId}`, { params }),
 }
@@ -122,7 +146,7 @@ export const doctorsAPI = {
   getDoctors: (params) => api.get('/doctors', { params }),
   getDoctor: (id) => api.get(`/doctors/${id}`),
   updateDoctorProfile: (data) => api.put('/doctors/profile', data),
-  getDoctorStats: () => api.get('/doctors/stats'),
+  getDoctorStats: () => api.get('/doctors/dashboard/stats'),
   getPatients: (params) => api.get('/doctors/patients', { params }),
   getPatientHistory: (patientId) => api.get(`/doctors/patients/${patientId}/history`),
   getSchedule: (params) => api.get('/doctors/schedule', { params }),
@@ -200,6 +224,11 @@ export const adminAPI = {
   deleteUser: (id) => api.delete(`/admin/users/${id}`),
   getActivityLogs: (params) => api.get('/admin/activity', { params }),
   generateReports: (params) => api.get('/admin/reports', { params }),
+  
+  // Doctor approval endpoints
+  getPendingDoctors: (params) => api.get('/admin/doctors/pending', { params }),
+  approveDoctor: (id) => api.put(`/admin/doctors/${id}/approve`),
+  rejectDoctor: (id, data) => api.put(`/admin/doctors/${id}/reject`, data),
 }
 
 // Export the main api instance

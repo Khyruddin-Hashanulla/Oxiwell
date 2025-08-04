@@ -103,8 +103,17 @@ export const AuthProvider = ({ children }) => {
           // Set token in axios defaults
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`
           
-          // Verify token and get user data
-          const response = await authAPI.getProfile()
+          // Add timeout to prevent infinite loading
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Auth check timeout')), 5000)
+          )
+          
+          // Verify token and get user data with timeout
+          const response = await Promise.race([
+            authAPI.getProfile(),
+            timeoutPromise
+          ])
+          
           dispatch({
             type: AUTH_ACTIONS.LOGIN_SUCCESS,
             payload: {
@@ -139,12 +148,14 @@ export const AuthProvider = ({ children }) => {
       console.log('📊 Response status:', response.status);
       console.log('📄 Response data:', response.data);
       
-      const { user, token } = response.data.data
+      // Fix token extraction - token is at root level, user is in data
+      const token = response.data.token
+      const user = response.data.data.user
       console.log('👤 Extracted user:', user);
       console.log('🔑 Extracted token:', token ? 'Token received' : 'No token');
 
-      // Store token in cookie
-      Cookies.set('token', token, { expires: 7 }) // 7 days
+      // Store token in cookie with proper configuration for development
+      Cookies.set('token', token, { expires: 7, secure: false, sameSite: 'lax' })
       
       // Set token in axios defaults
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`
@@ -179,7 +190,8 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: AUTH_ACTIONS.REGISTER_START })
       
       const response = await authAPI.register(userData)
-      const { user, token } = response.data.data
+      const token = response.data.token
+      const user = response.data.data.user
 
       // Store token in cookie
       Cookies.set('token', token, { expires: 7 }) // 7 days
@@ -206,7 +218,7 @@ export const AuthProvider = ({ children }) => {
   // Logout function
   const logout = async () => {
     try {
-      await authAPI.post('/auth/logout')
+      await authAPI.logout()
     } catch (error) {
       console.error('Logout error:', error)
     } finally {

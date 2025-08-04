@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
+import { adminAPI } from '../../services/api'
+import { toast } from 'react-hot-toast'
 import { 
   Users, 
   Calendar, 
@@ -30,25 +32,91 @@ const AdminDashboard = () => {
     systemAlerts: 0,
     recentActivities: []
   })
+  const [pendingDoctors, setPendingDoctors] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState({})
 
-  // Mock data - in real app, this would come from API
+  // Fetch dashboard data
   useEffect(() => {
-    setStats({
-      totalUsers: 1247,
-      totalDoctors: 45,
-      totalPatients: 1156,
-      totalAppointments: 2847,
-      monthlyRevenue: 125000,
-      pendingApprovals: 8,
-      systemAlerts: 3,
-      recentActivities: [
-        { id: 1, type: 'user_registered', message: 'New patient registered: Sarah Wilson', time: '5 min ago' },
-        { id: 2, type: 'appointment_booked', message: 'Appointment booked with Dr. Smith', time: '12 min ago' },
-        { id: 3, type: 'payment_received', message: 'Payment received: $150', time: '25 min ago' },
-        { id: 4, type: 'doctor_joined', message: 'New doctor joined: Dr. Emily Johnson', time: '1 hour ago' }
-      ]
-    })
+    fetchDashboardData()
   }, [])
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true)
+      
+      // Fetch pending doctors
+      const pendingResponse = await adminAPI.getPendingDoctors()
+      setPendingDoctors(pendingResponse.data.data.doctors || [])
+      
+      // Update stats with real pending count
+      setStats(prevStats => ({
+        ...prevStats,
+        pendingApprovals: pendingResponse.data.data.doctors?.length || 0,
+        // Mock data for other stats - replace with real API calls later
+        totalUsers: 1247,
+        totalDoctors: 45,
+        totalPatients: 1156,
+        totalAppointments: 2847,
+        monthlyRevenue: 125000,
+        systemAlerts: 3,
+        recentActivities: [
+          { id: 1, type: 'user_registered', message: 'New patient registered: Sarah Wilson', time: '5 min ago' },
+          { id: 2, type: 'appointment_booked', message: 'Appointment booked with Dr. Smith', time: '12 min ago' },
+          { id: 3, type: 'payment_received', message: 'Payment received: $150', time: '25 min ago' },
+          { id: 4, type: 'doctor_joined', message: 'New doctor joined: Dr. Emily Johnson', time: '1 hour ago' }
+        ]
+      }))
+      
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error)
+      toast.error('Failed to load dashboard data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleApproveDoctor = async (doctorId) => {
+    try {
+      setActionLoading(prev => ({ ...prev, [doctorId]: 'approving' }))
+      
+      await adminAPI.approveDoctor(doctorId)
+      toast.success('Doctor approved successfully!')
+      
+      // Refresh pending doctors list
+      fetchDashboardData()
+      
+    } catch (error) {
+      console.error('Error approving doctor:', error)
+      toast.error('Failed to approve doctor')
+    } finally {
+      setActionLoading(prev => ({ ...prev, [doctorId]: null }))
+    }
+  }
+
+  const handleRejectDoctor = async (doctorId) => {
+    try {
+      const reason = prompt('Please provide a reason for rejection:')
+      if (!reason || reason.trim().length < 10) {
+        toast.error('Rejection reason must be at least 10 characters long')
+        return
+      }
+
+      setActionLoading(prev => ({ ...prev, [doctorId]: 'rejecting' }))
+      
+      await adminAPI.rejectDoctor(doctorId, { rejectionReason: reason.trim() })
+      toast.success('Doctor application rejected')
+      
+      // Refresh pending doctors list
+      fetchDashboardData()
+      
+    } catch (error) {
+      console.error('Error rejecting doctor:', error)
+      toast.error('Failed to reject doctor')
+    } finally {
+      setActionLoading(prev => ({ ...prev, [doctorId]: null }))
+    }
+  }
 
   const quickActions = [
     {
@@ -79,12 +147,6 @@ const AdminDashboard = () => {
       link: '/admin/settings',
       color: 'bg-orange-500 hover:bg-orange-600'
     }
-  ]
-
-  const pendingApprovals = [
-    { id: 1, type: 'doctor', name: 'Dr. Michael Chen', specialty: 'Cardiology', status: 'pending' },
-    { id: 2, type: 'appointment', name: 'Emergency Appointment', patient: 'John Doe', status: 'pending' },
-    { id: 3, type: 'refund', name: 'Refund Request', amount: '$75', status: 'pending' }
   ]
 
   const systemAlerts = [
@@ -205,28 +267,32 @@ const AdminDashboard = () => {
               </Link>
             </div>
             <div className="space-y-4">
-              {pendingApprovals.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-4 bg-primary-700 bg-opacity-50 rounded-lg hover:bg-opacity-70 transition-all">
+              {pendingDoctors.map((doctor) => (
+                <div key={doctor.id} className="flex items-center justify-between p-4 bg-primary-700 bg-opacity-50 rounded-lg hover:bg-opacity-70 transition-all">
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center">
-                      {item.type === 'doctor' && <UserCheck className="w-5 h-5 text-white" />}
-                      {item.type === 'appointment' && <Calendar className="w-5 h-5 text-white" />}
-                      {item.type === 'refund' && <DollarSign className="w-5 h-5 text-white" />}
+                      <Users className="w-5 h-5 text-white" />
                     </div>
                     <div>
                       <p className="font-medium text-white">
-                        {item.name}
+                        {doctor.name}
                       </p>
                       <p className="text-sm text-gray-300">
-                        {item.specialty || item.patient || item.amount}
+                        {doctor.specialty}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <button className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-3 py-1 rounded-lg transition-colors">
+                    <button 
+                      className={`bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-3 py-1 rounded-lg transition-colors ${actionLoading[doctor.id] === 'approving' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      onClick={() => handleApproveDoctor(doctor.id)}
+                    >
                       Approve
                     </button>
-                    <button className="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-3 py-1 rounded-lg transition-colors">
+                    <button 
+                      className={`bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-3 py-1 rounded-lg transition-colors ${actionLoading[doctor.id] === 'rejecting' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      onClick={() => handleRejectDoctor(doctor.id)}
+                    >
                       Reject
                     </button>
                   </div>

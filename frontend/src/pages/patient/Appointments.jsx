@@ -1,77 +1,83 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, Clock, User, MapPin, Phone, Plus, Filter, Search, MoreVertical, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
+import { appointmentsAPI } from '../../services/api'
+import { toast } from 'react-hot-toast'
 
 const Appointments = () => {
+  const { user } = useAuth()
   const [appointments, setAppointments] = useState([])
   const [filteredAppointments, setFilteredAppointments] = useState([])
   const [filter, setFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(true)
 
-  // Mock appointments data - in real app, this would come from API
+  // Fetch real appointments data from API
   useEffect(() => {
-    const mockAppointments = [
-      {
-        id: 1,
-        doctorName: 'Dr. Sarah Doctor',
-        specialization: 'General Medicine',
-        date: '2025-08-05',
-        time: '10:30 AM',
-        status: 'confirmed',
-        reason: 'Routine Checkup',
-        location: 'Main Building, Room 201',
-        phone: '+1234567892',
-        notes: 'Annual health checkup',
-        fee: 150
-      },
-      {
-        id: 2,
-        doctorName: 'Dr. Michael Smith',
-        specialization: 'Cardiology',
-        date: '2025-08-08',
-        time: '02:00 PM',
-        status: 'pending',
-        reason: 'Follow-up Visit',
-        location: 'Cardiology Wing, Room 301',
-        phone: '+1234567893',
-        notes: 'Follow-up for blood pressure monitoring',
-        fee: 200
-      },
-      {
-        id: 3,
-        doctorName: 'Dr. Emily Johnson',
-        specialization: 'Dermatology',
-        date: '2025-07-28',
-        time: '11:00 AM',
-        status: 'completed',
-        reason: 'Consultation',
-        location: 'Dermatology Center, Room 105',
-        phone: '+1234567894',
-        notes: 'Skin condition consultation',
-        fee: 180
-      },
-      {
-        id: 4,
-        doctorName: 'Dr. Sarah Doctor',
-        specialization: 'General Medicine',
-        date: '2025-07-15',
-        time: '09:30 AM',
-        status: 'cancelled',
-        reason: 'Routine Checkup',
-        location: 'Main Building, Room 201',
-        phone: '+1234567892',
-        notes: 'Cancelled due to emergency',
-        fee: 150
-      }
-    ]
+    const fetchAppointments = async () => {
+      try {
+        setIsLoading(true)
+        
+        if (!user?._id) {
+          console.log('No user ID available')
+          setIsLoading(false)
+          return
+        }
 
-    setTimeout(() => {
-      setAppointments(mockAppointments)
-      setFilteredAppointments(mockAppointments)
-      setIsLoading(false)
-    }, 1000)
-  }, [])
+        const response = await appointmentsAPI.getPatientAppointments(user._id)
+        
+        console.log('🔍 DEBUG: Raw API response:', response.data)
+        console.log('🔍 DEBUG: Response status:', response.data.status)
+        console.log('🔍 DEBUG: Response data:', response.data.data)
+        
+        if (response.data.status === 'success') {
+          const appointmentsData = response.data.data.appointments || []
+          
+          console.log('🔍 DEBUG: Appointments array:', appointmentsData)
+          console.log('🔍 DEBUG: Appointments count:', appointmentsData.length)
+          
+          if (appointmentsData.length > 0) {
+            console.log('🔍 DEBUG: First appointment:', appointmentsData[0])
+            console.log('🔍 DEBUG: First appointment doctor:', appointmentsData[0]?.doctor)
+          }
+          
+          // Transform the data to match the expected format
+          const transformedAppointments = appointmentsData.map(appointment => {
+            console.log('🔍 DEBUG: Transforming appointment:', appointment._id, appointment.doctor)
+            return {
+              id: appointment._id,
+              doctorName: `${appointment.doctor?.firstName || 'Unknown'} ${appointment.doctor?.lastName || 'Doctor'}`,
+              specialization: appointment.doctor?.specialization || 'General Medicine',
+              date: new Date(appointment.appointmentDate).toISOString().split('T')[0],
+              time: appointment.appointmentTime || 'Not specified',
+              status: appointment.status || 'pending',
+              reason: appointment.reason || 'No reason specified',
+              location: appointment.doctor?.location || 'Main Building',
+              phone: appointment.doctor?.phone || 'Not available',
+              notes: appointment.notes || '',
+              fee: appointment.consultationFee || appointment.doctor?.consultationFee || 0
+            }
+          })
+          
+          setAppointments(transformedAppointments)
+          console.log('✅ DEBUG: Final transformed appointments:', transformedAppointments)
+        } else {
+          console.error('Failed to fetch appointments:', response.data.message)
+          toast.error('Failed to load appointments')
+          setAppointments([])
+        }
+      } catch (error) {
+        console.error('Error fetching appointments:', error)
+        toast.error('Failed to load appointments')
+        setAppointments([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchAppointments()
+  }, [user?._id])
 
   // Filter appointments based on status and search term
   useEffect(() => {

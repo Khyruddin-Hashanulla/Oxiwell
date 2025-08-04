@@ -6,18 +6,24 @@ const { asyncHandler } = require('./errorHandler');
 const protect = asyncHandler(async (req, res, next) => {
   let token;
 
+  console.log(' Auth middleware - checking token for:', req.method, req.path);
+  console.log(' Headers:', req.headers.authorization ? 'Has Authorization header' : 'No Authorization header');
+
   // Check for token in headers
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
+    console.log(' Token found in headers:', token ? `${token.substring(0, 20)}...` : 'Empty token');
   }
 
   // Check for token in cookies
   if (!token && req.cookies && req.cookies.token) {
     token = req.cookies.token;
+    console.log(' Token found in cookies:', token ? `${token.substring(0, 20)}...` : 'Empty token');
   }
 
   // Make sure token exists
   if (!token) {
+    console.log(' No token found - returning 401');
     return res.status(401).json({
       status: 'error',
       message: 'Not authorized to access this route'
@@ -32,6 +38,7 @@ const protect = asyncHandler(async (req, res, next) => {
     const user = await User.findById(decoded.id).select('-password');
 
     if (!user) {
+      console.log(' No user found with this token - returning 401');
       return res.status(401).json({
         status: 'error',
         message: 'No user found with this token'
@@ -40,6 +47,7 @@ const protect = asyncHandler(async (req, res, next) => {
 
     // Check if user is active
     if (user.status !== 'active') {
+      console.log(' User account is not active - returning 401');
       return res.status(401).json({
         status: 'error',
         message: 'User account is not active'
@@ -48,6 +56,7 @@ const protect = asyncHandler(async (req, res, next) => {
 
     // Check if user changed password after the token was issued
     if (user.changedPasswordAfter(decoded.iat)) {
+      console.log(' User recently changed password - returning 401');
       return res.status(401).json({
         status: 'error',
         message: 'User recently changed password. Please log in again'
@@ -57,6 +66,7 @@ const protect = asyncHandler(async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
+    console.log(' Error verifying token - returning 401:', error.message);
     return res.status(401).json({
       status: 'error',
       message: 'Not authorized to access this route'

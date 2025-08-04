@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { Calendar, Clock, User, MapPin, Phone, Star, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useAuth } from '../../contexts/AuthContext'
+import { appointmentsAPI } from '../../services/api'
 
 const AppointmentBooking = () => {
   const navigate = useNavigate()
@@ -21,46 +23,53 @@ const AppointmentBooking = () => {
     setValue
   } = useForm()
 
-  // Mock doctors data - in real app, this would come from API
+  // Load doctors from API
   useEffect(() => {
-    setDoctors([
-      {
-        id: 1,
-        name: 'Dr. Sarah Doctor',
-        specialization: 'General Medicine',
-        experience: 8,
-        rating: 4.8,
-        consultationFee: 150,
-        location: 'Main Building, Room 201',
-        phone: '+1234567892',
-        image: null,
-        availableDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
-      },
-      {
-        id: 2,
-        name: 'Dr. Michael Smith',
-        specialization: 'Cardiology',
-        experience: 12,
-        rating: 4.9,
-        consultationFee: 200,
-        location: 'Cardiology Wing, Room 301',
-        phone: '+1234567893',
-        image: null,
-        availableDays: ['monday', 'wednesday', 'friday']
-      },
-      {
-        id: 3,
-        name: 'Dr. Emily Johnson',
-        specialization: 'Dermatology',
-        experience: 6,
-        rating: 4.7,
-        consultationFee: 180,
-        location: 'Dermatology Center, Room 105',
-        phone: '+1234567894',
-        image: null,
-        availableDays: ['tuesday', 'thursday', 'saturday']
+    const fetchDoctors = async () => {
+      try {
+        setIsLoading(true)
+        const response = await appointmentsAPI.getAvailableDoctors()
+        
+        if (response.data.status === 'success') {
+          setDoctors(response.data.data.doctors || [])
+        } else {
+          console.error('Failed to fetch doctors:', response.data.message)
+          toast.error('Failed to load doctors')
+        }
+      } catch (error) {
+        console.error('Error fetching doctors:', error)
+        toast.error('Failed to load doctors')
+        // Fallback to mock data if API fails
+        setDoctors([
+          {
+            id: '1',
+            firstName: 'Dr. Sarah',
+            lastName: 'Doctor',
+            specialization: 'General Medicine',
+            experience: '8 years',
+            rating: 4.8,
+            location: 'Main Building, Room 201',
+            phone: '+1 (555) 123-4567',
+            availableSlots: ['09:00', '10:30', '14:00', '15:30']
+          },
+          {
+            id: '2',
+            firstName: 'Dr. Michael',
+            lastName: 'Johnson',
+            specialization: 'Cardiology',
+            experience: '12 years',
+            rating: 4.9,
+            location: 'Cardiology Wing, Room 305',
+            phone: '+1 (555) 987-6543',
+            availableSlots: ['08:30', '11:00', '13:30', '16:00']
+          }
+        ])
+      } finally {
+        setIsLoading(false)
       }
-    ])
+    }
+
+    fetchDoctors()
   }, [])
 
   // Generate available time slots when doctor and date are selected
@@ -84,13 +93,52 @@ const AppointmentBooking = () => {
 
     setIsLoading(true)
     try {
-      // Mock API call - in real app, this would call the backend
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Convert 12-hour time format to 24-hour format for backend
+      const convertTo24Hour = (time12h) => {
+        const [time, modifier] = time12h.split(' ');
+        let [hours, minutes] = time.split(':');
+        if (hours === '12') {
+          hours = '00';
+        }
+        if (modifier === 'PM') {
+          hours = parseInt(hours, 10) + 12;
+        }
+        return `${String(hours).padStart(2, '0')}:${minutes}`;
+      };
+
+      // Generate valid MongoDB ObjectId for test doctors
+      const generateTestObjectId = (id) => {
+        if (id === '1') return '507f1f77bcf86cd799439011'; // Valid ObjectId for Dr. Sarah
+        if (id === '2') return '507f1f77bcf86cd799439012'; // Valid ObjectId for Dr. Michael
+        return id; // Return as-is if already valid
+      };
+
+      // Create appointment payload with correct field names for backend
+      const appointmentData = {
+        doctor: generateTestObjectId(selectedDoctor._id || selectedDoctor.id),
+        appointmentDate: selectedDate,
+        appointmentTime: convertTo24Hour(selectedTime),
+        appointmentType: data.appointmentType || 'consultation',
+        reason: data.reason || `Consultation appointment with ${selectedDoctor.firstName} ${selectedDoctor.lastName} for general medical consultation and health assessment.`,
+        symptoms: data.symptoms ? [data.symptoms] : [],
+        patientNotes: data.notes || ''
+      }
+
+      console.log('Booking appointment with data:', appointmentData)
+
+      // Call backend API to create appointment
+      const response = await appointmentsAPI.createAppointment(appointmentData)
       
-      toast.success('Appointment booked successfully!')
-      navigate('/patient/appointments')
+      if (response.data.status === 'success') {
+        toast.success('Appointment booked successfully!')
+        navigate('/patient/appointments')
+      } else {
+        toast.error(response.data.message || 'Failed to book appointment')
+      }
     } catch (error) {
-      toast.error('Failed to book appointment. Please try again.')
+      console.error('Appointment booking error:', error)
+      const errorMessage = error.response?.data?.message || 'Failed to book appointment. Please try again.'
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -133,7 +181,7 @@ const AppointmentBooking = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {doctors.map((doctor) => (
               <div
-                key={doctor.id}
+                key={doctor._id || doctor.id}
                 onClick={() => {
                   setSelectedDoctor(doctor)
                   setValue('doctorId', doctor.id)
@@ -141,7 +189,7 @@ const AppointmentBooking = () => {
                   setAvailableSlots([])
                 }}
                 className={`bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border cursor-pointer transition-all duration-300 hover:shadow-xl ${
-                  selectedDoctor?.id === doctor.id
+                  selectedDoctor?._id === doctor._id || selectedDoctor?.id === doctor.id
                     ? 'border-accent-500 shadow-lg ring-2 ring-accent-500 ring-opacity-50'
                     : 'border-primary-600 hover:border-primary-500'
                 }`}
@@ -151,14 +199,14 @@ const AppointmentBooking = () => {
                     <User className="w-8 h-8 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-white mb-1">{doctor.name}</h3>
+                    <h3 className="text-xl font-semibold text-white mb-1">{doctor.firstName} {doctor.lastName}</h3>
                     <p className="text-gray-300 text-sm mb-2">{doctor.specialization}</p>
                     <div className="flex items-center space-x-4 text-sm text-gray-300 mb-3">
                       <div className="flex items-center">
                         <Star className="w-4 h-4 text-yellow-400 mr-1" />
                         <span>{doctor.rating}</span>
                       </div>
-                      <span>{doctor.experience} years exp.</span>
+                      <span>{doctor.experience}</span>
                     </div>
                     <div className="space-y-1 text-sm text-gray-300">
                       <div className="flex items-center">
@@ -186,19 +234,88 @@ const AppointmentBooking = () => {
           <div>
             <h2 className="text-2xl font-bold text-white mb-6">Select Date</h2>
             <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg">
-              <input
-                type="date"
-                min={getMinDate()}
-                value={selectedDate}
-                onChange={(e) => {
-                  setSelectedDate(e.target.value)
-                  setValue('date', e.target.value)
-                  setSelectedTime('')
-                  setAvailableSlots([])
-                }}
-                className="w-full p-4 bg-primary-700 border border-primary-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-                {...register('date', { required: 'Please select a date' })}
-              />
+              <div className="space-y-4">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Choose your preferred appointment date
+                </label>
+                
+                {/* Date Input with better styling */}
+                <div className="relative">
+                  <input
+                    type="date"
+                    min={getMinDate()}
+                    value={selectedDate}
+                    onChange={(e) => {
+                      console.log('📅 Date selected:', e.target.value);
+                      setSelectedDate(e.target.value)
+                      setValue('date', e.target.value)
+                      setSelectedTime('')
+                      setAvailableSlots([])
+                    }}
+                    className="w-full p-4 bg-primary-900 border-2 border-primary-600 rounded-lg text-white text-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all duration-200 cursor-pointer hover:border-accent-400"
+                    style={{
+                      colorScheme: 'dark',
+                      fontSize: '16px'
+                    }}
+                    {...register('date', { required: 'Please select a date' })}
+                  />
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <svg className="w-5 h-5 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Quick date selection buttons */}
+                <div className="flex flex-wrap gap-2 mt-4">
+                  <p className="text-sm text-gray-400 w-full mb-2">Quick select:</p>
+                  {[0, 1, 2, 3, 4, 5, 6].map((daysFromToday, index) => {
+                    const date = new Date();
+                    date.setDate(date.getDate() + daysFromToday + 1); // +1 because appointments start from tomorrow
+                    const dateString = date.toISOString().split('T')[0];
+                    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                    const dayNumber = date.getDate();
+                    
+                    return (
+                      <button
+                        key={`quick-date-${index}`}
+                        type="button"
+                        onClick={() => {
+                          console.log('📅 Quick date selected:', dateString);
+                          setSelectedDate(dateString);
+                          setValue('date', dateString);
+                          setSelectedTime('');
+                          setAvailableSlots([]);
+                        }}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                          selectedDate === dateString
+                            ? 'bg-accent-500 text-white shadow-lg'
+                            : 'bg-primary-600 text-gray-300 hover:bg-primary-500 hover:text-white'
+                        }`}
+                      >
+                        <div className="text-center">
+                          <div className="text-xs">{dayName}</div>
+                          <div className="font-bold">{dayNumber}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {selectedDate && (
+                  <div className="mt-4 p-3 bg-primary-600 rounded-lg">
+                    <p className="text-sm text-accent-400">
+                      ✅ Selected: {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                    </p>
+                  </div>
+                )}
+              </div>
+              
               {errors.date && (
                 <p className="mt-2 text-sm text-red-400">{errors.date.message}</p>
               )}
@@ -212,9 +329,9 @@ const AppointmentBooking = () => {
             <h2 className="text-2xl font-bold text-white mb-6">Select Time</h2>
             <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg">
               <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                {availableSlots.map((slot) => (
+                {availableSlots.map((slot, index) => (
                   <button
-                    key={slot}
+                    key={index}
                     type="button"
                     onClick={() => {
                       setSelectedTime(slot)
@@ -281,7 +398,7 @@ const AppointmentBooking = () => {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-300">Doctor:</span>
-                      <span className="text-white font-medium">{selectedDoctor?.name}</span>
+                      <span className="text-white font-medium">{selectedDoctor?.firstName} {selectedDoctor?.lastName}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-300">Specialization:</span>

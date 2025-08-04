@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../../contexts/AuthContext'
 import { Calendar, FileText, Pill, User, Clock, AlertCircle, Plus } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
+import { appointmentsAPI, patientsAPI } from '../../services/api'
+import { toast } from 'react-hot-toast'
 
 const PatientDashboard = () => {
   const { user } = useAuth()
@@ -11,22 +13,82 @@ const PatientDashboard = () => {
     recentReports: 0,
     nextAppointment: null
   })
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Mock data - in real app, this would come from API
+  // Fetch real patient data from API
   useEffect(() => {
-    // Simulate API call
-    setStats({
-      upcomingAppointments: 2,
-      activePrescriptions: 3,
-      recentReports: 1,
-      nextAppointment: {
-        date: '2025-08-05',
-        time: '10:30 AM',
-        doctor: 'Dr. Sarah Doctor',
-        type: 'General Checkup'
+    const fetchPatientData = async () => {
+      try {
+        setIsLoading(true)
+        
+        if (!user?._id) {
+          console.log('No user ID available')
+          setIsLoading(false)
+          return
+        }
+
+        // Fetch patient appointments to get stats and next appointment
+        const appointmentsResponse = await appointmentsAPI.getPatientAppointments(user._id)
+        
+        if (appointmentsResponse.data.status === 'success') {
+          const appointments = appointmentsResponse.data.data.appointments || []
+          
+          // Calculate stats from appointments
+          const now = new Date()
+          const upcomingAppointments = appointments.filter(apt => 
+            new Date(apt.appointmentDate) >= now && apt.status !== 'cancelled'
+          )
+          
+          // Find next upcoming appointment
+          const nextAppointment = upcomingAppointments
+            .sort((a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate))[0]
+          
+          // Try to fetch patient stats if available
+          let patientStats = {
+            activePrescriptions: 0,
+            recentReports: 0
+          }
+          
+          try {
+            const statsResponse = await patientsAPI.getPatientStats()
+            if (statsResponse.data.status === 'success') {
+              patientStats = statsResponse.data.data
+            }
+          } catch (statsError) {
+            console.log('Patient stats not available, using defaults')
+          }
+          
+          setStats({
+            upcomingAppointments: upcomingAppointments.length,
+            activePrescriptions: patientStats.activePrescriptions || 0,
+            recentReports: patientStats.recentReports || 0,
+            nextAppointment: nextAppointment ? {
+              date: new Date(nextAppointment.appointmentDate).toISOString().split('T')[0],
+              time: nextAppointment.appointmentTime || 'Not specified',
+              doctor: `${nextAppointment.doctor?.firstName || 'Unknown'} ${nextAppointment.doctor?.lastName || 'Doctor'}`,
+              type: nextAppointment.reason || 'General Consultation'
+            } : null
+          })
+          
+          console.log('Loaded patient dashboard data:', {
+            appointments: appointments.length,
+            upcoming: upcomingAppointments.length,
+            nextAppointment: nextAppointment ? nextAppointment.doctor : 'None'
+          })
+        } else {
+          console.error('Failed to fetch appointments:', appointmentsResponse.data.message)
+          toast.error('Failed to load dashboard data')
+        }
+      } catch (error) {
+        console.error('Error fetching patient data:', error)
+        toast.error('Failed to load dashboard data')
+      } finally {
+        setIsLoading(false)
       }
-    })
-  }, [])
+    }
+
+    fetchPatientData()
+  }, [user?._id])
 
   const quickActions = [
     {

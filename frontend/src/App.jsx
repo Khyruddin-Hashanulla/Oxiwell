@@ -31,6 +31,10 @@ import AppointmentBooking from './pages/patient/AppointmentBooking'
 import Appointments from './pages/patient/Appointments'
 import Prescriptions from './pages/patient/Prescriptions'
 
+// Doctor pages
+import DoctorAppointments from './pages/doctor/DoctorAppointments'
+import DoctorPatients from './pages/doctor/DoctorPatients'
+
 function App() {
   const { isLoading } = useAuth()
 
@@ -79,6 +83,8 @@ function App() {
             {/* Doctor Routes */}
             <Route path="/doctor" element={<Navigate to="/doctor/dashboard" replace />} />
             <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
+            <Route path="/doctor/appointments" element={<DoctorAppointments />} />
+            <Route path="/doctor/patients" element={<DoctorPatients />} />
             
             {/* Admin Routes */}
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />

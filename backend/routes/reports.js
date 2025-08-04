@@ -1,5 +1,6 @@
 const express = require('express');
 const { body } = require('express-validator');
+const multer = require('multer');
 const {
   getReports,
   getReport,
@@ -10,135 +11,186 @@ const {
   addComment,
   markAsCritical
 } = require('../controllers/reportController');
-const { protect, authorize, authorizePatientAccess } = require('../middleware/auth');
-const { upload } = require('../config/cloudinary');
+const { protect } = require('../middleware/auth');
+const {
+  requirePermission,
+  requirePatientAccess,
+  requireDoctorAccess,
+  requireAdmin,
+  requireDoctor,
+  requirePatient,
+  requireVerified,
+  requireActive,
+  auditLog
+} = require('../middleware/rbac');
 
 const router = express.Router();
+
+// Configure multer for file uploads
+const upload = multer({
+  dest: 'uploads/reports/',
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Allow only specific file types
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only PDF, JPEG, PNG files are allowed.'), false);
+    }
+  }
+});
 
 // Validation rules
 const uploadReportValidation = [
   body('title')
     .trim()
-    .isLength({ min: 5, max: 200 })
-    .withMessage('Title must be between 5 and 200 characters'),
+    .isLength({ min: 3, max: 200 })
+    .withMessage('Report title must be between 3 and 200 characters'),
+  body('reportType')
+    .isIn(['lab-test', 'x-ray', 'mri', 'ct-scan', 'ultrasound', 'blood-test', 'urine-test', 'ecg', 'other'])
+    .withMessage('Invalid report type'),
   body('description')
     .optional()
     .trim()
     .isLength({ max: 1000 })
-    .withMessage('Description cannot exceed 1000 characters'),
-  body('reportType')
-    .isIn(['blood-test', 'urine-test', 'x-ray', 'mri', 'ct-scan', 'ultrasound', 'ecg', 'echo', 'biopsy', 'pathology', 'other'])
-    .withMessage('Invalid report type'),
-  body('category')
-    .optional()
-    .isIn(['diagnostic', 'therapeutic', 'preventive', 'follow-up'])
-    .withMessage('Invalid category'),
+    .withMessage('Description must not exceed 1000 characters'),
   body('testDate')
+    .optional()
     .isISO8601()
     .withMessage('Valid test date is required'),
   body('labName')
     .optional()
     .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Lab name must be between 2 and 100 characters'),
-  body('doctorName')
+    .isLength({ max: 200 })
+    .withMessage('Lab name must not exceed 200 characters'),
+  body('doctorNotes')
     .optional()
     .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Doctor name must be between 2 and 100 characters'),
-  body('referringDoctor')
+    .isLength({ max: 2000 })
+    .withMessage('Doctor notes must not exceed 2000 characters'),
+  body('isPrivate')
     .optional()
-    .isMongoId()
-    .withMessage('Valid referring doctor ID is required'),
-  body('patient')
-    .optional()
-    .isMongoId()
-    .withMessage('Valid patient ID is required')
+    .isBoolean()
+    .withMessage('isPrivate must be a boolean value')
 ];
 
 const updateReportValidation = [
   body('title')
     .optional()
     .trim()
-    .isLength({ min: 5, max: 200 })
-    .withMessage('Title must be between 5 and 200 characters'),
+    .isLength({ min: 3, max: 200 })
+    .withMessage('Report title must be between 3 and 200 characters'),
+  body('reportType')
+    .optional()
+    .isIn(['lab-test', 'x-ray', 'mri', 'ct-scan', 'ultrasound', 'blood-test', 'urine-test', 'ecg', 'other'])
+    .withMessage('Invalid report type'),
   body('description')
     .optional()
     .trim()
     .isLength({ max: 1000 })
-    .withMessage('Description cannot exceed 1000 characters'),
-  body('reportType')
-    .optional()
-    .isIn(['blood-test', 'urine-test', 'x-ray', 'mri', 'ct-scan', 'ultrasound', 'ecg', 'echo', 'biopsy', 'pathology', 'other'])
-    .withMessage('Invalid report type'),
-  body('category')
-    .optional()
-    .isIn(['diagnostic', 'therapeutic', 'preventive', 'follow-up'])
-    .withMessage('Invalid category'),
-  body('testDate')
-    .optional()
-    .isISO8601()
-    .withMessage('Valid test date is required'),
-  body('labName')
-    .optional()
-    .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Lab name must be between 2 and 100 characters'),
-  body('doctorName')
-    .optional()
-    .trim()
-    .isLength({ min: 2, max: 100 })
-    .withMessage('Doctor name must be between 2 and 100 characters'),
+    .withMessage('Description must not exceed 1000 characters'),
   body('status')
     .optional()
     .isIn(['pending', 'reviewed', 'archived'])
-    .withMessage('Invalid status'),
-  body('reviewNotes')
+    .withMessage('Invalid report status'),
+  body('doctorNotes')
     .optional()
     .trim()
-    .isLength({ max: 500 })
-    .withMessage('Review notes cannot exceed 500 characters')
-];
-
-const shareReportValidation = [
-  body('doctorId')
-    .isMongoId()
-    .withMessage('Valid doctor ID is required'),
-  body('accessLevel')
+    .isLength({ max: 2000 })
+    .withMessage('Doctor notes must not exceed 2000 characters'),
+  body('isPrivate')
     .optional()
-    .isIn(['view', 'comment', 'edit'])
-    .withMessage('Invalid access level')
+    .isBoolean()
+    .withMessage('isPrivate must be a boolean value')
 ];
 
-const commentValidation = [
-  body('content')
-    .trim()
-    .isLength({ min: 5, max: 500 })
-    .withMessage('Comment must be between 5 and 500 characters')
-];
+// Apply authentication and active status to all routes
+router.use(protect, requireActive);
 
-const criticalValidation = [
-  body('notes')
-    .trim()
-    .isLength({ min: 10, max: 500 })
-    .withMessage('Critical notes must be between 10 and 500 characters')
-];
+// GET /api/reports - Get all reports (with role-based filtering)
+// Patient: own reports only, Doctor: assigned patients only, Admin: all
+router.get('/', 
+  requireVerified,
+  requireActive,
+  auditLog('VIEW_REPORTS'),
+  getReports
+);
 
-// Protected routes
-router.use(protect);
+// GET /api/reports/patient/:patientId - Get reports for a specific patient
+// Patient: own reports only, Doctor: assigned patients only, Admin: all
+router.get('/patient/:patientId', 
+  requirePatientAccess,
+  auditLog('VIEW_PATIENT_REPORTS'),
+  getReports
+);
 
-// Admin routes
-router.get('/', authorize('admin'), getReports);
+// GET /api/reports/doctor/:doctorId - Get reports reviewed by a specific doctor
+// Doctor: own reviewed reports only, Admin: all
+router.get('/doctor/:doctorId', 
+  requireDoctorAccess,
+  auditLog('VIEW_DOCTOR_REPORTS'),
+  getReports
+);
 
-// General report routes
-router.post('/', upload.array('files', 5), uploadReportValidation, uploadReport);
-router.get('/:id', getReport);
-router.put('/:id', updateReportValidation, updateReport);
-router.delete('/:id', deleteReport);
+// POST /api/reports/upload - Upload new report
+// Patient: upload for themselves, Doctor: upload for assigned patients, Admin: upload for any patient
+router.post('/upload', 
+  upload.single('reportFile'),
+  uploadReportValidation,
+  requireVerified,
+  auditLog('UPLOAD_REPORT'),
+  uploadReport
+);
 
-// Report sharing and collaboration
-router.post('/:id/share', shareReportValidation, shareReport);
-router.post('/:id/comments', commentValidation, addComment);
-router.put('/:id/critical', authorize(['doctor', 'admin']), criticalValidation, markAsCritical);
+// GET /api/reports/:id - Get specific report
+// Patient: own reports, Doctor: shared reports, Admin: all
+router.get('/:id', 
+  requireReportAccess,
+  auditLog('VIEW_REPORT'),
+  getReport
+);
+
+// PUT /api/reports/:id - Update report
+// Patient: own reports (limited fields), Doctor: assigned patients' reports, Admin: all
+router.put('/:id', 
+  requireReportAccess,
+  updateReportValidation,
+  auditLog('UPDATE_REPORT'),
+  updateReport
+);
+
+// DELETE /api/reports/:id - Delete report
+// Patient: own reports, Doctor: assigned patients' reports, Admin: all
+router.delete('/:id', 
+  requireReportAccess,
+  auditLog('DELETE_REPORT'),
+  deleteReport
+);
+
+// Admin-only routes
+router.use('/admin', requireAdmin);
+
+// GET /api/reports/admin/all - Get all reports with full details (Admin only)
+router.get('/admin/all', 
+  auditLog('VIEW_ALL_REPORTS_ADMIN'),
+  getReports
+);
+
+// Middleware to check report access
+function requireReportAccess(req, res, next) {
+  const reportId = req.params.id;
+  
+  // Admin can access all reports
+  if (req.user.role === 'admin') {
+    return next();
+  }
+  
+  // For other roles, we need to check the report details
+  // This will be handled in the controller with proper database queries
+  next();
+}
 
 module.exports = router;

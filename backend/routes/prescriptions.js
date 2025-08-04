@@ -12,6 +12,18 @@ const {
   addMedication
 } = require('../controllers/prescriptionController');
 const { protect, authorize, authorizePatientAccess, authorizeDoctorAccess } = require('../middleware/auth');
+const {
+  requirePermission,
+  requirePatientAccess,
+  requireDoctorAccess,
+  requireAppointmentAccess,
+  requireAdmin,
+  requireDoctor,
+  requirePatient,
+  requireVerified,
+  requireActive,
+  auditLog
+} = require('../middleware/rbac');
 
 const router = express.Router();
 
@@ -21,77 +33,54 @@ const createPrescriptionValidation = [
     .isMongoId()
     .withMessage('Valid patient ID is required'),
   body('appointment')
+    .optional()
     .isMongoId()
     .withMessage('Valid appointment ID is required'),
-  body('diagnosis')
-    .trim()
-    .isLength({ min: 10, max: 500 })
-    .withMessage('Diagnosis must be between 10 and 500 characters'),
   body('medications')
     .isArray({ min: 1 })
     .withMessage('At least one medication is required'),
   body('medications.*.name')
     .trim()
-    .isLength({ min: 2 })
-    .withMessage('Medication name is required'),
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Medication name must be between 2 and 100 characters'),
   body('medications.*.dosage')
     .trim()
-    .isLength({ min: 2 })
-    .withMessage('Medication dosage is required'),
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Dosage is required and must not exceed 50 characters'),
   body('medications.*.frequency')
-    .isIn(['once-daily', 'twice-daily', 'thrice-daily', 'four-times-daily', 'as-needed', 'custom'])
-    .withMessage('Invalid medication frequency'),
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Frequency is required and must not exceed 100 characters'),
   body('medications.*.duration')
     .trim()
-    .isLength({ min: 2 })
-    .withMessage('Medication duration is required'),
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Duration is required and must not exceed 50 characters'),
   body('medications.*.instructions')
     .optional()
     .trim()
-    .isLength({ max: 200 })
-    .withMessage('Medication instructions cannot exceed 200 characters'),
-  body('generalInstructions')
+    .isLength({ max: 500 })
+    .withMessage('Instructions must not exceed 500 characters'),
+  body('diagnosis')
     .optional()
     .trim()
     .isLength({ max: 1000 })
-    .withMessage('General instructions cannot exceed 1000 characters'),
-  body('dietaryRestrictions')
+    .withMessage('Diagnosis must not exceed 1000 characters'),
+  body('notes')
     .optional()
-    .isArray()
-    .withMessage('Dietary restrictions must be an array'),
-  body('precautions')
-    .optional()
-    .isArray()
-    .withMessage('Precautions must be an array'),
+    .trim()
+    .isLength({ max: 2000 })
+    .withMessage('Notes must not exceed 2000 characters'),
   body('followUpDate')
     .optional()
     .isISO8601()
     .withMessage('Valid follow-up date is required'),
-  body('recommendedTests')
-    .optional()
-    .isArray()
-    .withMessage('Recommended tests must be an array'),
-  body('recommendedTests.*.testName')
-    .optional()
-    .trim()
-    .isLength({ min: 2 })
-    .withMessage('Test name is required'),
-  body('recommendedTests.*.urgency')
-    .optional()
-    .isIn(['urgent', 'routine', 'optional'])
-    .withMessage('Invalid test urgency'),
   body('validUntil')
     .optional()
     .isISO8601()
-    .withMessage('Valid expiry date is required')
+    .withMessage('Valid expiration date is required')
 ];
 
 const updatePrescriptionValidation = [
-  body('diagnosis')
-    .optional()
-    .trim()
-    .isLength({ min: 10, max: 500 })
-    .withMessage('Diagnosis must be between 10 and 500 characters'),
   body('medications')
     .optional()
     .isArray({ min: 1 })
@@ -99,92 +88,123 @@ const updatePrescriptionValidation = [
   body('medications.*.name')
     .optional()
     .trim()
-    .isLength({ min: 2 })
-    .withMessage('Medication name is required'),
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Medication name must be between 2 and 100 characters'),
   body('medications.*.dosage')
     .optional()
     .trim()
-    .isLength({ min: 2 })
-    .withMessage('Medication dosage is required'),
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Dosage must not exceed 50 characters'),
   body('medications.*.frequency')
     .optional()
-    .isIn(['once-daily', 'twice-daily', 'thrice-daily', 'four-times-daily', 'as-needed', 'custom'])
-    .withMessage('Invalid medication frequency'),
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Frequency must not exceed 100 characters'),
   body('medications.*.duration')
     .optional()
     .trim()
-    .isLength({ min: 2 })
-    .withMessage('Medication duration is required'),
-  body('generalInstructions')
-    .optional()
-    .trim()
-    .isLength({ max: 1000 })
-    .withMessage('General instructions cannot exceed 1000 characters'),
-  body('pharmacyNotes')
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Duration must not exceed 50 characters'),
+  body('medications.*.instructions')
     .optional()
     .trim()
     .isLength({ max: 500 })
-    .withMessage('Pharmacy notes cannot exceed 500 characters')
-];
-
-const addMedicationValidation = [
-  body('name')
-    .trim()
-    .isLength({ min: 2 })
-    .withMessage('Medication name is required'),
-  body('dosage')
-    .trim()
-    .isLength({ min: 2 })
-    .withMessage('Medication dosage is required'),
-  body('frequency')
-    .isIn(['once-daily', 'twice-daily', 'thrice-daily', 'four-times-daily', 'as-needed', 'custom'])
-    .withMessage('Invalid medication frequency'),
-  body('duration')
-    .trim()
-    .isLength({ min: 2 })
-    .withMessage('Medication duration is required'),
-  body('instructions')
+    .withMessage('Instructions must not exceed 500 characters'),
+  body('status')
+    .optional()
+    .isIn(['active', 'completed', 'cancelled', 'expired'])
+    .withMessage('Invalid prescription status'),
+  body('notes')
     .optional()
     .trim()
-    .isLength({ max: 200 })
-    .withMessage('Medication instructions cannot exceed 200 characters')
+    .isLength({ max: 2000 })
+    .withMessage('Notes must not exceed 2000 characters'),
+  body('followUpDate')
+    .optional()
+    .isISO8601()
+    .withMessage('Valid follow-up date is required'),
+  body('validUntil')
+    .optional()
+    .isISO8601()
+    .withMessage('Valid expiration date is required')
 ];
 
-const dispensePrescriptionValidation = [
-  body('pharmacyName')
-    .trim()
-    .isLength({ min: 2 })
-    .withMessage('Pharmacy name is required'),
-  body('pharmacistName')
-    .trim()
-    .isLength({ min: 2 })
-    .withMessage('Pharmacist name is required'),
-  body('licenseNumber')
-    .trim()
-    .isLength({ min: 5 })
-    .withMessage('Valid license number is required')
-];
+// Apply authentication and active status to all routes
+router.use(protect, requireActive);
+
+// GET /api/prescriptions - Get prescriptions (role-based filtering)
+// Admin: all prescriptions, Doctor: created prescriptions, Patient: own prescriptions
+router.get('/', getPrescriptions);
+
+// GET /api/prescriptions/patient/:patientId - Get prescriptions for a specific patient
+// Patient: own prescriptions only, Doctor: assigned patients only, Admin: all
+router.get('/patient/:patientId', 
+  requirePatientAccess,
+  auditLog('VIEW_PATIENT_PRESCRIPTIONS'),
+  getPrescriptionsByPatient
+);
+
+// GET /api/prescriptions/doctor/:doctorId - Get prescriptions created by a specific doctor
+// Doctor: own prescriptions only, Admin: all
+router.get('/doctor/:doctorId', 
+  requireDoctorAccess,
+  auditLog('VIEW_DOCTOR_PRESCRIPTIONS'),
+  getPrescriptionsByDoctor
+);
+
+// POST /api/prescriptions - Create new prescription (Doctor only)
+router.post('/', 
+  requireDoctor,
+  requireVerified,
+  createPrescriptionValidation,
+  auditLog('CREATE_PRESCRIPTION'),
+  createPrescription
+);
+
+// GET /api/prescriptions/:id - Get specific prescription
+// Patient: own prescriptions, Doctor: created prescriptions, Admin: all
+router.get('/:id', 
+  requirePrescriptionAccess,
+  getPrescription
+);
+
+// PUT /api/prescriptions/:id - Update prescription (Doctor who created it or Admin)
+router.put('/:id', 
+  requirePrescriptionAccess,
+  updatePrescriptionValidation,
+  auditLog('UPDATE_PRESCRIPTION'),
+  updatePrescription
+);
+
+// PUT /api/prescriptions/:id/dispense - Dispense prescription (Admin only)
+router.put('/:id/dispense', 
+  requireAdmin,
+  auditLog('DISPENSE_PRESCRIPTION'),
+  dispensePrescription
+);
+
+// POST /api/prescriptions/:id/medications - Add medication to prescription (Doctor only)
+router.post('/:id/medications', 
+  requireDoctor,
+  auditLog('ADD_MEDICATION'),
+  addMedication
+);
+
+// Middleware to check prescription access
+function requirePrescriptionAccess(req, res, next) {
+  const prescriptionId = req.params.id;
+  
+  // Admin can access all prescriptions
+  if (req.user.role === 'admin') {
+    return next();
+  }
+  
+  // For other roles, we need to check the prescription details
+  // This will be handled in the controller with proper database queries
+  next();
+}
 
 // Public routes
 router.get('/verify/:verificationCode', verifyPrescription);
-
-// Protected routes
-router.use(protect);
-
-// Admin routes
-router.get('/', authorize('admin'), getPrescriptions);
-
-// General prescription routes
-router.post('/', authorize('doctor'), createPrescriptionValidation, createPrescription);
-router.get('/:id', getPrescription);
-router.put('/:id', authorize('doctor'), updatePrescriptionValidation, updatePrescription);
-router.put('/:id/dispense', authorize('admin'), dispensePrescriptionValidation, dispensePrescription);
-router.post('/:id/medications', authorize('doctor'), addMedicationValidation, addMedication);
-
-// Patient-specific routes
-router.get('/patient/:patientId', authorizePatientAccess, getPrescriptionsByPatient);
-
-// Doctor-specific routes
-router.get('/doctor/:doctorId', authorizeDoctorAccess, getPrescriptionsByDoctor);
 
 module.exports = router;

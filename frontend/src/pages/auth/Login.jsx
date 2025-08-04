@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { motion } from 'framer-motion'
-import { Eye, EyeOff, Mail, Lock, LogIn } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, LogIn, Heart, Shield, Users } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import toast from 'react-hot-toast'
 import LoadingSpinner from '../../components/ui/LoadingSpinner'
@@ -50,189 +50,223 @@ const Login = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="text-center">
-        <motion.h2 
-          className="text-3xl font-bold text-gray-900"
+    <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Header with Logo */}
+        <motion.div 
+          className="text-center mb-8"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.6 }}
         >
-          Welcome Back
-        </motion.h2>
-        <motion.p 
-          className="mt-2 text-gray-600"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          Sign in to access your healthcare dashboard
-        </motion.p>
-      </div>
-
-      {/* Error message */}
-      {error && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-error-50 border border-error-200 text-error-700 px-4 py-3 rounded-lg"
-        >
-          {error}
+          <div className="flex items-center justify-center mb-6">
+            <div className="w-16 h-16 bg-gradient-accent rounded-2xl flex items-center justify-center shadow-xl">
+              <Heart className="w-8 h-8 text-white" />
+            </div>
+          </div>
+          <h1 className="text-4xl font-bold text-white mb-2">
+            Welcome Back
+          </h1>
+          <p className="text-gray-300 text-lg">
+            Sign in to access your healthcare dashboard
+          </p>
         </motion.div>
-      )}
 
-      {/* Login form */}
-      <motion.form
-        onSubmit={handleSubmit(onSubmit)}
-        className="space-y-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        {/* Email field */}
-        <div>
-          <label htmlFor="email" className="label">
-            Email Address
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Mail className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              className={`input pl-10 ${errors.email ? 'input-error' : ''}`}
-              placeholder="Enter your email"
-              {...register('email', {
-                required: 'Email is required',
-                pattern: {
-                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Invalid email address'
-                }
-              })}
-            />
-          </div>
-          {errors.email && (
-            <p className="mt-1 text-sm text-error-600">{errors.email.message}</p>
-          )}
-        </div>
-
-        {/* Password field */}
-        <div>
-          <label htmlFor="password" className="label">
-            Password
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Lock className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              autoComplete="current-password"
-              className={`input pl-10 pr-10 ${errors.password ? 'input-error' : ''}`}
-              placeholder="Enter your password"
-              {...register('password', {
-                required: 'Password is required',
-                minLength: {
-                  value: 6,
-                  message: 'Password must be at least 6 characters'
-                }
-              })}
-            />
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-              ) : (
-                <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-              )}
-            </button>
-          </div>
-          {errors.password && (
-            <p className="mt-1 text-sm text-error-600">{errors.password.message}</p>
-          )}
-        </div>
-
-        {/* Remember me and forgot password */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <input
-              id="remember-me"
-              type="checkbox"
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-              {...register('rememberMe')}
-            />
-            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-              Remember me
-            </label>
-          </div>
-
-          <Link
-            to="/forgot-password"
-            className="text-sm text-primary-600 hover:text-primary-500 font-medium"
-          >
-            Forgot your password?
-          </Link>
-        </div>
-
-        {/* Submit button */}
-        <button
-          type="submit"
-          disabled={isSubmitting || isLoading}
-          className="btn-primary w-full py-3 text-base font-medium"
+        {/* Main Form Container */}
+        <motion.div
+          className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
         >
-          {isSubmitting || isLoading ? (
-            <div className="flex items-center justify-center space-x-2">
-              <LoadingSpinner size="sm" color="white" />
-              <span>Signing in...</span>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center space-x-2">
-              <LogIn className="w-5 h-5" />
-              <span>Sign In</span>
-            </div>
+          {/* Error message */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-red-500/20 border border-red-400/30 text-red-100 px-4 py-3 rounded-xl mb-6 backdrop-blur-sm"
+            >
+              <div className="flex items-center space-x-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <span>{error}</span>
+              </div>
+            </motion.div>
           )}
-        </button>
-      </motion.form>
 
-      {/* Sign up link */}
-      <motion.div
-        className="text-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.4 }}
-      >
-        <p className="text-sm text-gray-600">
-          Don't have an account?{' '}
-          <Link
-            to="/register"
-            className="font-medium text-primary-600 hover:text-primary-500"
-          >
-            Sign up here
-          </Link>
-        </p>
-      </motion.div>
+          {/* Login Form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Email Field */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-200 mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  className={`w-full pl-12 pr-4 py-4 bg-white/10 border ${
+                    errors.email ? 'border-red-400' : 'border-white/20'
+                  } rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent backdrop-blur-sm transition-all duration-200`}
+                  placeholder="Enter your email address"
+                  {...register('email', {
+                    required: 'Email is required',
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: 'Invalid email address'
+                    }
+                  })}
+                />
+              </div>
+              {errors.email && (
+                <motion.p 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-sm text-red-300 flex items-center space-x-1"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <span>{errors.email.message}</span>
+                </motion.p>
+              )}
+            </div>
 
-      {/* Demo credentials */}
-      <motion.div
-        className="bg-gray-50 rounded-lg p-4 border border-gray-200"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
-      >
-        <h4 className="text-sm font-medium text-gray-900 mb-2">Demo Credentials:</h4>
-        <div className="text-xs text-gray-600 space-y-1">
-          <p><strong>Patient:</strong> patient@oxiwell.com / password123</p>
-          <p><strong>Doctor:</strong> doctor@oxiwell.com / password123</p>
-          <p><strong>Admin:</strong> admin@oxiwell.com / password123</p>
-        </div>
-      </motion.div>
+            {/* Password Field */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-200 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  className={`w-full pl-12 pr-12 py-4 bg-white/10 border ${
+                    errors.password ? 'border-red-400' : 'border-white/20'
+                  } rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent backdrop-blur-sm transition-all duration-200`}
+                  placeholder="Enter your password"
+                  {...register('password', {
+                    required: 'Password is required',
+                    minLength: {
+                      value: 6,
+                      message: 'Password must be at least 6 characters'
+                    }
+                  })}
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-300 transition-colors"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+              {errors.password && (
+                <motion.p 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 text-sm text-red-300 flex items-center space-x-1"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <span>{errors.password.message}</span>
+                </motion.p>
+              )}
+            </div>
+
+            {/* Remember me and forgot password */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  type="checkbox"
+                  className="h-4 w-4 text-accent-600 focus:ring-accent-500 border-gray-300 rounded bg-white/10 backdrop-blur-sm"
+                  {...register('rememberMe')}
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-300">
+                  Remember me
+                </label>
+              </div>
+
+              <Link
+                to="/forgot-password"
+                className="text-sm text-accent-300 hover:text-accent-200 font-medium transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
+            {/* Submit Button */}
+            <motion.button
+              type="submit"
+              disabled={isSubmitting || isLoading}
+              className="w-full bg-gradient-accent hover:shadow-xl text-white py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {isSubmitting || isLoading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <LoadingSpinner size="sm" color="white" />
+                  <span>Signing in...</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center space-x-2">
+                  <LogIn className="w-5 h-5" />
+                  <span>Sign In to Dashboard</span>
+                </div>
+              )}
+            </motion.button>
+          </form>
+
+          {/* Sign up link */}
+          <div className="mt-8 text-center">
+            <p className="text-gray-300">
+              Don't have an account?{' '}
+              <Link
+                to="/register"
+                className="font-semibold text-accent-300 hover:text-accent-200 transition-colors"
+              >
+                Create Account
+              </Link>
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Trust Indicators */}
+        <motion.div
+          className="mt-8 grid grid-cols-3 gap-4 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+            <Shield className="w-6 h-6 text-accent-400 mx-auto mb-2" />
+            <p className="text-xs text-gray-300 font-medium">Secure Login</p>
+          </div>
+          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+            <Users className="w-6 h-6 text-accent-400 mx-auto mb-2" />
+            <p className="text-xs text-gray-300 font-medium">50K+ Users</p>
+          </div>
+          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+            <Heart className="w-6 h-6 text-accent-400 mx-auto mb-2" />
+            <p className="text-xs text-gray-300 font-medium">Trusted Care</p>
+          </div>
+        </motion.div>
+      </div>
     </div>
   )
 }

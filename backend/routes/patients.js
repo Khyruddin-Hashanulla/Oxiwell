@@ -76,6 +76,7 @@ const updateProfileValidation = [
 router.use(protect);
 
 // Patient-only routes
+router.get('/stats', authorize('patient'), getPatientStats); // Alias for frontend compatibility
 router.get('/dashboard/stats', authorize('patient'), getPatientStats);
 router.put('/profile', authorize('patient'), updateProfileValidation, updatePatientProfile);
 router.get('/appointments', authorize('patient'), getPatientAppointments);

@@ -140,6 +140,9 @@ appointmentSchema.virtual('durationInHours').get(function() {
 
 // Virtual for appointment date and time combined
 appointmentSchema.virtual('appointmentDateTime').get(function() {
+  if (!this.appointmentTime) {
+    return new Date(this.appointmentDate);
+  }
   const date = new Date(this.appointmentDate);
   const [hours, minutes] = this.appointmentTime.split(':');
   date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
