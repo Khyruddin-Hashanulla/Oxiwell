@@ -30,10 +30,15 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AppointmentBooking from './pages/patient/AppointmentBooking'
 import Appointments from './pages/patient/Appointments'
 import Prescriptions from './pages/patient/Prescriptions'
+import PatientProfile from './pages/patient/PatientProfile'
 
 // Doctor pages
 import DoctorAppointments from './pages/doctor/DoctorAppointments'
 import DoctorPatients from './pages/doctor/DoctorPatients'
+import DoctorProfile from './pages/doctor/DoctorProfile'
+
+// Admin pages
+import AdminProfile from './pages/admin/AdminProfile'
 
 function App() {
   const { isLoading } = useAuth()
@@ -79,16 +84,19 @@ function App() {
             <Route path="/patient/appointments" element={<Appointments />} />
             <Route path="/patient/appointments/book" element={<AppointmentBooking />} />
             <Route path="/patient/prescriptions" element={<Prescriptions />} />
+            <Route path="/patient/profile" element={<PatientProfile />} />
             
             {/* Doctor Routes */}
             <Route path="/doctor" element={<Navigate to="/doctor/dashboard" replace />} />
             <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
             <Route path="/doctor/appointments" element={<DoctorAppointments />} />
             <Route path="/doctor/patients" element={<DoctorPatients />} />
+            <Route path="/doctor/profile" element={<DoctorProfile />} />
             
             {/* Admin Routes */}
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/profile" element={<AdminProfile />} />
           </Route>
         </Route>
 

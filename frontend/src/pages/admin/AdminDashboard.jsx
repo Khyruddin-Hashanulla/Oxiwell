@@ -63,7 +63,7 @@ const AdminDashboard = () => {
         recentActivities: [
           { id: 1, type: 'user_registered', message: 'New patient registered: Sarah Wilson', time: '5 min ago' },
           { id: 2, type: 'appointment_booked', message: 'Appointment booked with Dr. Smith', time: '12 min ago' },
-          { id: 3, type: 'payment_received', message: 'Payment received: $150', time: '25 min ago' },
+          { id: 3, type: 'payment_received', message: 'Payment received: ₹150', time: '25 min ago' },
           { id: 4, type: 'doctor_joined', message: 'New doctor joined: Dr. Emily Johnson', time: '1 hour ago' }
         ]
       }))

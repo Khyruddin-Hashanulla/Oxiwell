@@ -406,7 +406,7 @@ const Appointments = () => {
                       </div>
                       <div className="flex items-center text-gray-300">
                         <span className="font-medium text-white">Fee:</span>
-                        <span className="ml-2">${appointment.fee}</span>
+                        <span className="ml-2">₹{appointment.fee}</span>
                       </div>
                     </div>
                   </div>

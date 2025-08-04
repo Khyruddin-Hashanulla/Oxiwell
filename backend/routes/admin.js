@@ -102,6 +102,20 @@ const reportGenerationValidation = [
 // Apply authentication, admin role, and active status to all routes
 router.use(protect, requireAdmin, requireActive, requireVerified);
 
+// Admin Profile Management
+// GET /api/admin/profile/:id - Get admin profile
+router.get('/profile/:id', 
+  auditLog('VIEW_ADMIN_PROFILE'),
+  getUser
+);
+
+// PUT /api/admin/profile - Update admin profile
+router.put('/profile', 
+  updateUserValidation,
+  auditLog('UPDATE_ADMIN_PROFILE'),
+  updateUserStatus
+);
+
 // Dashboard and Analytics
 // GET /api/admin/dashboard - Get admin dashboard statistics
 router.get('/dashboard', 

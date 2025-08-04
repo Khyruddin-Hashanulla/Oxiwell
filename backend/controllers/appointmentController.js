@@ -600,7 +600,7 @@ const getAvailableDoctors = asyncHandler(async (req, res, next) => {
     role: 'doctor',
     status: 'active',
     isVerified: true
-  }).select('firstName lastName specialization experience phone location');
+  }).select('firstName lastName specialization experience phone location consultationFee');
 
   res.status(200).json({
     status: 'success',

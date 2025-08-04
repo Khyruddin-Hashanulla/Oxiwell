@@ -169,10 +169,12 @@ export const doctorsAPI = {
   getPatients: (params) => api.get('/doctors/patients', { params }),
   getPatientHistory: (patientId) => api.get(`/doctors/patients/${patientId}/history`),
   getSchedule: (params) => api.get('/doctors/schedule', { params }),
+  getDoctor: (id) => api.get(`/doctors/${id}`),
 }
 
 // Patients API endpoints
 export const patientsAPI = {
+  getPatient: (id) => api.get(`/patients/${id}`),
   getPatientStats: () => api.get('/patients/stats'),
   updatePatientProfile: (data) => api.put('/patients/profile', data),
   getAppointments: (params) => api.get('/patients/appointments', { params }),
@@ -238,16 +240,26 @@ export const reportsAPI = {
 export const adminAPI = {
   getDashboardStats: () => api.get('/admin/dashboard'),
   getUsers: (params) => api.get('/admin/users', { params }),
-  getUser: (id) => api.get(`/admin/users/${id}`),
   updateUserStatus: (id, status) => api.put(`/admin/users/${id}/status`, { status }),
-  deleteUser: (id) => api.delete(`/admin/users/${id}`),
-  getActivityLogs: (params) => api.get('/admin/activity', { params }),
-  generateReports: (params) => api.get('/admin/reports', { params }),
   
   // Doctor approval endpoints
   getPendingDoctors: (params) => api.get('/admin/doctors/pending', { params }),
   approveDoctor: (id) => api.put(`/admin/doctors/${id}/approve`),
   rejectDoctor: (id, data) => api.put(`/admin/doctors/${id}/reject`, data),
+  
+  // Reports endpoints
+  generateReports: (params) => api.get('/admin/reports', { params }),
+  getReport: (id) => api.get(`/admin/reports/${id}`),
+  updateReport: (id, data) => api.put(`/admin/reports/${id}`, data),
+  deleteReport: (id) => api.delete(`/admin/reports/${id}`),
+  addComment: (id, data) => api.post(`/reports/${id}/comments`, data),
+  markAsCritical: (id, data) => api.put(`/reports/${id}/critical`, data)
+}
+
+// Admins API endpoints  
+export const adminsAPI = {
+  getAdmin: (id) => api.get(`/admin/profile/${id}`),
+  updateAdminProfile: (data) => api.put('/admin/profile', data)
 }
 
 // Export the main api instance

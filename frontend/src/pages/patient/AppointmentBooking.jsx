@@ -64,7 +64,8 @@ const AppointmentBooking = () => {
               experience: appointment.doctor.experience || 'N/A',
               rating: appointment.doctor.rating || 4.5,
               location: appointment.doctor.location || 'Main Building',
-              phone: appointment.doctor.phone || 'N/A'
+              phone: appointment.doctor.phone || 'N/A',
+              consultationFee: appointment.doctor.consultationFee || appointment.consultationFee || 0
             }
             setSelectedDoctor(doctorData)
             
@@ -94,7 +95,11 @@ const AppointmentBooking = () => {
         const response = await appointmentsAPI.getAvailableDoctors()
         
         if (response.data.status === 'success') {
-          setDoctors(response.data.data.doctors || [])
+          const doctorsData = response.data.data.doctors || []
+          console.log('🔍 Doctors data received:', doctorsData)
+          console.log('🔍 First doctor consultation fee:', doctorsData[0]?.consultationFee)
+          console.log('🔍 All doctor fees:', doctorsData.map(d => ({ name: `${d.firstName} ${d.lastName}`, fee: d.consultationFee })))
+          setDoctors(doctorsData)
         } else {
           console.error('Failed to fetch doctors:', response.data.message)
           toast.error('Failed to load doctors')
@@ -113,6 +118,7 @@ const AppointmentBooking = () => {
             rating: 4.8,
             location: 'Main Building, Room 201',
             phone: '+1 (555) 123-4567',
+            consultationFee: 1500,
             availableSlots: ['09:00', '10:30', '14:00', '15:30']
           },
           {
@@ -123,8 +129,21 @@ const AppointmentBooking = () => {
             experience: '12 years',
             rating: 4.9,
             location: 'Cardiology Wing, Room 305',
-            phone: '+1 (555) 987-6543',
-            availableSlots: ['08:30', '11:00', '13:30', '16:00']
+            phone: '+1 (555) 234-5678',
+            consultationFee: 2500,
+            availableSlots: ['08:00', '11:00', '13:30', '16:00']
+          },
+          {
+            id: '3',
+            firstName: 'Dr. Emily',
+            lastName: 'Davis',
+            specialization: 'Dermatology',
+            experience: '6 years',
+            rating: 4.7,
+            location: 'Dermatology Center, Room 102',
+            phone: '+1 (555) 345-6789',
+            consultationFee: 2000,
+            availableSlots: ['09:30', '12:00', '14:30', '17:00']
           }
         ])
       } finally {
@@ -156,16 +175,26 @@ const AppointmentBooking = () => {
 
     setIsLoading(true)
     try {
-      // Convert 12-hour time format to 24-hour format for backend
+      // Convert 12-hour format to 24-hour format for backend
       const convertTo24Hour = (time12h) => {
+        if (!time12h || !time12h.includes(' ')) {
+          // Already in 24-hour format or invalid
+          return time12h;
+        }
+        
         const [time, modifier] = time12h.split(' ');
         let [hours, minutes] = time.split(':');
-        if (hours === '12') {
-          hours = '00';
+        
+        if (modifier === 'AM') {
+          if (hours === '12') {
+            hours = '00';
+          }
+        } else if (modifier === 'PM') {
+          if (hours !== '12') {
+            hours = parseInt(hours, 10) + 12;
+          }
         }
-        if (modifier === 'PM') {
-          hours = parseInt(hours, 10) + 12;
-        }
+        
         return `${String(hours).padStart(2, '0')}:${minutes}`;
       };
 
@@ -173,7 +202,7 @@ const AppointmentBooking = () => {
       const appointmentData = {
         doctor: selectedDoctor._id || selectedDoctor.id,
         appointmentDate: selectedDate,
-        appointmentTime: selectedTime.includes(':') ? selectedTime : convertTo24Hour(selectedTime),
+        appointmentTime: convertTo24Hour(selectedTime),
         appointmentType: data.appointmentType || 'consultation',
         reason: data.reason || `Consultation appointment with ${selectedDoctor.firstName} ${selectedDoctor.lastName}`,
         symptoms: data.symptoms ? data.symptoms.split(',').map(s => s.trim()).filter(s => s) : [],
@@ -267,47 +296,45 @@ const AppointmentBooking = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {doctors.map((doctor) => (
               <div
-                key={doctor._id || doctor.id}
-                onClick={() => {
-                  setSelectedDoctor(doctor)
-                  setValue('doctorId', doctor.id)
-                  setSelectedTime('')
-                  setAvailableSlots([])
-                }}
+                key={doctor.id || doctor._id}
+                onClick={() => setSelectedDoctor(doctor)}
                 className={`bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border cursor-pointer transition-all duration-300 hover:shadow-xl ${
-                  selectedDoctor?._id === doctor._id || selectedDoctor?.id === doctor.id
-                    ? 'border-accent-500 shadow-lg ring-2 ring-accent-500 ring-opacity-50'
-                    : 'border-primary-600 hover:border-primary-500'
+                  selectedDoctor?.id === doctor.id ? 'border-accent-500 ring-2 ring-accent-500' : 'border-primary-600 hover:border-accent-400'
                 }`}
               >
-                <div className="flex items-start space-x-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center">
-                    <User className="w-8 h-8 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-white mb-1">{doctor.firstName} {doctor.lastName}</h3>
-                    <p className="text-gray-300 text-sm mb-2">{doctor.specialization}</p>
-                    <div className="flex items-center space-x-4 text-sm text-gray-300 mb-3">
-                      <div className="flex items-center">
-                        <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                        <span>{doctor.rating}</span>
-                      </div>
-                      <span>{doctor.experience}</span>
+                {console.log('🔍 Rendering doctor:', doctor.firstName, doctor.lastName, 'Fee:', doctor.consultationFee)}
+                <div className="flex justify-between items-start">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-16 h-16 bg-accent-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                      {doctor.firstName?.[0]}{doctor.lastName?.[0]}
                     </div>
-                    <div className="space-y-1 text-sm text-gray-300">
-                      <div className="flex items-center">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        {doctor.location}
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold text-white mb-1">{doctor.firstName} {doctor.lastName}</h3>
+                      <p className="text-gray-300 text-sm mb-2">{doctor.specialization}</p>
+                      <div className="flex items-center space-x-4 text-sm text-gray-300 mb-3">
+                        <div className="flex items-center">
+                          <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                          <span>{doctor.rating}</span>
+                        </div>
+                        <span>{doctor.experience}</span>
                       </div>
-                      <div className="flex items-center">
-                        <Phone className="w-4 h-4 mr-2" />
-                        {doctor.phone}
+                      <div className="space-y-1 text-sm text-gray-300">
+                        <div className="flex items-center">
+                          <MapPin className="w-4 h-4 mr-2" />
+                          {doctor.location || 'Location not specified'}
+                        </div>
+                        <div className="flex items-center">
+                          <Phone className="w-4 h-4 mr-2" />
+                          {doctor.phone}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-accent-400">${doctor.consultationFee}</p>
-                    <p className="text-xs text-gray-400">consultation</p>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-accent-400">
+                        ₹{doctor.consultationFee || doctor.fee || 1500}
+                      </p>
+                      <p className="text-xs text-gray-400">consultation</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -500,11 +527,11 @@ const AppointmentBooking = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-300">Location:</span>
-                      <span className="text-white">{selectedDoctor?.location}</span>
+                      <span className="text-white">{selectedDoctor?.location || 'Location not specified'}</span>
                     </div>
                     <div className="flex justify-between border-t border-primary-600 pt-2 mt-3">
                       <span className="text-gray-300 font-medium">Consultation Fee:</span>
-                      <span className="text-accent-400 font-bold text-lg">${selectedDoctor?.consultationFee}</span>
+                      <span className="text-accent-400 font-bold text-lg">₹{selectedDoctor?.consultationFee || selectedDoctor?.fee || 1500}</span>
                     </div>
                   </div>
                 </div>
