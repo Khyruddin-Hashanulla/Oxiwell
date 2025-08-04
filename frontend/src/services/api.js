@@ -101,8 +101,27 @@ api.interceptors.response.use(
           toast.error(data.message || 'An unexpected error occurred.')
       }
     } else if (error.request) {
-      // Network error
-      toast.error('Network error. Please check your connection.')
+      // Network error - provide more specific information
+      console.error('🌐 Network Error Details:', {
+        code: error.code,
+        message: error.message,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          baseURL: error.config?.baseURL,
+          timeout: error.config?.timeout
+        }
+      })
+      
+      if (error.code === 'ECONNREFUSED') {
+        toast.error('Cannot connect to server. Please ensure the backend is running on port 8080.')
+      } else if (error.code === 'TIMEOUT' || error.message.includes('timeout')) {
+        toast.error('Request timed out. Server may be slow or unavailable.')
+      } else if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
+        toast.error('Network error. Please check your internet connection and server status.')
+      } else {
+        toast.error(`Connection failed: ${error.message || 'Please check your connection and ensure backend is running.'}`)
+      }
     } else {
       toast.error('An unexpected error occurred.')
     }
@@ -134,7 +153,7 @@ export const appointmentsAPI = {
   createAppointment: (data) => api.post('/appointments', data),
   updateAppointment: (id, data) => api.put(`/appointments/${id}`, data),
   updateAppointmentStatus: (id, status) => api.put(`/appointments/${id}/status`, { status }),
-  cancelAppointment: (id, reason) => api.put(`/appointments/${id}/cancel`, { reason }),
+  cancelAppointment: (id, data) => api.delete(`/appointments/${id}`, { data }),
   getAvailableSlots: (doctorId, date) => api.get(`/appointments/slots/${doctorId}`, { params: { date } }),
   getAvailableDoctors: () => api.get('/appointments/available-doctors'),
   getPatientAppointments: (patientId, params) => api.get(`/appointments/patient/${patientId}`, { params }),

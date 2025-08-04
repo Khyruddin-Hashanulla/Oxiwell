@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { Calendar, Clock, User, MapPin, Phone, Star, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -8,12 +8,19 @@ import { appointmentsAPI } from '../../services/api'
 
 const AppointmentBooking = () => {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const { user } = useAuth()
   const [selectedDoctor, setSelectedDoctor] = useState(null)
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
   const [availableSlots, setAvailableSlots] = useState([])
   const [doctors, setDoctors] = useState([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isRescheduling, setIsRescheduling] = useState(false)
+  const [originalAppointment, setOriginalAppointment] = useState(null)
+
+  // Check if this is a reschedule operation
+  const rescheduleId = searchParams.get('reschedule')
 
   const {
     register,
@@ -22,6 +29,62 @@ const AppointmentBooking = () => {
     watch,
     setValue
   } = useForm()
+
+  // Load original appointment data if rescheduling
+  useEffect(() => {
+    const loadOriginalAppointment = async () => {
+      if (rescheduleId) {
+        try {
+          setIsRescheduling(true)
+          setIsLoading(true)
+          console.log('📅 Loading original appointment for reschedule:', rescheduleId)
+          
+          const response = await appointmentsAPI.getAppointment(rescheduleId)
+          
+          if (response.data.status === 'success') {
+            const appointment = response.data.data.appointment
+            setOriginalAppointment(appointment)
+            
+            // Pre-fill form with original appointment data
+            setValue('reason', appointment.reason || '')
+            setValue('symptoms', appointment.symptoms?.join(', ') || '')
+            setValue('notes', appointment.patientNotes || '')
+            
+            // Set original date and time as defaults
+            const appointmentDate = new Date(appointment.appointmentDate).toISOString().split('T')[0]
+            setSelectedDate(appointmentDate)
+            setSelectedTime(appointment.appointmentTime || '')
+            
+            // Set the original doctor as selected
+            const doctorData = {
+              id: appointment.doctor._id,
+              firstName: appointment.doctor.firstName,
+              lastName: appointment.doctor.lastName,
+              specialization: appointment.doctor.specialization,
+              experience: appointment.doctor.experience || 'N/A',
+              rating: appointment.doctor.rating || 4.5,
+              location: appointment.doctor.location || 'Main Building',
+              phone: appointment.doctor.phone || 'N/A'
+            }
+            setSelectedDoctor(doctorData)
+            
+            console.log('✅ Original appointment loaded:', appointment)
+            toast.success('Original appointment data loaded for rescheduling')
+          } else {
+            console.error('Failed to load original appointment:', response.data.message)
+            toast.error('Failed to load original appointment data')
+          }
+        } catch (error) {
+          console.error('Error loading original appointment:', error)
+          toast.error('Failed to load original appointment data')
+        } finally {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    loadOriginalAppointment()
+  }, [rescheduleId, setValue])
 
   // Load doctors from API
   useEffect(() => {
@@ -106,38 +169,46 @@ const AppointmentBooking = () => {
         return `${String(hours).padStart(2, '0')}:${minutes}`;
       };
 
-      // Generate valid MongoDB ObjectId for test doctors
-      const generateTestObjectId = (id) => {
-        if (id === '1') return '507f1f77bcf86cd799439011'; // Valid ObjectId for Dr. Sarah
-        if (id === '2') return '507f1f77bcf86cd799439012'; // Valid ObjectId for Dr. Michael
-        return id; // Return as-is if already valid
-      };
-
-      // Create appointment payload with correct field names for backend
+      // Use real doctor ID (no need for fake ObjectId generation)
       const appointmentData = {
-        doctor: generateTestObjectId(selectedDoctor._id || selectedDoctor.id),
+        doctor: selectedDoctor._id || selectedDoctor.id,
         appointmentDate: selectedDate,
-        appointmentTime: convertTo24Hour(selectedTime),
+        appointmentTime: selectedTime.includes(':') ? selectedTime : convertTo24Hour(selectedTime),
         appointmentType: data.appointmentType || 'consultation',
-        reason: data.reason || `Consultation appointment with ${selectedDoctor.firstName} ${selectedDoctor.lastName} for general medical consultation and health assessment.`,
-        symptoms: data.symptoms ? [data.symptoms] : [],
+        reason: data.reason || `Consultation appointment with ${selectedDoctor.firstName} ${selectedDoctor.lastName}`,
+        symptoms: data.symptoms ? data.symptoms.split(',').map(s => s.trim()).filter(s => s) : [],
         patientNotes: data.notes || ''
       }
 
-      console.log('Booking appointment with data:', appointmentData)
+      console.log('📅 Appointment data:', appointmentData)
 
-      // Call backend API to create appointment
-      const response = await appointmentsAPI.createAppointment(appointmentData)
-      
-      if (response.data.status === 'success') {
-        toast.success('Appointment booked successfully!')
-        navigate('/patient/appointments')
+      let response;
+      if (isRescheduling && originalAppointment) {
+        // Update existing appointment
+        console.log('🔄 Rescheduling appointment:', rescheduleId)
+        response = await appointmentsAPI.updateAppointment(rescheduleId, appointmentData)
+        
+        if (response.data.status === 'success') {
+          toast.success('Appointment rescheduled successfully!')
+          navigate('/patient/appointments')
+        } else {
+          toast.error(response.data.message || 'Failed to reschedule appointment')
+        }
       } else {
-        toast.error(response.data.message || 'Failed to book appointment')
+        // Create new appointment
+        console.log('📝 Creating new appointment')
+        response = await appointmentsAPI.createAppointment(appointmentData)
+        
+        if (response.data.status === 'success') {
+          toast.success('Appointment booked successfully!')
+          navigate('/patient/appointments')
+        } else {
+          toast.error(response.data.message || 'Failed to book appointment')
+        }
       }
     } catch (error) {
-      console.error('Appointment booking error:', error)
-      const errorMessage = error.response?.data?.message || 'Failed to book appointment. Please try again.'
+      console.error('Appointment operation error:', error)
+      const errorMessage = error.response?.data?.message || `Failed to ${isRescheduling ? 'reschedule' : 'book'} appointment. Please try again.`
       toast.error(errorMessage)
     } finally {
       setIsLoading(false)
@@ -168,8 +239,23 @@ const AppointmentBooking = () => {
             <ArrowLeft className="w-6 h-6" />
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-white">Book Appointment</h1>
-            <p className="mt-2 text-gray-300">Schedule your next healthcare visit</p>
+            <h1 className="text-3xl font-bold text-white">
+              {isRescheduling ? 'Reschedule Appointment' : 'Book Appointment'}
+            </h1>
+            <p className="mt-2 text-gray-300">
+              {isRescheduling 
+                ? 'Update your appointment details' 
+                : 'Schedule your next healthcare visit'
+              }
+            </p>
+            {isRescheduling && originalAppointment && (
+              <div className="mt-3 p-3 bg-primary-700 bg-opacity-50 rounded-lg">
+                <p className="text-sm text-gray-300">
+                  <span className="font-medium text-white">Original:</span> {' '}
+                  {new Date(originalAppointment.appointmentDate).toLocaleDateString()} at {originalAppointment.appointmentTime} with {originalAppointment.doctor.firstName} {originalAppointment.doctor.lastName}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

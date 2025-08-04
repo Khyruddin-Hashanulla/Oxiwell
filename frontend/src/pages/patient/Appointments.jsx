@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Calendar, Clock, User, MapPin, Phone, Plus, Filter, Search, MoreVertical, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { appointmentsAPI } from '../../services/api'
@@ -7,11 +7,13 @@ import { toast } from 'react-hot-toast'
 
 const Appointments = () => {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [appointments, setAppointments] = useState([])
   const [filteredAppointments, setFilteredAppointments] = useState([])
   const [filter, setFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   // Fetch real appointments data from API
   useEffect(() => {
@@ -81,21 +83,37 @@ const Appointments = () => {
 
   // Filter appointments based on status and search term
   useEffect(() => {
+    console.log('🔍 Filter useEffect triggered:', { 
+      appointmentsLength: appointments.length, 
+      currentFilter: filter, 
+      searchTerm 
+    })
+    
     let filtered = appointments
 
     // Filter by status
     if (filter !== 'all') {
+      console.log('🔍 Filtering by status:', filter)
       filtered = filtered.filter(apt => apt.status === filter)
+      console.log('🔍 After status filter:', filtered.length, 'appointments')
     }
 
     // Filter by search term
     if (searchTerm) {
+      console.log('🔍 Filtering by search term:', searchTerm)
       filtered = filtered.filter(apt =>
         apt.doctorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         apt.specialization.toLowerCase().includes(searchTerm.toLowerCase()) ||
         apt.reason.toLowerCase().includes(searchTerm.toLowerCase())
       )
+      console.log('🔍 After search filter:', filtered.length, 'appointments')
     }
+
+    console.log('🔍 Final filtered appointments:', filtered.map(apt => ({
+      id: apt.id,
+      status: apt.status,
+      doctorName: apt.doctorName
+    })))
 
     setFilteredAppointments(filtered)
   }, [appointments, filter, searchTerm])
@@ -160,6 +178,93 @@ const Appointments = () => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     return appointmentDate >= today
+  }
+
+  // Handle appointment rescheduling
+  const handleRescheduleAppointment = async (appointmentId) => {
+    try {
+      console.log('📅 Reschedule button clicked:', appointmentId)
+      
+      // Navigate to booking page with appointment ID for rescheduling
+      navigate(`/patient/appointments/book?reschedule=${appointmentId}`)
+    } catch (error) {
+      console.error('❌ Error navigating to reschedule:', error)
+      toast.error('Failed to navigate to reschedule page')
+    }
+  }
+
+  // Handle appointment cancellation (patients can only cancel their own appointments)
+  const handleCancelAppointment = async (appointmentId) => {
+    try {
+      console.log('� Attempting to cancel appointment:', appointmentId)
+      
+      // Use DELETE endpoint for patient cancellations (not PUT /status)
+      const response = await appointmentsAPI.cancelAppointment(appointmentId, {
+        cancellationReason: 'Cancelled by patient'
+      })
+      
+      console.log('✅ Cancel appointment API call successful')
+      
+      if (response.data.status === 'success') {
+        toast.success('Appointment cancelled successfully')
+        
+        // Refresh appointments list
+        console.log('🔄 Refreshing appointments list...')
+        const appointmentsResponse = await appointmentsAPI.getPatientAppointments(user._id)
+        const appointmentsData = appointmentsResponse?.data?.data?.appointments || []
+        
+        console.log('📊 Raw appointments data after cancel:', appointmentsData.map(apt => ({
+          id: apt._id,
+          status: apt.status,
+          date: apt.appointmentDate,
+          rawStatus: JSON.stringify(apt.status) // Show exact status value with quotes
+        })))
+        
+        const transformedAppointments = appointmentsData.map(appointment => ({
+          id: appointment._id,
+          doctorName: `${appointment.doctor?.firstName || 'Unknown'} ${appointment.doctor?.lastName || 'Doctor'}`,
+          specialization: appointment.doctor?.specialization || 'General Medicine',
+          date: new Date(appointment.appointmentDate).toISOString().split('T')[0],
+          time: appointment.appointmentTime || 'Not specified',
+          status: appointment.status || 'pending',
+          reason: appointment.reason || 'No reason specified',
+          location: appointment.doctor?.location || 'Main Building',
+          phone: appointment.doctor?.phone || 'Not available',
+          notes: appointment.notes || '',
+          fee: appointment.consultationFee || appointment.doctor?.consultationFee || 0
+        }))
+        
+        console.log('🔄 Transformed appointments:', transformedAppointments.map(apt => ({
+          id: apt.id,
+          status: apt.status,
+          date: apt.date
+        })))
+        
+        // Find the specific appointment that was cancelled
+        const cancelledAppointment = transformedAppointments.find(apt => apt.id === appointmentId)
+        console.log('🎯 Cancelled appointment details:', cancelledAppointment)
+        
+        setAppointments(transformedAppointments)
+        setRefreshKey(prev => prev + 1) // Force re-render
+        
+        // Immediately update filtered appointments to show all appointments
+        setFilteredAppointments(transformedAppointments)
+        
+        // If currently filtering by 'pending', switch to 'all' to show the cancelled appointment
+        if (filter === 'pending') {
+          console.log('🔄 Switching filter from "pending" to "all" to show cancelled appointment')
+          setFilter('all')
+        }
+        
+        console.log('✅ Appointments list refreshed successfully')
+        console.log('🔄 Component will re-render with refreshKey:', refreshKey + 1)
+        console.log('📋 Current filteredAppointments length:', transformedAppointments.length)
+      }
+    } catch (error) {
+      console.error('❌ Error cancelling appointment:', error)
+      console.log('🔍 Error details:', { status: error.response?.status, message: error.response?.data?.message, config: error.config })
+      toast.error(error.response?.data?.message || 'Failed to cancel appointment')
+    }
   }
 
   if (isLoading) {
@@ -230,7 +335,7 @@ const Appointments = () => {
       </div>
 
       {/* Appointments List */}
-      <div className="space-y-4">
+      <div className="space-y-4" key={refreshKey}>
         {filteredAppointments.length === 0 ? (
           <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-12 text-center border border-primary-600">
             <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -277,9 +382,6 @@ const Appointments = () => {
                     </div>
                     <div className="flex items-center space-x-3">
                       {getStatusBadge(appointment.status)}
-                      <button className="p-2 text-gray-400 hover:text-white hover:bg-primary-600 rounded-lg transition-colors">
-                        <MoreVertical className="w-5 h-5" />
-                      </button>
                     </div>
                   </div>
 
@@ -318,26 +420,52 @@ const Appointments = () => {
                   )}
                 </div>
 
-                {/* Action Buttons */}
+                {/* Patient-appropriate Action Buttons */}
                 <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-col space-y-2 lg:w-32">
                   {appointment.status === 'pending' && (
                     <>
-                      <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
-                        Confirm
+                      <button 
+                        onClick={() => handleRescheduleAppointment(appointment.id)}
+                        className="px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors text-sm font-medium"
+                      >
+                        Reschedule
                       </button>
-                      <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium">
+                      <button 
+                        onClick={() => handleCancelAppointment(appointment.id)}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                      >
                         Cancel
                       </button>
                     </>
                   )}
                   {appointment.status === 'confirmed' && (
-                    <button className="px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors text-sm font-medium">
+                    <button 
+                      onClick={() => handleRescheduleAppointment(appointment.id)}
+                      className="px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors text-sm font-medium"
+                    >
                       Reschedule
                     </button>
                   )}
                   {appointment.status === 'completed' && (
                     <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-colors text-sm font-medium">
                       View Details
+                    </button>
+                  )}
+                  {appointment.status === 'cancelled' && (
+                    <button 
+                      onClick={() => {
+                        console.log('🟢 Book New button clicked:', {
+                          appointmentId: appointment.id,
+                          userAuthenticated: !!user,
+                          userId: user?._id,
+                          currentPath: window.location.pathname,
+                          targetPath: '/patient/appointments/book'
+                        })
+                        navigate('/patient/appointments/book')
+                      }}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                    >
+                      Book New
                     </button>
                   )}
                 </div>
