@@ -9,7 +9,10 @@ const {
   getPatientAppointments,
   getDoctorAppointments,
   getAvailableSlots,
-  getAvailableDoctors
+  getAvailableDoctors,
+  getDoctorDetails,
+  getAvailableDates,
+  getAvailableTimeSlots
 } = require('../controllers/appointmentController');
 const { protect } = require('../middleware/auth');
 const {
@@ -32,6 +35,9 @@ const createAppointmentValidation = [
   body('doctor')
     .isMongoId()
     .withMessage('Valid doctor ID is required'),
+  body('hospital')
+    .isMongoId()
+    .withMessage('Valid hospital ID is required'),
   body('appointmentDate')
     .isISO8601()
     .withMessage('Valid appointment date is required'),
@@ -100,6 +106,15 @@ const updateAppointmentValidation = [
 // GET /api/appointments/available-doctors - Get available doctors for appointment booking
 // Must be BEFORE parameterized routes to avoid conflicts
 router.get('/available-doctors', getAvailableDoctors);
+
+// GET /api/appointments/doctor/:doctorId/details - Get doctor details with workplaces
+router.get('/doctor/:doctorId/details', getDoctorDetails);
+
+// GET /api/appointments/doctor/:doctorId/hospital/:hospitalId/available-dates - Get available dates
+router.get('/doctor/:doctorId/hospital/:hospitalId/available-dates', getAvailableDates);
+
+// GET /api/appointments/doctor/:doctorId/hospital/:hospitalId/available-slots - Get available time slots
+router.get('/doctor/:doctorId/hospital/:hospitalId/available-slots', getAvailableTimeSlots);
 
 // Apply authentication and active status to all other routes
 router.use(protect, requireActive);

@@ -33,8 +33,9 @@ const protect = asyncHandler(async (req, res, next) => {
   try {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log(' Token decoded successfully for user ID:', decoded.id);
 
-    // Get user from token
+    // Get user from token with fresh data from database
     const user = await User.findById(decoded.id).select('-password');
 
     if (!user) {
@@ -45,8 +46,10 @@ const protect = asyncHandler(async (req, res, next) => {
       });
     }
 
-    // Check if user is active
-    if (user.status !== 'active') {
+    console.log(' User found:', user.email, 'Role:', user.role, 'Status:', user.status);
+
+    // Check if user is active (allow pending for some routes)
+    if (user.status !== 'active' && user.status !== 'pending') {
       console.log(' User account is not active - returning 401');
       return res.status(401).json({
         status: 'error',
@@ -55,7 +58,7 @@ const protect = asyncHandler(async (req, res, next) => {
     }
 
     // Check if user changed password after the token was issued
-    if (user.changedPasswordAfter(decoded.iat)) {
+    if (user.changedPasswordAfter && user.changedPasswordAfter(decoded.iat)) {
       console.log(' User recently changed password - returning 401');
       return res.status(401).json({
         status: 'error',
@@ -63,10 +66,26 @@ const protect = asyncHandler(async (req, res, next) => {
       });
     }
 
+    // Attach fresh user data to request
     req.user = user;
+    console.log(' User attached to request:', user.email, user.role);
     next();
   } catch (error) {
     console.log(' Error verifying token - returning 401:', error.message);
+    
+    // Handle specific JWT errors
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Token expired. Please log in again'
+      });
+    } else if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Invalid token. Please log in again'
+      });
+    }
+    
     return res.status(401).json({
       status: 'error',
       message: 'Not authorized to access this route'
@@ -193,6 +212,47 @@ const logActivity = (action) => {
   };
 };
 
+// Validate session and refresh user data
+const validateSession = asyncHandler(async (req, res, next) => {
+  // Skip if no user is attached (will be handled by protect middleware)
+  if (!req.user) {
+    return next();
+  }
+
+  try {
+    // Refresh user data from database to ensure latest status
+    const freshUser = await User.findById(req.user._id).select('-password');
+    
+    if (!freshUser) {
+      console.log(' Session validation failed - user no longer exists');
+      return res.status(401).json({
+        status: 'error',
+        message: 'User session is no longer valid'
+      });
+    }
+
+    // Check if user status changed
+    if (freshUser.status !== req.user.status) {
+      console.log(' User status changed from', req.user.status, 'to', freshUser.status);
+      req.user = freshUser; // Update with fresh data
+    }
+
+    // Check if user role changed
+    if (freshUser.role !== req.user.role) {
+      console.log(' User role changed from', req.user.role, 'to', freshUser.role);
+      req.user = freshUser; // Update with fresh data
+    }
+
+    next();
+  } catch (error) {
+    console.log(' Session validation error:', error.message);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Session validation failed'
+    });
+  }
+});
+
 module.exports = {
   protect,
   authorize,
@@ -200,5 +260,6 @@ module.exports = {
   authorizePatientAccess,
   authorizeDoctorAccess,
   requireVerification,
-  logActivity
+  logActivity,
+  validateSession
 };

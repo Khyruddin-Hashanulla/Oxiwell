@@ -13,6 +13,13 @@ const appointmentSchema = new mongoose.Schema({
     required: [true, 'Doctor is required']
   },
   
+  // Hospital/workplace reference
+  hospital: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Hospital',
+    required: [true, 'Hospital is required']
+  },
+  
   // Appointment Details
   appointmentDate: {
     type: Date,
@@ -169,6 +176,7 @@ appointmentSchema.virtual('canBeCancelled').get(function() {
 // Indexes for better query performance
 appointmentSchema.index({ patient: 1, appointmentDate: 1 });
 appointmentSchema.index({ doctor: 1, appointmentDate: 1 });
+appointmentSchema.index({ hospital: 1, appointmentDate: 1 });
 appointmentSchema.index({ status: 1, appointmentDate: 1 });
 appointmentSchema.index({ appointmentDate: 1, appointmentTime: 1 });
 

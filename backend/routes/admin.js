@@ -14,11 +14,11 @@ const {
   reactivateUser,
   getPendingDoctors
 } = require('../controllers/adminController');
-const { protect } = require('../middleware/auth');
+const { protect, validateSession } = require('../middleware/auth');
 const {
   requireAdmin,
-  requireVerified,
   requireActive,
+  requireVerified,
   auditLog
 } = require('../middleware/rbac');
 
@@ -99,8 +99,8 @@ const reportGenerationValidation = [
     .withMessage('Invalid report format')
 ];
 
-// Apply authentication, admin role, and active status to all routes
-router.use(protect, requireAdmin, requireActive, requireVerified);
+// Apply authentication, session validation, admin role, and active status to all routes
+router.use(protect, validateSession, requireAdmin, requireActive, requireVerified);
 
 // Admin Profile Management
 // GET /api/admin/profile/:id - Get admin profile

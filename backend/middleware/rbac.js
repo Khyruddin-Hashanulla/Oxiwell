@@ -219,11 +219,30 @@ const requireAdmin = asyncHandler(async (req, res, next) => {
   console.log('   User Role:', req.user?.role);
   console.log('   User Status:', req.user?.status);
   
+  // Ensure user exists and is properly attached
+  if (!req.user) {
+    console.log('❌ Admin access denied - no user attached to request');
+    return res.status(401).json({
+      status: 'error',
+      message: 'Authentication required'
+    });
+  }
+  
+  // Check if user role is admin
   if (req.user.role !== 'admin') {
     console.log('❌ Admin access denied - user role is:', req.user.role);
     return res.status(403).json({
       status: 'error',
       message: 'Admin access required'
+    });
+  }
+  
+  // Ensure admin user is active
+  if (req.user.status !== 'active') {
+    console.log('❌ Admin access denied - user status is:', req.user.status);
+    return res.status(403).json({
+      status: 'error',
+      message: 'Admin account is not active'
     });
   }
   
@@ -233,12 +252,40 @@ const requireAdmin = asyncHandler(async (req, res, next) => {
 
 // Doctor-only access
 const requireDoctor = asyncHandler(async (req, res, next) => {
+  console.log('🔍 requireDoctor middleware - checking user role');
+  console.log('   User ID:', req.user?._id);
+  console.log('   User Email:', req.user?.email);
+  console.log('   User Role:', req.user?.role);
+  console.log('   User Status:', req.user?.status);
+  
+  // Ensure user exists and is properly attached
+  if (!req.user) {
+    console.log('❌ Doctor access denied - no user attached to request');
+    return res.status(401).json({
+      status: 'error',
+      message: 'Authentication required'
+    });
+  }
+  
+  // Check if user role is doctor
   if (req.user.role !== 'doctor') {
+    console.log('❌ Doctor access denied - user role is:', req.user.role);
     return res.status(403).json({
       status: 'error',
       message: 'Doctor access required'
     });
   }
+  
+  // Ensure doctor user is active
+  if (req.user.status !== 'active') {
+    console.log('❌ Doctor access denied - user status is:', req.user.status);
+    return res.status(403).json({
+      status: 'error',
+      message: 'Doctor account is not active or pending approval'
+    });
+  }
+  
+  console.log('✅ Doctor access granted');
   next();
 });
 

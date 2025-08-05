@@ -7,9 +7,12 @@ const {
   updateDoctorProfile,
   getDoctorPatients,
   getPatientHistory,
-  getDoctorSchedule
+  getDoctorSchedule,
+  completeProfileSetup,
+  checkProfileSetupRequired
 } = require('../controllers/doctorController');
-const { protect, authorize } = require('../middleware/auth');
+const { protect, authorize, validateSession } = require('../middleware/auth');
+const { requireDoctor } = require('../middleware/rbac');
 
 const router = express.Router();
 
@@ -81,15 +84,17 @@ const updateProfileValidation = [
 // Public routes
 router.get('/', getDoctors);
 
-// Protected routes - Apply protection middleware
-router.use(protect);
+// Protected routes - Apply protection and session validation middleware
+router.use(protect, validateSession);
 
 // Doctor-only routes - MUST come before /:id route to avoid conflicts
-router.get('/dashboard/stats', authorize('doctor'), getDoctorStats);
-router.put('/profile', authorize('doctor'), updateProfileValidation, updateDoctorProfile);
-router.get('/patients', authorize('doctor'), getDoctorPatients);
-router.get('/patients/:patientId/history', authorize('doctor'), getPatientHistory);
-router.get('/schedule', authorize('doctor'), getDoctorSchedule);
+router.get('/dashboard/stats', requireDoctor, getDoctorStats);
+router.get('/profile-setup/required', requireDoctor, checkProfileSetupRequired);
+router.post('/profile-setup', requireDoctor, completeProfileSetup);
+router.put('/profile', requireDoctor, updateProfileValidation, updateDoctorProfile);
+router.get('/patients', requireDoctor, getDoctorPatients);
+router.get('/patients/:patientId/history', requireDoctor, getPatientHistory);
+router.get('/schedule', requireDoctor, getDoctorSchedule);
 
 // Generic routes - MUST come after specific routes
 router.get('/:id', getDoctor);

@@ -148,29 +148,74 @@ export const authAPI = {
 
 // Appointments API endpoints
 export const appointmentsAPI = {
-  getAppointments: (params) => api.get('/appointments', { params }),
+  // Get all appointments for current user
+  getAppointments: () => api.get('/appointments'),
+  
+  // Get patient appointments (alias for getAppointments)
+  getPatientAppointments: () => api.get('/appointments'),
+  
+  // Get doctor appointments with filtering and pagination
+  getDoctorAppointments: (doctorId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const url = queryString ? `/appointments/doctor/${doctorId}?${queryString}` : `/appointments/doctor/${doctorId}`;
+    return api.get(url);
+  },
+  
+  // Get single appointment
   getAppointment: (id) => api.get(`/appointments/${id}`),
+  
+  // Create new appointment
   createAppointment: (data) => api.post('/appointments', data),
+  
+  // Update appointment
   updateAppointment: (id, data) => api.put(`/appointments/${id}`, data),
+  
+  // Update appointment status
   updateAppointmentStatus: (id, status) => api.put(`/appointments/${id}/status`, { status }),
-  cancelAppointment: (id, data) => api.delete(`/appointments/${id}`, { data }),
-  getAvailableSlots: (doctorId, date) => api.get(`/appointments/slots/${doctorId}`, { params: { date } }),
-  getAvailableDoctors: () => api.get('/appointments/available-doctors'),
-  getPatientAppointments: (patientId, params) => api.get(`/appointments/patient/${patientId}`, { params }),
-  getDoctorAppointments: (doctorId, params) => api.get(`/appointments/doctor/${doctorId}`, { params }),
-}
+  
+  // Cancel appointment
+  cancelAppointment: (id, reason) => api.delete(`/appointments/${id}`, { data: { cancellationReason: reason } }),
+  
+  // Get available doctors (public endpoint)
+  getAvailableDoctors: (queryParams = '') => {
+    const url = queryParams ? `/appointments/available-doctors?${queryParams}` : '/appointments/available-doctors';
+    return api.get(url);
+  },
+  
+  // Get doctor details with workplaces (public endpoint)
+  getDoctorDetails: (doctorId) => api.get(`/appointments/doctor/${doctorId}/details`),
+  
+  // Get available dates for doctor at hospital (public endpoint)
+  getAvailableDates: (doctorId, hospitalId, queryParams = '') => {
+    const url = queryParams 
+      ? `/appointments/doctor/${doctorId}/hospital/${hospitalId}/available-dates?${queryParams}`
+      : `/appointments/doctor/${doctorId}/hospital/${hospitalId}/available-dates`;
+    return api.get(url);
+  },
+  
+  // Get available time slots (public endpoint)
+  getAvailableSlots: (doctorId, hospitalId, date) => {
+    return api.get(`/appointments/doctor/${doctorId}/hospital/${hospitalId}/available-slots?date=${date}`);
+  },
+  
+  // Legacy endpoint for backward compatibility
+  getAvailableTimeSlots: (doctorId, date) => api.get(`/appointments/available-slots/${doctorId}?date=${date}`)
+};
 
 // Doctors API endpoints
 export const doctorsAPI = {
   getDoctors: (params) => api.get('/doctors', { params }),
   getDoctor: (id) => api.get(`/doctors/${id}`),
-  updateDoctorProfile: (data) => api.put('/doctors/profile', data),
   getDoctorStats: () => api.get('/doctors/dashboard/stats'),
+  updateProfile: (data) => api.put('/doctors/profile', data),
   getPatients: (params) => api.get('/doctors/patients', { params }),
   getPatientHistory: (patientId) => api.get(`/doctors/patients/${patientId}/history`),
-  getSchedule: (params) => api.get('/doctors/schedule', { params }),
-  getDoctor: (id) => api.get(`/doctors/${id}`),
-}
+  getSchedule: () => api.get('/doctors/schedule'),
+  
+  // Doctor onboarding workflow
+  checkProfileSetupRequired: () => api.get('/doctors/profile-setup/required'),
+  completeProfileSetup: (data) => api.post('/doctors/profile-setup', data)
+};
 
 // Patients API endpoints
 export const patientsAPI = {

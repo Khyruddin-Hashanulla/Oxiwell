@@ -392,6 +392,195 @@ const getDoctorSchedule = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc    Complete doctor profile setup (onboarding)
+// @route   POST /api/doctors/profile-setup
+// @access  Private (Doctor only)
+const completeProfileSetup = asyncHandler(async (req, res, next) => {
+  const {
+    qualifications,
+    consultationFee,
+    onlineConsultationAvailable,
+    offlineConsultationAvailable,
+    availableSlots,
+    workplaces,
+    professionalBio,
+    languages,
+    address
+  } = req.body;
+
+  console.log('🔍 Profile setup request received:', {
+    userId: req.user._id,
+    consultationFee,
+    qualificationsCount: qualifications?.length || 0,
+    availableSlotsCount: availableSlots?.length || 0,
+    onlineConsultationAvailable,
+    offlineConsultationAvailable
+  });
+
+  // Validate required fields (only new fields, not registration fields)
+  if (!consultationFee || consultationFee <= 0) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Valid consultation fee is required'
+    });
+  }
+
+  // Validate availability slots
+  if (!availableSlots || !Array.isArray(availableSlots) || availableSlots.length === 0) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'At least one available time slot is required'
+    });
+  }
+
+  // Validate each time slot
+  for (const slot of availableSlots) {
+    if (!slot.day || !slot.startTime || !slot.endTime) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Each time slot must have day, start time, and end time'
+      });
+    }
+  }
+
+  // Validate qualifications - require at least one qualification
+  if (!qualifications || !Array.isArray(qualifications) || qualifications.length === 0) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'At least one qualification is required'
+    });
+  }
+
+  // Validate each qualification
+  for (const qual of qualifications) {
+    if (!qual.degree || !qual.institution || !qual.year) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Each qualification must have degree, institution, and year'
+      });
+    }
+  }
+
+  // Validate online/offline consultation availability
+  if (onlineConsultationAvailable === undefined && offlineConsultationAvailable === undefined) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'At least one consultation type (online or offline) must be available'
+    });
+  }
+
+  try {
+    const doctor = await User.findById(req.user._id);
+    
+    if (!doctor || doctor.role !== 'doctor') {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Doctor not found'
+      });
+    }
+
+    console.log('👤 Doctor found:', {
+      email: doctor.email,
+      profileSetupCompleted: doctor.profileSetupCompleted,
+      status: doctor.status
+    });
+
+    if (doctor.profileSetupCompleted) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Profile setup has already been completed'
+      });
+    }
+
+    // Update doctor profile with all provided information
+    const updateData = {
+      consultationFee: parseFloat(consultationFee),
+      onlineConsultationAvailable: onlineConsultationAvailable !== false, // Default to true
+      offlineConsultationAvailable: offlineConsultationAvailable !== false, // Default to true
+      availableSlots: availableSlots || [],
+      profileSetupCompleted: true,
+      profileSetupCompletedAt: new Date()
+    };
+
+    // Add optional fields if provided
+    if (qualifications && qualifications.length > 0) {
+      updateData.qualifications = qualifications;
+    }
+    
+    if (workplaces && workplaces.length > 0) {
+      updateData.workplaces = workplaces;
+    }
+    
+    if (professionalBio) {
+      updateData.professionalBio = professionalBio;
+    }
+    
+    if (languages && languages.length > 0) {
+      updateData.languages = languages;
+    }
+    
+    if (address) {
+      updateData.address = address;
+    }
+
+    console.log('📝 Updating doctor profile with:', updateData);
+
+    const updatedDoctor = await User.findByIdAndUpdate(
+      req.user._id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    console.log('✅ Profile setup completed successfully for:', updatedDoctor.email);
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Profile setup completed successfully',
+      data: {
+        doctor: {
+          _id: updatedDoctor._id,
+          email: updatedDoctor.email,
+          firstName: updatedDoctor.firstName,
+          lastName: updatedDoctor.lastName,
+          profileSetupCompleted: updatedDoctor.profileSetupCompleted,
+          consultationFee: updatedDoctor.consultationFee,
+          onlineConsultationAvailable: updatedDoctor.onlineConsultationAvailable,
+          offlineConsultationAvailable: updatedDoctor.offlineConsultationAvailable
+        }
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error completing profile setup:', error);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Failed to complete profile setup',
+      error: error.message
+    });
+  }
+});
+
+// @desc    Check if doctor profile setup is required
+// @route   GET /api/doctors/profile-setup/required
+// @access  Private (Doctor only)
+const checkProfileSetupRequired = asyncHandler(async (req, res, next) => {
+  const doctor = await User.findById(req.user._id).select('profileSetupCompleted role status');
+  
+  if (!doctor || doctor.role !== 'doctor') {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Doctor not found'
+    });
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      profileSetupRequired: !doctor.profileSetupCompleted,
+      profileSetupCompleted: doctor.profileSetupCompleted
+    }
+  });
+});
+
 module.exports = {
   getDoctors,
   getDoctor,
@@ -399,5 +588,7 @@ module.exports = {
   updateDoctorProfile,
   getDoctorPatients,
   getPatientHistory,
-  getDoctorSchedule
+  getDoctorSchedule,
+  completeProfileSetup,
+  checkProfileSetupRequired
 };

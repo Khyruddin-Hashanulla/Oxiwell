@@ -44,6 +44,14 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  profileSetupCompleted: {
+    type: Boolean,
+    default: false
+  },
+  profileSetupCompletedAt: {
+    type: Date,
+    default: null
+  },
   // Contact Information
   phone: {
     type: String,
@@ -120,7 +128,41 @@ const userSchema = new mongoose.Schema({
     startTime: String,
     endTime: String
   }],
-  
+  workplaces: [{
+    hospital: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Hospital',
+      required: true
+    },
+    availableSlots: [{
+      day: {
+        type: String,
+        enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+      },
+      startTime: String,
+      endTime: String
+    }],
+    consultationFee: {
+      type: Number,
+      required: true
+    },
+    isPrimary: {
+      type: Boolean,
+      default: false
+    }
+  }],
+  rating: {
+    average: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5
+    },
+    count: {
+      type: Number,
+      default: 0
+    }
+  },
   // Patient-specific fields
   bloodGroup: {
     type: String,

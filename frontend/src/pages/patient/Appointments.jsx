@@ -55,10 +55,13 @@ const Appointments = () => {
               time: appointment.appointmentTime || 'Not specified',
               status: appointment.status || 'pending',
               reason: appointment.reason || 'No reason specified',
-              location: appointment.doctor?.location || 'Main Building',
-              phone: appointment.doctor?.phone || 'Not available',
+              location: appointment.hospital?.name || appointment.doctor?.location || 'Hospital not specified',
+              phone: appointment.hospital?.phone || appointment.doctor?.phone || 'Contact not available',
               notes: appointment.notes || '',
-              fee: appointment.consultationFee || appointment.doctor?.consultationFee || 0
+              fee: appointment.consultationFee || appointment.doctor?.consultationFee || 0,
+              hospitalAddress: appointment.hospital?.address ? 
+                `${appointment.hospital.address.street}, ${appointment.hospital.address.city}` : 
+                'Address not available'
             }
           })
           
@@ -196,12 +199,10 @@ const Appointments = () => {
   // Handle appointment cancellation (patients can only cancel their own appointments)
   const handleCancelAppointment = async (appointmentId) => {
     try {
-      console.log('� Attempting to cancel appointment:', appointmentId)
+      console.log('🔴 Attempting to cancel appointment:', appointmentId)
       
-      // Use DELETE endpoint for patient cancellations (not PUT /status)
-      const response = await appointmentsAPI.cancelAppointment(appointmentId, {
-        cancellationReason: 'Cancelled by patient'
-      })
+      // Use the DELETE endpoint with proper cancellationReason format
+      const response = await appointmentsAPI.cancelAppointment(appointmentId, 'Cancelled by patient')
       
       console.log('✅ Cancel appointment API call successful')
       
@@ -213,13 +214,6 @@ const Appointments = () => {
         const appointmentsResponse = await appointmentsAPI.getPatientAppointments(user._id)
         const appointmentsData = appointmentsResponse?.data?.data?.appointments || []
         
-        console.log('📊 Raw appointments data after cancel:', appointmentsData.map(apt => ({
-          id: apt._id,
-          status: apt.status,
-          date: apt.appointmentDate,
-          rawStatus: JSON.stringify(apt.status) // Show exact status value with quotes
-        })))
-        
         const transformedAppointments = appointmentsData.map(appointment => ({
           id: appointment._id,
           doctorName: `${appointment.doctor?.firstName || 'Unknown'} ${appointment.doctor?.lastName || 'Doctor'}`,
@@ -228,27 +222,17 @@ const Appointments = () => {
           time: appointment.appointmentTime || 'Not specified',
           status: appointment.status || 'pending',
           reason: appointment.reason || 'No reason specified',
-          location: appointment.doctor?.location || 'Main Building',
-          phone: appointment.doctor?.phone || 'Not available',
+          location: appointment.hospital?.name || appointment.doctor?.location || 'Hospital not specified',
+          phone: appointment.hospital?.phone || appointment.doctor?.phone || 'Contact not available',
           notes: appointment.notes || '',
-          fee: appointment.consultationFee || appointment.doctor?.consultationFee || 0
+          fee: appointment.consultationFee || appointment.doctor?.consultationFee || 0,
+          hospitalAddress: appointment.hospital?.address ? 
+            `${appointment.hospital.address.street}, ${appointment.hospital.address.city}` : 
+            'Address not available'
         }))
-        
-        console.log('🔄 Transformed appointments:', transformedAppointments.map(apt => ({
-          id: apt.id,
-          status: apt.status,
-          date: apt.date
-        })))
-        
-        // Find the specific appointment that was cancelled
-        const cancelledAppointment = transformedAppointments.find(apt => apt.id === appointmentId)
-        console.log('🎯 Cancelled appointment details:', cancelledAppointment)
         
         setAppointments(transformedAppointments)
         setRefreshKey(prev => prev + 1) // Force re-render
-        
-        // Immediately update filtered appointments to show all appointments
-        setFilteredAppointments(transformedAppointments)
         
         // If currently filtering by 'pending', switch to 'all' to show the cancelled appointment
         if (filter === 'pending') {
@@ -257,12 +241,9 @@ const Appointments = () => {
         }
         
         console.log('✅ Appointments list refreshed successfully')
-        console.log('🔄 Component will re-render with refreshKey:', refreshKey + 1)
-        console.log('📋 Current filteredAppointments length:', transformedAppointments.length)
       }
     } catch (error) {
       console.error('❌ Error cancelling appointment:', error)
-      console.log('🔍 Error details:', { status: error.response?.status, message: error.response?.data?.message, config: error.config })
       toast.error(error.response?.data?.message || 'Failed to cancel appointment')
     }
   }
@@ -359,96 +340,147 @@ const Appointments = () => {
               key={appointment.id}
               className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg hover:shadow-xl transition-all duration-300"
             >
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
                 <div className="flex-1">
+                  {/* Header Section */}
                   <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-xl font-semibold text-white mb-1">
-                        {appointment.doctorName}
-                      </h3>
-                      <p className="text-gray-300 text-sm mb-2">
-                        {appointment.specialization}
-                      </p>
-                      <div className="flex items-center space-x-4 text-sm text-gray-300">
-                        <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {new Date(appointment.date).toLocaleDateString()}
+                    <div className="flex items-start space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                        <User className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold text-white mb-1">
+                          Dr. {appointment.doctorName}
+                        </h3>
+                        <p className="text-blue-300 text-sm font-medium mb-1">
+                          {appointment.specialization}
+                        </p>
+                        <div className="flex items-center space-x-2">
+                          {getStatusBadge(appointment.status)}
+                          {isUpcoming(appointment.date) && appointment.status === 'confirmed' && (
+                            <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">
+                              Upcoming
+                            </span>
+                          )}
                         </div>
-                        <div className="flex items-center">
-                          <Clock className="w-4 h-4 mr-1" />
-                          {appointment.time}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-3">
-                      {getStatusBadge(appointment.status)}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div className="space-y-2">
-                      <div className="flex items-center text-gray-300">
-                        <User className="w-4 h-4 mr-2" />
-                        <span className="font-medium text-white">Reason:</span>
-                        <span className="ml-2">{appointment.reason}</span>
-                      </div>
-                      <div className="flex items-center text-gray-300">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        <span className="font-medium text-white">Location:</span>
-                        <span className="ml-2">{appointment.location}</span>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center text-gray-300">
-                        <Phone className="w-4 h-4 mr-2" />
-                        <span className="font-medium text-white">Contact:</span>
-                        <span className="ml-2">{appointment.phone}</span>
-                      </div>
-                      <div className="flex items-center text-gray-300">
-                        <span className="font-medium text-white">Fee:</span>
-                        <span className="ml-2">₹{appointment.fee}</span>
                       </div>
                     </div>
                   </div>
 
+                  {/* Appointment Details Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    {/* Date & Time */}
+                    <div className="space-y-3">
+                      <div className="flex items-center text-gray-300">
+                        <Calendar className="w-4 h-4 mr-3 text-blue-400" />
+                        <div>
+                          <span className="font-medium text-white">Date:</span>
+                          <p className="text-sm">{new Date(appointment.date).toLocaleDateString('en-US', { 
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          })}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center text-gray-300">
+                        <Clock className="w-4 h-4 mr-3 text-green-400" />
+                        <div>
+                          <span className="font-medium text-white">Time:</span>
+                          <p className="text-sm">{appointment.time}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Location & Contact */}
+                    <div className="space-y-3">
+                      <div className="flex items-center text-gray-300">
+                        <MapPin className="w-4 h-4 mr-3 text-purple-400" />
+                        <div>
+                          <span className="font-medium text-white">Location:</span>
+                          <p className="text-sm">{appointment.location}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center text-gray-300">
+                        <Phone className="w-4 h-4 mr-3 text-orange-400" />
+                        <div>
+                          <span className="font-medium text-white">Contact:</span>
+                          <p className="text-sm">{appointment.phone}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Reason & Fee Section */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="bg-primary-700/50 rounded-lg p-3">
+                      <h4 className="text-white font-medium mb-1 text-sm">Reason for Visit</h4>
+                      <p className="text-gray-300 text-sm">{appointment.reason}</p>
+                    </div>
+                    <div className="bg-green-500/10 rounded-lg p-3 border border-green-500/20">
+                      <h4 className="text-white font-medium mb-1 text-sm">Consultation Fee</h4>
+                      <p className="text-green-400 font-bold text-lg">₹{appointment.fee}</p>
+                    </div>
+                  </div>
+
+                  {/* Hospital Address */}
+                  <div className="bg-blue-500/10 rounded-lg p-3 border border-blue-500/20">
+                    <h4 className="text-white font-medium mb-1 text-sm">Hospital Address</h4>
+                    <p className="text-blue-400 text-sm">{appointment.hospitalAddress}</p>
+                  </div>
+
+                  {/* Notes Section */}
                   {appointment.notes && (
-                    <div className="mt-4 p-3 bg-primary-700 bg-opacity-50 rounded-lg">
-                      <p className="text-sm text-gray-300">
-                        <span className="font-medium text-white">Notes:</span> {appointment.notes}
-                      </p>
+                    <div className="mt-4 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                      <h4 className="text-white font-medium mb-2 text-sm flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-2" />
+                        Additional Notes
+                      </h4>
+                      <p className="text-gray-300 text-sm">{appointment.notes}</p>
                     </div>
                   )}
+
+                  {/* Appointment ID */}
+                  <div className="mt-4 pt-3 border-t border-gray-600">
+                    <p className="text-xs text-gray-400">
+                      Appointment ID: <span className="font-mono">{appointment.id}</span>
+                    </p>
+                  </div>
                 </div>
 
-                {/* Patient-appropriate Action Buttons */}
-                <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-col space-y-2 lg:w-32">
+                {/* Action Buttons */}
+                <div className="lg:ml-6 flex flex-row lg:flex-col gap-2 lg:w-40">
                   {appointment.status === 'pending' && (
                     <>
                       <button 
                         onClick={() => handleRescheduleAppointment(appointment.id)}
-                        className="px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors text-sm font-medium"
+                        className="flex-1 lg:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
                       >
-                        Reschedule
+                        <Calendar className="w-4 h-4" />
+                        <span>Reschedule</span>
                       </button>
                       <button 
                         onClick={() => handleCancelAppointment(appointment.id)}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                        className="flex-1 lg:flex-none px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
                       >
-                        Cancel
+                        <XCircle className="w-4 h-4" />
+                        <span>Cancel</span>
                       </button>
                     </>
                   )}
                   {appointment.status === 'confirmed' && (
                     <button 
                       onClick={() => handleRescheduleAppointment(appointment.id)}
-                      className="px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors text-sm font-medium"
+                      className="flex-1 lg:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
                     >
-                      Reschedule
+                      <Calendar className="w-4 h-4" />
+                      <span>Reschedule</span>
                     </button>
                   )}
                   {appointment.status === 'completed' && (
-                    <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-colors text-sm font-medium">
-                      View Details
+                    <button className="flex-1 lg:flex-none px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2">
+                      <CheckCircle className="w-4 h-4" />
+                      <span>View Report</span>
                     </button>
                   )}
                   {appointment.status === 'cancelled' && (
@@ -463,9 +495,10 @@ const Appointments = () => {
                         })
                         navigate('/patient/appointments/book')
                       }}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                      className="flex-1 lg:flex-none px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
                     >
-                      Book New
+                      <Plus className="w-4 h-4" />
+                      <span>Book New</span>
                     </button>
                   )}
                 </div>

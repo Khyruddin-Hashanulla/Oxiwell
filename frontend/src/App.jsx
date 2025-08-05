@@ -5,6 +5,7 @@ import { useAuth } from './contexts/AuthContext'
 import LoadingSpinner from './components/ui/LoadingSpinner'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import PublicRoute from './components/auth/PublicRoute'
+import DoctorProfileSetupGuard from './components/auth/DoctorProfileSetupGuard'
 
 // Layout components
 import DashboardLayout from './components/layout/DashboardLayout'
@@ -36,6 +37,7 @@ import PatientProfile from './pages/patient/PatientProfile'
 import DoctorAppointments from './pages/doctor/DoctorAppointments'
 import DoctorPatients from './pages/doctor/DoctorPatients'
 import DoctorProfile from './pages/doctor/DoctorProfile'
+import DoctorProfileSetup from './pages/doctor/DoctorProfileSetup'
 
 // Admin pages
 import AdminProfile from './pages/admin/AdminProfile'
@@ -88,10 +90,27 @@ function App() {
             
             {/* Doctor Routes */}
             <Route path="/doctor" element={<Navigate to="/doctor/dashboard" replace />} />
-            <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
-            <Route path="/doctor/appointments" element={<DoctorAppointments />} />
-            <Route path="/doctor/patients" element={<DoctorPatients />} />
-            <Route path="/doctor/profile" element={<DoctorProfile />} />
+            <Route path="/doctor/profile-setup" element={<DoctorProfileSetup />} />
+            <Route path="/doctor/dashboard" element={
+              <DoctorProfileSetupGuard>
+                <DoctorDashboard />
+              </DoctorProfileSetupGuard>
+            } />
+            <Route path="/doctor/appointments" element={
+              <DoctorProfileSetupGuard>
+                <DoctorAppointments />
+              </DoctorProfileSetupGuard>
+            } />
+            <Route path="/doctor/patients" element={
+              <DoctorProfileSetupGuard>
+                <DoctorPatients />
+              </DoctorProfileSetupGuard>
+            } />
+            <Route path="/doctor/profile" element={
+              <DoctorProfileSetupGuard>
+                <DoctorProfile />
+              </DoctorProfileSetupGuard>
+            } />
             
             {/* Admin Routes */}
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
@@ -130,7 +149,13 @@ const DashboardRedirect = () => {
     case 'patient':
       return <Navigate to="/patient/dashboard" replace />
     case 'doctor':
-      return <Navigate to="/doctor/dashboard" replace />
+      // For doctors, we need to check if profile setup is completed
+      // The DoctorProfileSetupGuard will handle the redirect logic
+      return (
+        <DoctorProfileSetupGuard>
+          <Navigate to="/doctor/dashboard" replace />
+        </DoctorProfileSetupGuard>
+      )
     case 'admin':
       return <Navigate to="/admin/dashboard" replace />
     default:

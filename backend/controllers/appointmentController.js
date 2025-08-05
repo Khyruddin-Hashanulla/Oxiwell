@@ -1,5 +1,6 @@
 const Appointment = require('../models/Appointment');
 const User = require('../models/User');
+const Hospital = require('../models/Hospital');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { validationResult } = require('express-validator');
 
@@ -12,6 +13,16 @@ const getAppointments = asyncHandler(async (req, res, next) => {
   const startIndex = (page - 1) * limit;
 
   let query = {};
+
+  // CRITICAL: Filter by patient for patient users - patients can only see their own appointments
+  if (req.user.role === 'patient') {
+    query.patient = req.user._id;
+  }
+  // For doctors, filter by doctor ID
+  else if (req.user.role === 'doctor') {
+    query.doctor = req.user._id;
+  }
+  // Admin can see all appointments (no additional filter needed)
 
   // Filter by status
   if (req.query.status) {
@@ -27,9 +38,10 @@ const getAppointments = asyncHandler(async (req, res, next) => {
   }
 
   const appointments = await Appointment.find(query)
-    .populate('patient', 'firstName lastName email phone')
-    .populate('doctor', 'firstName lastName specialization')
-    .sort({ appointmentDate: -1 })
+    .populate('patient', 'firstName lastName email phone dateOfBirth bloodGroup')
+    .populate('doctor', 'firstName lastName specialization phone email')
+    .populate('hospital', 'name phone address rating')
+    .sort({ appointmentDate: 1, appointmentTime: 1 })
     .limit(limit * 1)
     .skip(startIndex);
 
@@ -109,6 +121,7 @@ const createAppointment = asyncHandler(async (req, res, next) => {
     // Extract data from request body
     const {
       doctor,
+      hospital,
       appointmentDate,
       appointmentTime,
       duration,
@@ -120,6 +133,7 @@ const createAppointment = asyncHandler(async (req, res, next) => {
 
     console.log('🔍 DEBUG: Appointment data extracted:', {
       doctor,
+      hospital,
       appointmentDate,
       appointmentTime,
       duration,
@@ -130,45 +144,64 @@ const createAppointment = asyncHandler(async (req, res, next) => {
 
     // Verify doctor exists and is active
     console.log('🔍 Checking if doctor exists...');
-    const doctorUser = await User.findOne({ _id: doctor, role: 'doctor', status: 'active' });
+    const doctorUser = await User.findOne({ 
+      _id: doctor, 
+      role: 'doctor', 
+      status: 'active',
+      'workplaces.hospital': hospital 
+    });
+    
     if (!doctorUser) {
-      console.log('❌ Doctor not found:', doctor);
+      console.log('❌ Doctor not found or not available at this hospital:', doctor, hospital);
       return res.status(404).json({
         status: 'error',
-        message: 'Doctor not found or not available'
+        message: 'Doctor not found or not available at this hospital'
       });
     }
 
     console.log('✅ Doctor found:', doctorUser.firstName, doctorUser.lastName);
 
-    // Check if the appointment slot is available
-    console.log('🔍 Checking if time slot is available...');
-    
-    // Simple availability check - just check if slot exists
-    const existingAppointment = await Appointment.findOne({
-      doctor,
-      appointmentDate,
-      appointmentTime,
-      status: { $ne: 'cancelled' }
-    });
-
-    if (existingAppointment) {
-      console.log('❌ Time slot not available - existing appointment found');
-      return res.status(400).json({
+    // Verify hospital exists and is active
+    console.log('🔍 Checking if hospital exists...');
+    const hospitalDoc = await Hospital.findOne({ _id: hospital, status: 'active' });
+    if (!hospitalDoc) {
+      console.log('❌ Hospital not found or not active:', hospital);
+      return res.status(404).json({
         status: 'error',
-        message: 'The selected time slot is not available'
+        message: 'Hospital not found or not active'
       });
     }
 
-    console.log('✅ Time slot available');
+    console.log('✅ Hospital found:', hospitalDoc.name);
 
-    // Check if appointment date is in the future
-    console.log('🔍 Checking if appointment date is valid...');
-    const appointmentDateTime = new Date(appointmentDate);
-    const [hours, minutes] = appointmentTime.split(':');
-    appointmentDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    // Get workplace info for consultation fee
+    const workplace = doctorUser.workplaces.find(wp => wp.hospital.toString() === hospital);
+    if (!workplace) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Doctor does not practice at this hospital'
+      });
+    }
 
-    if (appointmentDateTime <= new Date()) {
+    // Check if the appointment slot is available
+    console.log('🔍 Checking if time slot is available...');
+    
+    const isAvailable = await Appointment.isSlotAvailable(doctor, appointmentDate, appointmentTime, duration || 30);
+    if (!isAvailable) {
+      console.log('❌ Time slot not available');
+      return res.status(409).json({
+        status: 'error',
+        message: 'The selected time slot is not available. Please choose a different time.'
+      });
+    }
+
+    console.log('✅ Time slot is available');
+
+    // Validate appointment date (must be in the future)
+    const appointmentDateTime = new Date(`${appointmentDate}T${appointmentTime}`);
+    const now = new Date();
+    
+    if (appointmentDateTime <= now) {
       console.log('❌ Appointment date is in the past');
       return res.status(400).json({
         status: 'error',
@@ -184,6 +217,7 @@ const createAppointment = asyncHandler(async (req, res, next) => {
     const appointmentData = {
       patient: req.user._id,
       doctor,
+      hospital,
       appointmentDate,
       appointmentTime,
       duration: duration || 30,
@@ -191,28 +225,21 @@ const createAppointment = asyncHandler(async (req, res, next) => {
       reason,
       symptoms: symptoms || [],
       patientNotes: patientNotes || '',
-      consultationFee: doctorUser.consultationFee || 0,
+      consultationFee: workplace.consultationFee,
       status: 'pending'
     };
 
-    console.log('🔍 DEBUG: Appointment data to save:', appointmentData);
+    console.log('🔍 DEBUG: Final appointment data:', appointmentData);
 
-    const appointment = await Appointment.create(appointmentData);
+    const appointment = new Appointment(appointmentData);
+    await appointment.save();
 
-    console.log('✅ Appointment created successfully:', appointment._id);
-    console.log('🔍 DEBUG: Created appointment details:', {
-      _id: appointment._id,
-      patient: appointment.patient,
-      doctor: appointment.doctor,
-      appointmentDate: appointment.appointmentDate,
-      appointmentTime: appointment.appointmentTime,
-      status: appointment.status
-    });
+    console.log('✅ Appointment saved to database with ID:', appointment._id);
 
-    // Verify appointment was actually saved
+    // Verify appointment was saved correctly
     const savedAppointment = await Appointment.findById(appointment._id);
     if (!savedAppointment) {
-      console.log('❌ ERROR: Appointment was not saved to database');
+      console.log('❌ Failed to verify appointment in database');
       return res.status(500).json({
         status: 'error',
         message: 'Failed to save appointment to database'
@@ -221,10 +248,11 @@ const createAppointment = asyncHandler(async (req, res, next) => {
 
     console.log('✅ Appointment verified in database');
 
-    // Populate the appointment with doctor and patient details
+    // Populate the appointment with doctor, patient, and hospital details
     const populatedAppointment = await Appointment.findById(appointment._id)
       .populate('patient', 'firstName lastName email phone')
-      .populate('doctor', 'firstName lastName specialization consultationFee');
+      .populate('doctor', 'firstName lastName specialization consultationFee')
+      .populate('hospital', 'name address phone');
 
     console.log('✅ Appointment populated successfully');
 
@@ -366,16 +394,22 @@ const cancelAppointment = asyncHandler(async (req, res, next) => {
 
   const { cancellationReason } = req.body;
 
-  if (!cancellationReason) {
+  // Handle case where cancellationReason might be passed as a string directly
+  let reason = cancellationReason;
+  if (typeof cancellationReason === 'object' && cancellationReason.cancellationReason) {
+    reason = cancellationReason.cancellationReason;
+  }
+
+  if (!reason || typeof reason !== 'string') {
     return res.status(400).json({
       status: 'error',
-      message: 'Cancellation reason is required'
+      message: 'Cancellation reason is required and must be a string'
     });
   }
 
   appointment.status = 'cancelled';
   appointment.cancelledBy = req.user._id;
-  appointment.cancellationReason = cancellationReason;
+  appointment.cancellationReason = reason;
   appointment.cancelledAt = new Date();
 
   await appointment.save();
@@ -408,6 +442,16 @@ const getPatientAppointments = asyncHandler(async (req, res, next) => {
 
   let query = { patient: patientId };
 
+  // CRITICAL: Filter by patient for patient users - patients can only see their own appointments
+  if (req.user.role === 'patient') {
+    query.patient = req.user._id;
+  }
+  // For doctors, filter by doctor ID
+  else if (req.user.role === 'doctor') {
+    query.doctor = req.user._id;
+  }
+  // Admin can see all appointments (no additional filter needed)
+
   // Filter by status
   if (req.query.status) {
     query.status = req.query.status;
@@ -427,6 +471,7 @@ const getPatientAppointments = asyncHandler(async (req, res, next) => {
 
   const appointments = await Appointment.find(query)
     .populate('doctor', 'firstName lastName specialization consultationFee')
+    .populate('hospital', 'name address phone rating')
     .sort({ appointmentDate: -1 })
     .limit(limit * 1)
     .skip(startIndex);
@@ -464,10 +509,37 @@ const getDoctorAppointments = asyncHandler(async (req, res, next) => {
   const limit = parseInt(req.query.limit, 10) || 10;
   const startIndex = (page - 1) * limit;
 
-  let query = { doctor: doctorId };
+  let query = {};
+
+  // CRITICAL: Role-based access control
+  if (req.user.role === 'patient') {
+    // Patients can only see their own appointments with the specified doctor
+    query = { 
+      doctor: doctorId,
+      patient: req.user._id 
+    };
+  } else if (req.user.role === 'doctor') {
+    // Doctors can only see their own appointments
+    // Ensure the requested doctorId matches the logged-in doctor
+    if (doctorId !== req.user._id.toString()) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Access denied. You can only view your own appointments.'
+      });
+    }
+    query = { doctor: req.user._id };
+  } else if (req.user.role === 'admin') {
+    // Admin can see all appointments for the specified doctor
+    query = { doctor: doctorId };
+  } else {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Access denied. Invalid role.'
+    });
+  }
 
   // Filter by status
-  if (req.query.status) {
+  if (req.query.status && req.query.status !== 'all') {
     query.status = req.query.status;
   }
 
@@ -483,13 +555,19 @@ const getDoctorAppointments = asyncHandler(async (req, res, next) => {
     };
   }
 
+  console.log('🔍 Doctor appointments query:', query);
+
   const appointments = await Appointment.find(query)
     .populate('patient', 'firstName lastName email phone dateOfBirth bloodGroup')
+    .populate('doctor', 'firstName lastName specialization consultationFee')
+    .populate('hospital', 'name address phone rating')
     .sort({ appointmentDate: 1, appointmentTime: 1 })
     .limit(limit * 1)
     .skip(startIndex);
 
   const total = await Appointment.countDocuments(query);
+
+  console.log(`✅ Found ${appointments.length} appointments for doctor ${doctorId}`);
 
   res.status(200).json({
     status: 'success',
@@ -501,7 +579,8 @@ const getDoctorAppointments = asyncHandler(async (req, res, next) => {
       pages: Math.ceil(total / limit)
     },
     data: {
-      appointments
+      appointments,
+      total
     }
   });
 });
@@ -535,7 +614,7 @@ const getAvailableSlots = asyncHandler(async (req, res, next) => {
   // Generate available slots based on doctor's availability
   const availableSlots = [];
   const requestedDate = new Date(date);
-  const dayOfWeek = requestedDate.toLocaleDateString('en-US', { weekday: 'lowercase' });
+  const dayOfWeek = requestedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
 
   // Find doctor's available slots for the day
   const doctorSlots = doctor.availableSlots?.filter(slot => slot.day === dayOfWeek) || [];
@@ -593,20 +672,300 @@ const getAvailableSlots = asyncHandler(async (req, res, next) => {
 
 // @desc    Get available doctors for appointment booking
 // @route   GET /api/appointments/available-doctors
-// @access  Private (Authenticated users)
+// @access  Public
 const getAvailableDoctors = asyncHandler(async (req, res, next) => {
-  // Get all active and verified doctors
-  const doctors = await User.find({
+  const { specialization, gender, location, minRating } = req.query;
+  
+  // Build query for active doctors with available slots
+  let query = {
     role: 'doctor',
     status: 'active',
-    isVerified: true
-  }).select('firstName lastName specialization experience phone location consultationFee');
+    isVerified: true,
+    workplaces: { $exists: true, $not: { $size: 0 } } // Must have at least one workplace
+  };
+
+  // Add filters
+  if (specialization) {
+    query.specialization = new RegExp(specialization, 'i');
+  }
+  
+  if (gender) {
+    query.gender = gender;
+  }
+  
+  if (minRating) {
+    query['rating.average'] = { $gte: parseFloat(minRating) };
+  }
+
+  const doctors = await User.find(query)
+    .populate('workplaces.hospital', 'name address phone type rating')
+    .select('firstName lastName specialization experience gender phone consultationFee rating profileImage workplaces')
+    .sort({ 'rating.average': -1, experience: -1 });
+
+  // Filter by location if specified
+  let filteredDoctors = doctors;
+  if (location) {
+    filteredDoctors = doctors.filter(doctor => 
+      doctor.workplaces.some(workplace => 
+        workplace.hospital.address.city.toLowerCase().includes(location.toLowerCase()) ||
+        workplace.hospital.address.state.toLowerCase().includes(location.toLowerCase())
+      )
+    );
+  }
 
   res.status(200).json({
     status: 'success',
-    results: doctors.length,
+    results: filteredDoctors.length,
     data: {
-      doctors
+      doctors: filteredDoctors
+    }
+  });
+});
+
+// @desc    Get doctor details with workplaces
+// @route   GET /api/appointments/doctor/:doctorId/details
+// @access  Public
+const getDoctorDetails = asyncHandler(async (req, res, next) => {
+  const { doctorId } = req.params;
+
+  const doctor = await User.findOne({
+    _id: doctorId,
+    role: 'doctor',
+    status: 'active',
+    isVerified: true
+  })
+  .populate('workplaces.hospital', 'name address phone type rating operatingHours')
+  .select('firstName lastName specialization experience gender phone consultationFee rating profileImage qualifications workplaces');
+
+  if (!doctor) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Doctor not found or not available'
+    });
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      doctor
+    }
+  });
+});
+
+// @desc    Get available dates for doctor at specific workplace
+// @route   GET /api/appointments/doctor/:doctorId/hospital/:hospitalId/available-dates
+// @access  Public
+const getAvailableDates = asyncHandler(async (req, res, next) => {
+  const { doctorId, hospitalId } = req.params;
+  const { startDate, endDate } = req.query;
+
+  // Verify doctor and hospital
+  const doctor = await User.findOne({
+    _id: doctorId,
+    role: 'doctor',
+    status: 'active',
+    isVerified: true,
+    'workplaces.hospital': hospitalId
+  });
+
+  if (!doctor) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Doctor not found at this hospital'
+    });
+  }
+
+  const hospital = await Hospital.findById(hospitalId);
+  if (!hospital || hospital.status !== 'active') {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Hospital not found or not active'
+    });
+  }
+
+  // Get doctor's workplace info for this hospital
+  const workplace = doctor.workplaces.find(wp => wp.hospital.toString() === hospitalId);
+  if (!workplace || !workplace.availableSlots.length) {
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        availableDates: [],
+        message: 'Doctor has no available slots at this hospital'
+      }
+    });
+  }
+
+  // Generate available dates for the next 30 days (or specified range)
+  const start = startDate ? new Date(startDate) : new Date();
+  const end = endDate ? new Date(endDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  
+  const availableDates = [];
+  const currentDate = new Date(start);
+
+  while (currentDate <= end) {
+    const dayOfWeek = currentDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    
+    // Check if doctor has slots on this day
+    const hasSlots = workplace.availableSlots.some(slot => slot.day === dayOfWeek);
+    
+    // Check if hospital is open on this day
+    const hospitalHours = hospital.operatingHours.find(hours => hours.day === dayOfWeek);
+    const hospitalOpen = hospitalHours && !hospitalHours.is24Hours ? true : hospitalHours?.is24Hours;
+    
+    if (hasSlots && hospitalOpen && currentDate >= new Date().setHours(0, 0, 0, 0)) {
+      availableDates.push({
+        date: currentDate.toISOString().split('T')[0],
+        dayOfWeek,
+        available: true
+      });
+    }
+    
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      availableDates,
+      doctorInfo: {
+        name: doctor.fullName,
+        specialization: doctor.specialization
+      },
+      hospitalInfo: {
+        name: hospital.name,
+        address: hospital.fullAddress
+      }
+    }
+  });
+});
+
+// @desc    Get available time slots for doctor at hospital on specific date
+// @route   GET /api/appointments/doctor/:doctorId/hospital/:hospitalId/available-slots
+// @access  Public
+const getAvailableTimeSlots = asyncHandler(async (req, res, next) => {
+  const { doctorId, hospitalId } = req.params;
+  const { date } = req.query;
+
+  if (!date) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Date is required'
+    });
+  }
+
+  // Verify doctor and hospital
+  const doctor = await User.findOne({
+    _id: doctorId,
+    role: 'doctor',
+    status: 'active',
+    isVerified: true,
+    'workplaces.hospital': hospitalId
+  });
+
+  if (!doctor) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Doctor not found at this hospital'
+    });
+  }
+
+  const hospital = await Hospital.findById(hospitalId);
+  if (!hospital || hospital.status !== 'active') {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Hospital not found or not active'
+    });
+  }
+
+  // Get workplace info
+  const workplace = doctor.workplaces.find(wp => wp.hospital.toString() === hospitalId);
+  if (!workplace) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Doctor does not practice at this hospital'
+    });
+  }
+
+  // Get booked appointments for the date
+  const requestedDate = new Date(date);
+  const startOfDay = new Date(requestedDate.setHours(0, 0, 0, 0));
+  const endOfDay = new Date(requestedDate.setHours(23, 59, 59, 999));
+
+  const bookedAppointments = await Appointment.find({
+    doctor: doctorId,
+    hospital: hospitalId,
+    appointmentDate: {
+      $gte: startOfDay,
+      $lte: endOfDay
+    },
+    status: { $in: ['pending', 'confirmed'] }
+  }).select('appointmentTime duration');
+
+  // Generate available slots
+  const availableSlots = [];
+  const dayOfWeek = requestedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+
+  // Find doctor's available slots for the day at this workplace
+  const doctorSlots = workplace.availableSlots.filter(slot => slot.day === dayOfWeek);
+
+  if (doctorSlots.length === 0) {
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        availableSlots: [],
+        message: 'Doctor is not available on this day at this hospital'
+      }
+    });
+  }
+
+  // Generate time slots (30-minute intervals)
+  doctorSlots.forEach(slot => {
+    const startTime = slot.startTime;
+    const endTime = slot.endTime;
+    
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+    
+    const startMinutes = startHour * 60 + startMinute;
+    const endMinutes = endHour * 60 + endMinute;
+    
+    for (let time = startMinutes; time < endMinutes; time += 30) {
+      const hour = Math.floor(time / 60);
+      const minute = time % 60;
+      const timeSlot = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      
+      // Check if slot is not booked
+      const isBooked = bookedAppointments.some(booked => {
+        const [bookedHour, bookedMinute] = booked.appointmentTime.split(':').map(Number);
+        const bookedStart = bookedHour * 60 + bookedMinute;
+        const bookedEnd = bookedStart + (booked.duration || 30);
+        
+        return time < bookedEnd && (time + 30) > bookedStart;
+      });
+      
+      if (!isBooked) {
+        availableSlots.push({
+          time: timeSlot,
+          available: true,
+          consultationFee: workplace.consultationFee
+        });
+      }
+    }
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      availableSlots,
+      doctorInfo: {
+        name: doctor.fullName,
+        specialization: doctor.specialization
+      },
+      hospitalInfo: {
+        name: hospital.name,
+        address: hospital.fullAddress
+      },
+      consultationFee: workplace.consultationFee
     }
   });
 });
@@ -620,5 +979,8 @@ module.exports = {
   getPatientAppointments,
   getDoctorAppointments,
   getAvailableSlots,
-  getAvailableDoctors
+  getAvailableDoctors,
+  getDoctorDetails,
+  getAvailableDates,
+  getAvailableTimeSlots
 };
