@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { useForm, useFieldArray } from 'react-hook-form'
 import { useAuth } from '../../contexts/AuthContext'
 import { doctorsAPI } from '../../services/api'
 import { toast } from 'react-hot-toast'
@@ -19,31 +18,64 @@ import {
   ArrowLeft,
   Plus,
   Trash2,
-  Building,
-  Award
+  Building2,
+  Award,
+  Globe,
+  Camera,
+  Heart,
+  Shield,
+  Users
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 const DoctorProfile = () => {
   const navigate = useNavigate()
-  const { user, updateProfile } = useAuth()
+  const { user, updateUser } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [profileData, setProfileData] = useState(null)
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-    setValue,
-    control
-  } = useForm()
-
-  const { fields, append, prepend, remove, swap, move, insert } = useFieldArray({
-    control, // control props comes from useForm (optional: if you are using FormContext)
-    name: "workplaces", // unique name for your Field Array
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    dateOfBirth: '',
+    gender: '',
+    specialization: '',
+    licenseNumber: '',
+    medicalRegistrationNumber: '',
+    experience: '',
+    professionalBio: '',
+    profileImage: '',
+    profileImageFile: null,
+    languages: [],
+    servicesProvided: [],
+    onlineConsultationAvailable: true,
+    offlineConsultationAvailable: true,
+    workplaces: [],
+    qualifications: [],
+    emergencyContact: {
+      name: '',
+      relationship: '',
+      phone: '',
+      email: ''
+    },
+    address: {
+      street: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: 'India'
+    }
   })
+  const [errors, setErrors] = useState({})
+
+  const servicesOptions = [
+    'General Consultation', 'Vaccination', 'Health Checkup', 'Emergency Care',
+    'Diagnostic Tests', 'Prescription Refill', 'Follow-up Consultation',
+    'Specialist Referral', 'Medical Certificates', 'Chronic Disease Management',
+    'Preventive Care', 'Mental Health Support'
+  ]
 
   // Load doctor profile data
   useEffect(() => {
@@ -57,41 +89,40 @@ const DoctorProfile = () => {
           setProfileData(doctor)
           
           // Pre-fill form with current data
-          reset({
+          setFormData({
             firstName: doctor.firstName || '',
             lastName: doctor.lastName || '',
             email: doctor.email || '',
             phone: doctor.phone || '',
             dateOfBirth: doctor.dateOfBirth ? new Date(doctor.dateOfBirth).toISOString().split('T')[0] : '',
             gender: doctor.gender || '',
-            address: typeof doctor.address === 'string' 
-              ? doctor.address 
-              : doctor.address 
-                ? `${doctor.address.street || ''} ${doctor.address.city || ''} ${doctor.address.state || ''} ${doctor.address.country || ''}`.trim()
-                : '',
             specialization: doctor.specialization || '',
+            licenseNumber: doctor.licenseNumber || '',
+            medicalRegistrationNumber: doctor.medicalRegistrationNumber || '',
             experience: doctor.experience?.toString() || '',
-            qualifications: doctor.qualifications?.map(q => `${q.degree} from ${q.institution} (${q.year})`).join(', ') || '',
-            consultationFee: doctor.consultationFee?.toString() || '',
-            bio: doctor.bio || '',
-            availableHours: doctor.availableHours || '',
-            location: doctor.location || '',
-            licenseNumber: doctor.licenseNumber || '', // Added missing license number field
-            workplaces: doctor.workplaces || []
+            professionalBio: doctor.professionalBio || doctor.bio || '',
+            profileImage: doctor.profileImage || '',
+            profileImageFile: null,
+            languages: doctor.languages || ['English'],
+            servicesProvided: doctor.servicesProvided || [],
+            onlineConsultationAvailable: doctor.onlineConsultationAvailable !== false,
+            offlineConsultationAvailable: doctor.offlineConsultationAvailable !== false,
+            workplaces: doctor.workplaces || [],
+            qualifications: doctor.qualifications || [],
+            emergencyContact: {
+              name: doctor.emergencyContact?.name || '',
+              relationship: doctor.emergencyContact?.relationship || '',
+              phone: doctor.emergencyContact?.phone || '',
+              email: doctor.emergencyContact?.email || ''
+            },
+            address: {
+              street: doctor.address?.street || '',
+              city: doctor.address?.city || '',
+              state: doctor.address?.state || '',
+              zipCode: doctor.address?.zipCode || '',
+              country: doctor.address?.country || 'India'
+            }
           })
-
-          // Initialize workplaces field array
-          if (doctor.workplaces && doctor.workplaces.length > 0) {
-            doctor.workplaces.forEach((workplace, index) => {
-              if (index === 0) {
-                // Replace the first field
-                setValue(`workplaces.0`, workplace)
-              } else {
-                // Append additional workplaces
-                append(workplace)
-              }
-            })
-          }
         }
       } catch (error) {
         console.error('Error loading profile:', error)
@@ -104,155 +135,125 @@ const DoctorProfile = () => {
     if (user?._id) {
       loadProfile()
     }
-  }, [user, reset])
+  }, [user])
 
-  // Function to handle edit mode toggle and ensure form is properly populated
-  const handleEditToggle = () => {
-    if (!isEditing && profileData) {
-      // When entering edit mode, re-populate the form with current data
-      reset({
-        firstName: profileData.firstName || '',
-        lastName: profileData.lastName || '',
-        email: profileData.email || '',
-        phone: profileData.phone || '',
-        dateOfBirth: profileData.dateOfBirth ? new Date(profileData.dateOfBirth).toISOString().split('T')[0] : '',
-        gender: profileData.gender || '',
-        address: typeof profileData.address === 'string' 
-          ? profileData.address 
-          : profileData.address 
-            ? `${profileData.address.street || ''} ${profileData.address.city || ''} ${profileData.address.state || ''} ${profileData.address.country || ''}`.trim()
-            : '',
-        specialization: profileData.specialization || '',
-        experience: profileData.experience?.toString() || '',
-        qualifications: profileData.qualifications?.map(q => `${q.degree} from ${q.institution} (${q.year})`).join(', ') || '',
-        consultationFee: profileData.consultationFee?.toString() || '',
-        bio: profileData.bio || '',
-        availableHours: profileData.availableHours || '',
-        location: profileData.location || '',
-        licenseNumber: profileData.licenseNumber || '', // Added missing license number field
-        workplaces: profileData.workplaces || []
-      })
-    }
-    setIsEditing(!isEditing)
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
   }
 
-  const onSubmit = async (data) => {
+  const handleNestedInputChange = (parent, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [parent]: {
+        ...prev[parent],
+        [field]: value
+      }
+    }))
+  }
+
+  const handleArrayNestedInputChange = (field, index, nestedField, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: prev[field].map((item, i) => 
+        i === index ? { ...item, [nestedField]: value } : item
+      )
+    }))
+  }
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast.error('Image size should be less than 5MB')
+        return
+      }
+      
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setFormData(prev => ({
+          ...prev,
+          profileImage: e.target.result,
+          profileImageFile: file
+        }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const validateForm = () => {
+    const newErrors = {}
+    
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required'
+    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required'
+    if (!formData.phone.trim()) newErrors.phone = 'Phone is required'
+    if (!formData.specialization) newErrors.specialization = 'Specialization is required'
+    if (!formData.licenseNumber.trim()) newErrors.licenseNumber = 'License number is required'
+    if (!formData.professionalBio.trim()) newErrors.professionalBio = 'Professional bio is required'
+    
+    if (formData.qualifications.length === 0) {
+      newErrors.qualifications = 'At least one qualification is required'
+    }
+    
+    if (formData.workplaces.length === 0) {
+      newErrors.workplaces = 'At least one workplace is required'
+    }
+    
+    if (formData.servicesProvided.length === 0) {
+      newErrors.servicesProvided = 'At least one service must be selected'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
     try {
       setIsLoading(true)
-      
-      // Validate required fields before sending
-      if (!data.firstName || data.firstName.trim().length < 2) {
-        toast.error('First name must be at least 2 characters')
-        setIsLoading(false)
-        return
-      }
-      if (!data.lastName || data.lastName.trim().length < 2) {
-        toast.error('Last name must be at least 2 characters')
-        setIsLoading(false)
-        return
-      }
-      if (!data.specialization || data.specialization.trim().length < 2) {
-        toast.error('Please select a specialization')
-        setIsLoading(false)
-        return
-      }
-      
-      // Format data for backend
-      const updateData = {
-        firstName: data.firstName.trim(),
-        lastName: data.lastName.trim(),
-        email: data.email.trim(),
-        phone: data.phone ? data.phone.trim() : undefined, // Only send if provided
-        specialization: data.specialization.trim(),
-        experience: data.experience ? parseInt(data.experience) : 0,
-        consultationFee: data.consultationFee ? parseFloat(data.consultationFee) : 0,
-        bio: data.bio ? data.bio.trim() : '',
-        availableHours: data.availableHours ? data.availableHours.trim() : '',
-        location: data.location ? data.location.trim() : '',
-        address: data.address ? data.address.trim() : '', // Added missing address field
-        licenseNumber: data.licenseNumber ? data.licenseNumber.trim() : '', // Added missing license number field
-        // Convert qualifications from comma-separated string to array of objects
-        qualifications: data.qualifications 
-          ? data.qualifications.split(',').map(item => {
-              const trimmed = item.trim()
-              if (!trimmed) return null
-              
-              // Try to parse format like "MBBS from XYZ University (2020)"
-              const match = trimmed.match(/^(.+?)\s+from\s+(.+?)\s*\((\d{4})\)$/)
-              if (match) {
-                return {
-                  degree: match[1].trim(),
-                  institution: match[2].trim(),
-                  year: parseInt(match[3])
-                }
-              } else {
-                // Fallback for simple format
-                return {
-                  degree: trimmed,
-                  institution: 'Not specified',
-                  year: new Date().getFullYear()
-                }
-              }
-            }).filter(item => item !== null)
-          : [],
-        // Convert workplaces to availableSlots format for backend compatibility
-        availableSlots: data.workplaces && data.workplaces.length > 0 
-          ? data.workplaces.flatMap(workplace => 
-              workplace.schedule ? workplace.schedule
-                .filter(slot => slot.isAvailable && slot.startTime && slot.endTime)
-                .map(slot => ({
-                  day: slot.day.toLowerCase(),
-                  startTime: slot.startTime,
-                  endTime: slot.endTime,
-                  location: workplace.name || 'Main clinic'
-                }))
-              : []
-            )
-          : []
-      }
 
-      // Remove only undefined fields, keep empty strings as they represent intentional clearing
-      Object.keys(updateData).forEach(key => {
-        if (updateData[key] === undefined) {
-          delete updateData[key]
+      // Create FormData for file upload
+      const submitData = new FormData()
+
+      // Add all form fields to FormData
+      Object.keys(formData).forEach(key => {
+        if (key === 'profileImage' && formData[key] instanceof File) {
+          submitData.append('profileImage', formData[key])
+        } else if (typeof formData[key] === 'object' && formData[key] !== null) {
+          submitData.append(key, JSON.stringify(formData[key]))
+        } else if (formData[key] !== null && formData[key] !== undefined) {
+          submitData.append(key, formData[key])
         }
       })
 
-      console.log('🔍 Doctor profile update data:', updateData)
-      console.log('🔍 Location being sent:', updateData.location)
-      console.log('🔍 Address being sent:', updateData.address)
-      console.log('🔍 Bio being sent:', updateData.bio)
-      console.log('🔍 Available hours being sent:', updateData.availableHours)
-
-      console.log('Sending data to backend:', updateData)
-
-      const response = await doctorsAPI.updateDoctorProfile(updateData)
+      console.log(' Submitting profile update data...')
       
-      if (response.data.status === 'success') {
-        toast.success('Profile updated successfully!')
-        setIsEditing(false)
-        
-        // Update auth context with new data
-        if (updateProfile) {
-          await updateProfile(response.data.data.doctor)
-        }
-        
-        // Reload profile data
-        setProfileData(response.data.data.doctor)
-      } else {
-        toast.error(response.data.message || 'Failed to update profile')
+      // Use updateProfile instead of completeProfileSetup
+      const response = await doctorsAPI.updateProfile(submitData)
+      
+      console.log(' Profile update response:', response.data)
+
+      toast.success('Profile updated successfully!')
+      setIsEditing(false)
+      
+      // Refresh profile data
+      const response2 = await doctorsAPI.getDoctor(user._id)
+      if (response2.data.status === 'success') {
+        setProfileData(response2.data.data.doctor)
+        await updateUser()
       }
+      
     } catch (error) {
-      console.error('Error updating profile:', error)
-      console.error('Error details:', error.response?.data)
-      
-      // Show specific validation errors if available
-      if (error.response?.data?.errors && Array.isArray(error.response.data.errors)) {
-        const errorMessages = error.response.data.errors.map(err => err.msg || err.message).join(', ')
-        toast.error(`Validation failed: ${errorMessages}`)
-      } else {
-        toast.error(error.response?.data?.message || 'Failed to update profile')
-      }
+      console.error(' Profile update error:', error)
+      const errorMessage = error.response?.data?.message || 'Failed to update profile'
+      toast.error(errorMessage)
+      setErrors({ submit: errorMessage })
     } finally {
       setIsLoading(false)
     }
@@ -260,154 +261,172 @@ const DoctorProfile = () => {
 
   if (isLoading && !profileData) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-accent-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading profile...</div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
           <button
             onClick={() => navigate('/doctor/dashboard')}
-            className="p-2 text-gray-400 hover:text-white hover:bg-primary-700 rounded-lg transition-colors"
+            className="flex items-center text-white hover:text-green-400 transition-colors"
           >
-            <ArrowLeft className="w-6 h-6" />
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Back to Dashboard
           </button>
-          <div>
-            <h1 className="text-3xl font-bold text-white">My Profile</h1>
-            <p className="mt-2 text-gray-300">Manage your professional information</p>
+          
+          <div className="flex items-center space-x-4">
+            {!isEditing ? (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Profile
+              </button>
+            ) : (
+              <div className="flex space-x-2">
+                <button
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {isLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
         </div>
-        <div className="flex space-x-3">
-          {!isEditing ? (
-            <button
-              onClick={handleEditToggle}
-              className="flex items-center px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit Profile
-            </button>
-          ) : (
-            <div className="flex space-x-2">
-              <button
-                onClick={handleEditToggle}
-                className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-              >
-                <X className="w-4 h-4 mr-2" />
-                Cancel
-              </button>
-              <button
-                onClick={handleSubmit(onSubmit)}
-                disabled={isLoading}
-                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                {isLoading ? 'Saving...' : 'Save Changes'}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Profile Form */}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-8 border border-primary-600">
-          {/* Basic Information */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
+        {/* Profile Content */}
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 space-y-8">
+          {/* Profile Header */}
+          <div className="text-center">
+            <div className="relative inline-block">
+              <div className="w-32 h-32 rounded-full bg-gradient-to-r from-green-400 to-blue-500 p-1">
+                <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+                  {formData.profileImage ? (
+                    <img
+                      src={formData.profileImage}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-16 h-16 text-gray-400" />
+                  )}
+                </div>
+              </div>
+              {isEditing && (
+                <label className="absolute bottom-0 right-0 bg-green-600 text-white p-2 rounded-full cursor-pointer hover:bg-green-700 transition-colors">
+                  <Camera className="w-4 h-4" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
+            <h1 className="text-3xl font-bold text-white mt-4">
+              Dr. {profileData?.firstName} {profileData?.lastName}
+            </h1>
+            <p className="text-green-400 text-lg">{profileData?.specialization}</p>
+          </div>
+
+          {/* Personal Information Section */}
+          <div className="bg-white/5 rounded-xl p-6">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center">
               <User className="w-5 h-5 mr-2" />
-              Basic Information
+              Personal Information
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">First Name</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">First Name *</label>
                 {isEditing ? (
                   <input
-                    {...register('firstName', { required: 'First name is required' })}
-                    className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+                    type="text"
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
                     placeholder="Enter first name"
                   />
                 ) : (
-                  <div className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white">
-                    {profileData?.firstName || 'Not provided'}
-                  </div>
+                  <p className="text-white">{profileData?.firstName || 'Not provided'}</p>
                 )}
-                {errors.firstName && <p className="mt-1 text-sm text-red-400">{errors.firstName.message}</p>}
+                {errors.firstName && <p className="text-red-400 text-sm mt-1">{errors.firstName}</p>}
               </div>
-
+              
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Last Name</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Last Name *</label>
                 {isEditing ? (
                   <input
-                    {...register('lastName', { required: 'Last name is required' })}
-                    className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+                    type="text"
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
                     placeholder="Enter last name"
                   />
                 ) : (
-                  <div className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white">
-                    {profileData?.lastName || 'Not provided'}
-                  </div>
+                  <p className="text-white">{profileData?.lastName || 'Not provided'}</p>
                 )}
-                {errors.lastName && <p className="mt-1 text-sm text-red-400">{errors.lastName.message}</p>}
+                {errors.lastName && <p className="text-red-400 text-sm mt-1">{errors.lastName}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
-                {isEditing ? (
-                  <input
-                    {...register('email', { 
-                      required: 'Email is required',
-                      pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'Invalid email address'
-                      }
-                    })}
-                    type="email"
-                    className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-                    placeholder="Enter email address"
-                  />
-                ) : (
-                  <div className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white flex items-center">
-                    <Mail className="w-4 h-4 mr-2 text-gray-400" />
-                    {profileData?.email || 'Not provided'}
-                  </div>
-                )}
-                {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email.message}</p>}
+                <p className="text-white flex items-center">
+                  <Mail className="w-4 h-4 mr-2" />
+                  {profileData?.email}
+                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Phone</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Phone *</label>
                 {isEditing ? (
                   <input
-                    {...register('phone')}
                     type="tel"
-                    className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
                     placeholder="Enter phone number"
                   />
                 ) : (
-                  <div className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white">
+                  <p className="text-white flex items-center">
+                    <Phone className="w-4 h-4 mr-2" />
                     {profileData?.phone || 'Not provided'}
-                  </div>
+                  </p>
                 )}
+                {errors.phone && <p className="text-red-400 text-sm mt-1">{errors.phone}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">Date of Birth</label>
                 {isEditing ? (
                   <input
-                    {...register('dateOfBirth')}
                     type="date"
-                    className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+                    value={formData.dateOfBirth}
+                    onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white"
                   />
                 ) : (
-                  <div className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white flex items-center">
-                    <Calendar className="w-4 h-4 mr-2 text-gray-400" />
+                  <p className="text-white flex items-center">
+                    <Calendar className="w-4 h-4 mr-2" />
                     {profileData?.dateOfBirth ? new Date(profileData.dateOfBirth).toLocaleDateString() : 'Not provided'}
-                  </div>
+                  </p>
                 )}
               </div>
 
@@ -415,8 +434,9 @@ const DoctorProfile = () => {
                 <label className="block text-sm font-medium text-gray-300 mb-2">Gender</label>
                 {isEditing ? (
                   <select
-                    {...register('gender')}
-                    className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+                    value={formData.gender}
+                    onChange={(e) => handleInputChange('gender', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white"
                   >
                     <option value="">Select gender</option>
                     <option value="male">Male</option>
@@ -424,396 +444,595 @@ const DoctorProfile = () => {
                     <option value="other">Other</option>
                   </select>
                 ) : (
-                  <div className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white">
-                    {profileData?.gender || 'Not provided'}
-                  </div>
+                  <p className="text-white capitalize">{profileData?.gender || 'Not provided'}</p>
                 )}
               </div>
             </div>
           </div>
 
           {/* Professional Information */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
+          <div className="bg-white/5 rounded-xl p-6">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center">
               <Stethoscope className="w-5 h-5 mr-2" />
               Professional Information
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Specialization</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Specialization *</label>
                 {isEditing ? (
                   <select
-                    {...register('specialization', { required: 'Specialization is required' })}
-                    className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+                    value={formData.specialization}
+                    onChange={(e) => handleInputChange('specialization', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white"
                   >
-                    <option value="">Select Specialization</option>
+                    <option value="">Select specialization</option>
                     <option value="General Medicine">General Medicine</option>
                     <option value="Cardiology">Cardiology</option>
                     <option value="Dermatology">Dermatology</option>
-                    <option value="Endocrinology">Endocrinology</option>
-                    <option value="Gastroenterology">Gastroenterology</option>
-                    <option value="Gynecology">Gynecology</option>
-                    <option value="Neurology">Neurology</option>
-                    <option value="Oncology">Oncology</option>
-                    <option value="Ophthalmology">Ophthalmology</option>
-                    <option value="Orthopedics">Orthopedics</option>
-                    <option value="Otolaryngology (ENT)">Otolaryngology (ENT)</option>
                     <option value="Pediatrics">Pediatrics</option>
+                    <option value="Orthopedics">Orthopedics</option>
+                    <option value="Neurology">Neurology</option>
                     <option value="Psychiatry">Psychiatry</option>
-                    <option value="Pulmonology">Pulmonology</option>
-                    <option value="Radiology">Radiology</option>
-                    <option value="Rheumatology">Rheumatology</option>
-                    <option value="Surgery">Surgery</option>
-                    <option value="Urology">Urology</option>
-                    <option value="Emergency Medicine">Emergency Medicine</option>
-                    <option value="Family Medicine">Family Medicine</option>
-                    <option value="Internal Medicine">Internal Medicine</option>
-                    <option value="Anesthesiology">Anesthesiology</option>
-                    <option value="Pathology">Pathology</option>
-                    <option value="Other">Other</option>
+                    <option value="Gynecology">Gynecology</option>
+                    <option value="ENT">ENT</option>
+                    <option value="Ophthalmology">Ophthalmology</option>
                   </select>
                 ) : (
-                  <div className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white flex items-center">
-                    <Stethoscope className="w-4 h-4 mr-2 text-gray-400" />
-                    {profileData?.specialization || 'Not specified'}
-                  </div>
+                  <p className="text-white">{profileData?.specialization || 'Not provided'}</p>
                 )}
-                {errors.specialization && (
-                  <p className="mt-1 text-sm text-red-400">{errors.specialization.message}</p>
-                )}
+                {errors.specialization && <p className="text-red-400 text-sm mt-1">{errors.specialization}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Experience (years)</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">License Number *</label>
                 {isEditing ? (
                   <input
-                    {...register('experience')}
-                    type="number"
-                    className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-                    placeholder="Enter years of experience"
-                  />
-                ) : (
-                  <div className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white flex items-center">
-                    <Award className="w-4 h-4 mr-2 text-gray-400" />
-                    {profileData?.experience ? `${profileData.experience} years` : 'Not provided'}
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">License Number</label>
-                {isEditing ? (
-                  <input
-                    {...register('licenseNumber')}
-                    className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+                    type="text"
+                    value={formData.licenseNumber}
+                    onChange={(e) => handleInputChange('licenseNumber', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
                     placeholder="Enter license number"
                   />
                 ) : (
-                  <div className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white">
-                    {profileData?.licenseNumber || 'Not provided'}
-                  </div>
+                  <p className="text-white">{profileData?.licenseNumber || 'Not provided'}</p>
+                )}
+                {errors.licenseNumber && <p className="text-red-400 text-sm mt-1">{errors.licenseNumber}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Medical Registration Number</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={formData.medicalRegistrationNumber}
+                    onChange={(e) => handleInputChange('medicalRegistrationNumber', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                    placeholder="Enter registration number"
+                  />
+                ) : (
+                  <p className="text-white">{profileData?.medicalRegistrationNumber || 'Not provided'}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Consultation Fee</label>
-                {isEditing ? (
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">₹</span>
-                    <input
-                      {...register('consultationFee', { 
-                        required: 'Consultation fee is required',
-                        min: { value: 0, message: 'Fee must be positive' }
-                      })}
-                      type="number"
-                      min="0"
-                      step="50"
-                      className="w-full pl-8 pr-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-                      placeholder="Enter consultation fee"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white flex items-center">
-                    <DollarSign className="w-4 h-4 mr-2 text-gray-400" />
-                    ₹{profileData?.consultationFee ? Number(profileData.consultationFee).toLocaleString('en-IN') : '0'}
-                  </div>
-                )}
-                {errors.consultationFee && (
-                  <p className="mt-1 text-sm text-red-400">{errors.consultationFee.message}</p>
-                )}
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-300 mb-2">Qualifications</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Experience (Years)</label>
                 {isEditing ? (
                   <input
-                    {...register('qualifications')}
-                    className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-                    placeholder="Enter qualifications (comma separated)"
+                    type="number"
+                    value={formData.experience}
+                    onChange={(e) => handleInputChange('experience', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                    placeholder="Enter years of experience"
+                    min="0"
                   />
                 ) : (
-                  <div className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white">
-                    {profileData?.qualifications?.map(item => item.degree || item).join(', ') || 'Not provided'}
-                  </div>
-                )}
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-300 mb-2">Bio</label>
-                {isEditing ? (
-                  <textarea
-                    {...register('bio')}
-                    rows={4}
-                    className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-                    placeholder="Enter professional bio"
-                  />
-                ) : (
-                  <div className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white min-h-[100px]">
-                    {profileData?.bio || 'Not provided'}
-                  </div>
+                  <p className="text-white">{profileData?.experience ? `${profileData.experience} years` : 'Not provided'}</p>
                 )}
               </div>
             </div>
-          </div>
 
-          {/* Contact & Availability */}
-          <div>
-            <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
-              <MapPin className="w-5 h-5 mr-2" />
-              Contact & Availability
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Address</label>
-                {isEditing ? (
-                  <textarea
-                    {...register('address')}
-                    rows={3}
-                    className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-                    placeholder="Enter address"
-                  />
-                ) : (
-                  <div className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white min-h-[84px]">
-                    {profileData?.address 
-                      ? typeof profileData.address === 'string' 
-                        ? profileData.address 
-                        : `${profileData.address.street || ''} ${profileData.address.city || ''} ${profileData.address.state || ''} ${profileData.address.country || ''}`.trim() || 'Not provided'
-                      : 'Not provided'
-                    }
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Office Location</label>
-                {isEditing ? (
-                  <input
-                    {...register('location')}
-                    className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-                    placeholder="Enter office location"
-                  />
-                ) : (
-                  <div className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white">
-                    {profileData?.location || 'Not provided'}
-                  </div>
-                )}
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-300 mb-2">Available Hours</label>
-                {isEditing ? (
-                  <input
-                    {...register('availableHours')}
-                    className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-                    placeholder="e.g., Mon-Fri 9:00 AM - 5:00 PM"
-                  />
-                ) : (
-                  <div className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white flex items-center">
-                    <Clock className="w-4 h-4 mr-2 text-gray-400" />
-                    {profileData?.availableHours || 'Not provided'}
-                  </div>
-                )}
-              </div>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-300 mb-2">Professional Bio *</label>
+              {isEditing ? (
+                <textarea
+                  value={formData.professionalBio}
+                  onChange={(e) => handleInputChange('professionalBio', e.target.value)}
+                  className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                  placeholder="Tell us about your professional background and expertise..."
+                  rows="4"
+                />
+              ) : (
+                <p className="text-white">{profileData?.professionalBio || profileData?.bio || 'Not provided'}</p>
+              )}
+              {errors.professionalBio && <p className="text-red-400 text-sm mt-1">{errors.professionalBio}</p>}
             </div>
           </div>
 
-          {/* Workplace & Schedule Management Section */}
-          <div className="bg-primary-800 rounded-lg p-6 border border-primary-700">
-            <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
-              <Building className="w-5 h-5 mr-2" />
-              Workplace & Schedule Management
+          {/* Qualifications */}
+          <div className="bg-white/5 rounded-xl p-6">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+              <GraduationCap className="w-5 h-5 mr-2" />
+              Qualifications *
             </h2>
-            
-            {isEditing && (
-              <div className="mb-4">
+            {isEditing ? (
+              <div className="space-y-4">
+                {formData.qualifications.map((qualification, index) => (
+                  <div key={index} className="border border-gray-600 rounded-lg p-4 bg-white/5">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <input
+                        type="text"
+                        value={qualification.degree || ''}
+                        onChange={(e) => handleArrayNestedInputChange('qualifications', index, 'degree', e.target.value)}
+                        className="w-full px-3 py-2 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                        placeholder="e.g., MBBS, MD, MS"
+                      />
+                      <input
+                        type="text"
+                        value={qualification.institution || ''}
+                        onChange={(e) => handleArrayNestedInputChange('qualifications', index, 'institution', e.target.value)}
+                        className="w-full px-3 py-2 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                        placeholder="e.g., AIIMS, Medical College"
+                      />
+                      <div className="flex space-x-2">
+                        <input
+                          type="number"
+                          value={qualification.year || ''}
+                          onChange={(e) => handleArrayNestedInputChange('qualifications', index, 'year', e.target.value)}
+                          className="flex-1 px-3 py-2 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                          placeholder="Year"
+                          min="1950"
+                          max={new Date().getFullYear()}
+                        />
+                        {formData.qualifications.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newQualifications = formData.qualifications.filter((_, i) => i !== index)
+                              handleInputChange('qualifications', newQualifications)
+                            }}
+                            className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
                 <button
                   type="button"
-                  onClick={() => append({
-                    name: '',
-                    address: '',
-                    phone: '',
-                    schedule: [
-                      { day: 'Monday', startTime: '', endTime: '', isAvailable: false },
-                      { day: 'Tuesday', startTime: '', endTime: '', isAvailable: false },
-                      { day: 'Wednesday', startTime: '', endTime: '', isAvailable: false },
-                      { day: 'Thursday', startTime: '', endTime: '', isAvailable: false },
-                      { day: 'Friday', startTime: '', endTime: '', isAvailable: false },
-                      { day: 'Saturday', startTime: '', endTime: '', isAvailable: false },
-                      { day: 'Sunday', startTime: '', endTime: '', isAvailable: false }
-                    ]
-                  })}
-                  className="flex items-center px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors"
+                  onClick={() => {
+                    const newQualifications = [...formData.qualifications, { degree: '', institution: '', year: '' }]
+                    handleInputChange('qualifications', newQualifications)
+                  }}
+                  className="w-full py-2 border-2 border-dashed border-gray-600 rounded-lg text-gray-300 hover:border-green-500 hover:text-green-400"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Workplace
+                  + Add Qualification
                 </button>
               </div>
+            ) : (
+              <div className="space-y-2">
+                {profileData?.qualifications?.length > 0 ? (
+                  profileData.qualifications.map((qualification, index) => (
+                    <div key={index} className="text-white">
+                      <span className="font-medium">{qualification.degree}</span> from{' '}
+                      <span className="text-green-400">{qualification.institution}</span> ({qualification.year})
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-400">No qualifications added</p>
+                )}
+              </div>
             )}
+            {errors.qualifications && <p className="text-red-400 text-sm mt-1">{errors.qualifications}</p>}
+          </div>
 
-            <div className="space-y-6">
-              {fields.length === 0 && !isEditing && (
-                <div className="text-center py-8 text-gray-400">
-                  <Building className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No workplaces added yet</p>
-                </div>
-              )}
+          {/* Services Provided */}
+          <div className="bg-white/5 rounded-xl p-6">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+              <Heart className="w-5 h-5 mr-2" />
+              Services Provided *
+            </h2>
+            {isEditing ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {servicesOptions.map(service => (
+                  <label
+                    key={service}
+                    className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
+                      formData.servicesProvided.includes(service)
+                        ? 'border-green-500 bg-green-500/20 text-green-300'
+                        : 'border-gray-600 bg-white/5 hover:border-green-400'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.servicesProvided.includes(service)}
+                      onChange={(e) => {
+                        const updatedServices = e.target.checked
+                          ? [...formData.servicesProvided, service]
+                          : formData.servicesProvided.filter(s => s !== service)
+                        handleInputChange('servicesProvided', updatedServices)
+                      }}
+                      className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mr-3"
+                    />
+                    <span className="text-sm font-medium text-white">{service}</span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {profileData?.servicesProvided?.length > 0 ? (
+                  profileData.servicesProvided.map((service, index) => (
+                    <span
+                      key={index}
+                      className="px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-sm"
+                    >
+                      {service}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-gray-400">No services selected</p>
+                )}
+              </div>
+            )}
+            {errors.servicesProvided && <p className="text-red-400 text-sm mt-1">{errors.servicesProvided}</p>}
+          </div>
 
-              {fields.map((field, index) => (
-                <div key={field.id} className="bg-primary-700 rounded-lg p-4 border border-primary-600">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium text-white">
-                      Workplace {index + 1}
-                    </h3>
-                    {isEditing && (
+          {/* Consultation Options */}
+          <div className="bg-white/5 rounded-xl p-6">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+              <Globe className="w-5 h-5 mr-2" />
+              Consultation Options
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Online Consultation</label>
+                {isEditing ? (
+                  <select
+                    value={formData.onlineConsultationAvailable}
+                    onChange={(e) => handleInputChange('onlineConsultationAvailable', e.target.value === 'true')}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white"
+                  >
+                    <option value="true">Available</option>
+                    <option value="false">Not Available</option>
+                  </select>
+                ) : (
+                  <p className="text-white">
+                    {profileData?.onlineConsultationAvailable !== false ? 'Available' : 'Not Available'}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Offline Consultation</label>
+                {isEditing ? (
+                  <select
+                    value={formData.offlineConsultationAvailable}
+                    onChange={(e) => handleInputChange('offlineConsultationAvailable', e.target.value === 'true')}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white"
+                  >
+                    <option value="true">Available</option>
+                    <option value="false">Not Available</option>
+                  </select>
+                ) : (
+                  <p className="text-white">
+                    {profileData?.offlineConsultationAvailable !== false ? 'Available' : 'Not Available'}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Workplaces */}
+          <div className="bg-white/5 rounded-xl p-6">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+              <Building2 className="w-5 h-5 mr-2" />
+              Workplaces & Availability *
+            </h2>
+            {isEditing ? (
+              <div className="space-y-4">
+                {formData.workplaces.map((workplace, index) => (
+                  <div key={index} className="border border-gray-600 rounded-lg p-6 bg-white/5 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Hospital *</label>
+                        <input
+                          type="text"
+                          value={workplace?.hospital || ''}
+                          onChange={(e) => handleArrayNestedInputChange('workplaces', index, 'hospital', e.target.value)}
+                          className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                          placeholder="e.g., Apollo Hospital"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Consultation Fee *</label>
+                        <input
+                          type="number"
+                          value={workplace?.consultationFee || ''}
+                          onChange={(e) => handleArrayNestedInputChange('workplaces', index, 'consultationFee', e.target.value)}
+                          className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                          placeholder="e.g., 500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Available Days and Time Slots */}
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-300 mb-3">Available Days & Working Hours</label>
+                      <div className="space-y-3">
+                        {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
+                          const daySlot = workplace?.availableSlots?.find(slot => slot.day === day) || { day, startTime: '09:00', endTime: '17:00', isAvailable: false }
+                          return (
+                            <div key={day} className="flex items-center space-x-4 p-3 bg-white/10 rounded-lg border border-gray-600">
+                              <div className="flex items-center min-w-[120px]">
+                                <input
+                                  type="checkbox"
+                                  checked={daySlot.isAvailable}
+                                  onChange={(e) => {
+                                    const newSlots = workplace?.availableSlots ? [...workplace.availableSlots] : []
+                                    const existingIndex = newSlots.findIndex(slot => slot.day === day)
+                                    
+                                    if (existingIndex >= 0) {
+                                      newSlots[existingIndex] = { ...newSlots[existingIndex], isAvailable: e.target.checked }
+                                    } else {
+                                      newSlots.push({ day, startTime: '09:00', endTime: '17:00', isAvailable: e.target.checked })
+                                    }
+                                    
+                                    handleArrayNestedInputChange('workplaces', index, 'availableSlots', newSlots)
+                                  }}
+                                  className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mr-2"
+                                />
+                                <span className="text-sm font-medium capitalize text-white">{day}</span>
+                              </div>
+                              
+                              {daySlot.isAvailable && (
+                                <div className="flex items-center space-x-2 flex-1">
+                                  <input
+                                    type="time"
+                                    value={daySlot.startTime}
+                                    onChange={(e) => {
+                                      const newSlots = workplace?.availableSlots ? [...workplace.availableSlots] : []
+                                      const existingIndex = newSlots.findIndex(slot => slot.day === day)
+                                      
+                                      if (existingIndex >= 0) {
+                                        newSlots[existingIndex] = { ...newSlots[existingIndex], startTime: e.target.value }
+                                      } else {
+                                        newSlots.push({ day, startTime: e.target.value, endTime: '17:00', isAvailable: true })
+                                      }
+                                      
+                                      handleArrayNestedInputChange('workplaces', index, 'availableSlots', newSlots)
+                                    }}
+                                    className="px-3 py-2 bg-white/10 border border-gray-600 rounded-md text-sm text-white"
+                                  />
+                                  <span className="text-gray-300">to</span>
+                                  <input
+                                    type="time"
+                                    value={daySlot.endTime}
+                                    onChange={(e) => {
+                                      const newSlots = workplace?.availableSlots ? [...workplace.availableSlots] : []
+                                      const existingIndex = newSlots.findIndex(slot => slot.day === day)
+                                      
+                                      if (existingIndex >= 0) {
+                                        newSlots[existingIndex] = { ...newSlots[existingIndex], endTime: e.target.value }
+                                      } else {
+                                        newSlots.push({ day, startTime: '09:00', endTime: e.target.value, isAvailable: true })
+                                      }
+                                      
+                                      handleArrayNestedInputChange('workplaces', index, 'availableSlots', newSlots)
+                                    }}
+                                    className="px-3 py-2 bg-white/10 border border-gray-600 rounded-md text-sm text-white"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    {formData.workplaces.length > 1 && (
                       <button
                         type="button"
-                        onClick={() => remove(index)}
-                        className="text-red-400 hover:text-red-300 transition-colors"
+                        onClick={() => {
+                          const newWorkplaces = formData.workplaces.filter((_, i) => i !== index)
+                          handleInputChange('workplaces', newWorkplaces)
+                        }}
+                        className="mt-4 text-red-400 hover:text-red-300 text-sm font-medium"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        Remove Workplace
                       </button>
                     )}
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Workplace Name
-                      </label>
-                      {isEditing ? (
-                        <input
-                          {...register(`workplaces.${index}.name`)}
-                          className="w-full px-4 py-3 bg-primary-600 border border-primary-500 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-                          placeholder="e.g., City Hospital, Private Clinic"
-                        />
-                      ) : (
-                        <div className="w-full px-4 py-3 bg-primary-600 border border-primary-500 rounded-lg text-white">
-                          {field.name || 'Not specified'}
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Phone Number
-                      </label>
-                      {isEditing ? (
-                        <input
-                          {...register(`workplaces.${index}.phone`)}
-                          type="tel"
-                          className="w-full px-4 py-3 bg-primary-600 border border-primary-500 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-                          placeholder="Workplace contact number"
-                        />
-                      ) : (
-                        <div className="w-full px-4 py-3 bg-primary-600 border border-primary-500 rounded-lg text-white flex items-center">
-                          <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                          {field.phone || 'Not provided'}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Address
-                    </label>
-                    {isEditing ? (
-                      <textarea
-                        {...register(`workplaces.${index}.address`)}
-                        rows={2}
-                        className="w-full px-4 py-3 bg-primary-600 border border-primary-500 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-                        placeholder="Full address of the workplace"
-                      />
-                    ) : (
-                      <div className="w-full px-4 py-3 bg-primary-600 border border-primary-500 rounded-lg text-white flex items-start">
-                        <MapPin className="w-4 h-4 mr-2 text-gray-400 mt-0.5" />
-                        {field.address || 'Not provided'}
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newWorkplaces = [...formData.workplaces, { hospital: '', consultationFee: '', availableSlots: [{ day: 'monday', startTime: '09:00', endTime: '17:00', isAvailable: true }] }]
+                    handleInputChange('workplaces', newWorkplaces)
+                  }}
+                  className="w-full py-2 border-2 border-dashed border-gray-600 rounded-lg text-gray-300 hover:border-green-500 hover:text-green-400"
+                >
+                  + Add Another Workplace
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {profileData?.workplaces?.length > 0 ? (
+                  profileData.workplaces.map((workplace, index) => (
+                    <div key={index} className="border border-gray-600 rounded-lg p-4 bg-white/5">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-lg font-medium text-white">{workplace.hospital}</h3>
+                        <span className="text-green-400 font-medium">₹{workplace.consultationFee}</span>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Weekly Schedule */}
-                  <div>
-                    <h4 className="text-md font-medium text-white mb-3 flex items-center">
-                      <Clock className="w-4 h-4 mr-2" />
-                      Weekly Schedule
-                    </h4>
-                    <div className="grid grid-cols-1 gap-2">
-                      {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day, dayIndex) => (
-                        <div key={day} className="flex items-center space-x-4 bg-primary-600 p-3 rounded-lg">
-                          <div className="w-20 text-sm text-gray-300">{day}</div>
-                          
-                          {isEditing ? (
-                            <>
-                              <label className="flex items-center">
-                                <input
-                                  {...register(`workplaces.${index}.schedule.${dayIndex}.isAvailable`)}
-                                  type="checkbox"
-                                  className="mr-2 rounded"
-                                />
-                                <span className="text-sm text-gray-300">Available</span>
-                              </label>
-                              
-                              <input
-                                {...register(`workplaces.${index}.schedule.${dayIndex}.startTime`)}
-                                type="time"
-                                className="px-3 py-1 bg-primary-500 border border-primary-400 rounded text-white text-sm"
-                                placeholder="Start"
-                              />
-                              
-                              <span className="text-gray-400">to</span>
-                              
-                              <input
-                                {...register(`workplaces.${index}.schedule.${dayIndex}.endTime`)}
-                                type="time"
-                                className="px-3 py-1 bg-primary-500 border border-primary-400 rounded text-white text-sm"
-                                placeholder="End"
-                              />
-                            </>
-                          ) : (
-                            <div className="flex items-center space-x-4">
-                              {field.schedule?.[dayIndex]?.isAvailable ? (
-                                <>
-                                  <span className="text-green-400 text-sm">Available</span>
-                                  <span className="text-gray-300 text-sm">
-                                    {field.schedule[dayIndex].startTime || '--:--'} - {field.schedule[dayIndex].endTime || '--:--'}
-                                  </span>
-                                </>
-                              ) : (
-                                <span className="text-gray-500 text-sm">Not available</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                      <div className="text-sm text-gray-300">
+                        Available: {workplace.availableSlots?.filter(slot => slot.isAvailable).map(slot => 
+                          `${slot.day.charAt(0).toUpperCase() + slot.day.slice(1)} (${slot.startTime}-${slot.endTime})`
+                        ).join(', ') || 'No availability set'}
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  ))
+                ) : (
+                  <p className="text-gray-400">No workplaces added</p>
+                )}
+              </div>
+            )}
+            {errors.workplaces && <p className="text-red-400 text-sm mt-1">{errors.workplaces}</p>}
+          </div>
+
+          {/* Emergency Contact */}
+          <div className="bg-white/5 rounded-xl p-6">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+              <Shield className="w-5 h-5 mr-2" />
+              Emergency Contact
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Contact Name</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={formData.emergencyContact.name}
+                    onChange={(e) => handleNestedInputChange('emergencyContact', 'name', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                    placeholder="Enter contact name"
+                  />
+                ) : (
+                  <p className="text-white">{profileData?.emergencyContact?.name || 'Not provided'}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Relationship</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={formData.emergencyContact.relationship}
+                    onChange={(e) => handleNestedInputChange('emergencyContact', 'relationship', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                    placeholder="e.g., Spouse, Parent, Sibling"
+                  />
+                ) : (
+                  <p className="text-white">{profileData?.emergencyContact?.relationship || 'Not provided'}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
+                {isEditing ? (
+                  <input
+                    type="tel"
+                    value={formData.emergencyContact.phone}
+                    onChange={(e) => handleNestedInputChange('emergencyContact', 'phone', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                    placeholder="Enter phone number"
+                  />
+                ) : (
+                  <p className="text-white">{profileData?.emergencyContact?.phone || 'Not provided'}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Email (Optional)</label>
+                {isEditing ? (
+                  <input
+                    type="email"
+                    value={formData.emergencyContact.email}
+                    onChange={(e) => handleNestedInputChange('emergencyContact', 'email', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                    placeholder="Enter email address"
+                  />
+                ) : (
+                  <p className="text-white">{profileData?.emergencyContact?.email || 'Not provided'}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Address */}
+          <div className="bg-white/5 rounded-xl p-6">
+            <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+              <MapPin className="w-5 h-5 mr-2" />
+              Address Information
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">Street Address</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={formData.address.street}
+                    onChange={(e) => handleNestedInputChange('address', 'street', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                    placeholder="Enter street address"
+                  />
+                ) : (
+                  <p className="text-white">{profileData?.address?.street || 'Not provided'}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">City</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={formData.address.city}
+                    onChange={(e) => handleNestedInputChange('address', 'city', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                    placeholder="Enter city"
+                  />
+                ) : (
+                  <p className="text-white">{profileData?.address?.city || 'Not provided'}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">State</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={formData.address.state}
+                    onChange={(e) => handleNestedInputChange('address', 'state', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                    placeholder="Enter state"
+                  />
+                ) : (
+                  <p className="text-white">{profileData?.address?.state || 'Not provided'}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">ZIP Code</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={formData.address.zipCode}
+                    onChange={(e) => handleNestedInputChange('address', 'zipCode', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                    placeholder="Enter ZIP code"
+                  />
+                ) : (
+                  <p className="text-white">{profileData?.address?.zipCode || 'Not provided'}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Country</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={formData.address.country}
+                    onChange={(e) => handleNestedInputChange('address', 'country', e.target.value)}
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                    placeholder="Enter country"
+                  />
+                ) : (
+                  <p className="text-white">{profileData?.address?.country || 'Not provided'}</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </form>
+      </div>
     </div>
   )
 }

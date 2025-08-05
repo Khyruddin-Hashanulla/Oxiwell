@@ -112,7 +112,10 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        const token = Cookies.get('token')
+        let token = Cookies.get('token')
+        if (!token) {
+          token = localStorage.getItem('token')
+        }
         if (token) {
           // Set token in axios defaults
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`
@@ -150,6 +153,7 @@ export const AuthProvider = ({ children }) => {
         if (error.response?.status === 401 || error.response?.status === 403) {
           console.log(' Token is invalid, clearing authentication')
           Cookies.remove('token')
+          localStorage.removeItem('token')
           delete api.defaults.headers.common['Authorization']
         } else {
           console.log(' Network/server error during auth check, keeping token for retry')
@@ -181,8 +185,9 @@ export const AuthProvider = ({ children }) => {
       console.log(' Extracted user:', user);
       console.log(' Extracted token:', token ? 'Token received' : 'No token');
 
-      // Store token in cookie with proper configuration for development
+      // Store token in both cookie and localStorage for reliability
       Cookies.set('token', token, { expires: 7, secure: false, sameSite: 'lax' })
+      localStorage.setItem('token', token)
       
       // Set token in axios defaults
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`
@@ -220,8 +225,9 @@ export const AuthProvider = ({ children }) => {
       const token = response.data.token
       const user = response.data.data.user
 
-      // Store token in cookie
-      Cookies.set('token', token, { expires: 7 }) // 7 days
+      // Store token in both cookie and localStorage for reliability
+      Cookies.set('token', token, { expires: 7, secure: false, sameSite: 'lax' })
+      localStorage.setItem('token', token)
       
       // Set token in axios defaults
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`
@@ -249,8 +255,9 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
-      // Clear token from cookie and axios defaults
+      // Clear token from cookie and localStorage
       Cookies.remove('token')
+      localStorage.removeItem('token')
       delete api.defaults.headers.common['Authorization']
       
       dispatch({ type: AUTH_ACTIONS.LOGOUT })

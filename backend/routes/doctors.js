@@ -1,5 +1,6 @@
 const express = require('express');
 const { body } = require('express-validator');
+const { upload } = require('../config/cloudinary');
 const {
   getDoctors,
   getDoctor,
@@ -90,8 +91,8 @@ router.use(protect, validateSession);
 // Doctor-only routes - MUST come before /:id route to avoid conflicts
 router.get('/dashboard/stats', requireDoctor, getDoctorStats);
 router.get('/profile-setup/required', requireDoctor, checkProfileSetupRequired);
-router.post('/profile-setup', requireDoctor, completeProfileSetup);
-router.put('/profile', requireDoctor, updateProfileValidation, updateDoctorProfile);
+router.post('/profile-setup', requireDoctor, upload.single('profileImage'), completeProfileSetup);
+router.put('/profile', requireDoctor, upload.single('profileImage'), updateProfileValidation, updateDoctorProfile);
 router.get('/patients', requireDoctor, getDoctorPatients);
 router.get('/patients/:patientId/history', requireDoctor, getPatientHistory);
 router.get('/schedule', requireDoctor, getDoctorSchedule);

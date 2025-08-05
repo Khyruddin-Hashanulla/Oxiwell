@@ -130,9 +130,10 @@ const userSchema = new mongoose.Schema({
   }],
   workplaces: [{
     hospital: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Hospital',
-      required: true
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: [100, 'Hospital name cannot exceed 100 characters']
     },
     availableSlots: [{
       day: {

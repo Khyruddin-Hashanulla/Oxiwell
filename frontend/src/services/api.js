@@ -27,12 +27,31 @@ api.interceptors.request.use(
       hasToken: !!token,
       tokenPreview: token ? `${token.substring(0, 20)}...` : 'No token'
     })
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
+    } else {
+      // Check if this is a protected route that needs authentication
+      const protectedRoutes = ['/doctors/', '/patients/', '/appointments/', '/prescriptions/', '/reports/']
+      const isProtectedRoute = protectedRoutes.some(route => config.url.includes(route))
+      
+      if (isProtectedRoute) {
+        console.warn('⚠️ Making request to protected route without token:', config.url)
+        // Try to get token from localStorage as fallback
+        const fallbackToken = localStorage.getItem('token')
+        if (fallbackToken) {
+          console.log('📦 Using fallback token from localStorage')
+          config.headers.Authorization = `Bearer ${fallbackToken}`
+          // Also set it in cookies for future use
+          Cookies.set('token', fallbackToken, { expires: 7, secure: false, sameSite: 'lax' })
+        }
+      }
     }
+    
     return config
   },
   (error) => {
+    console.error('❌ Request interceptor error:', error)
     return Promise.reject(error)
   }
 )
@@ -205,16 +224,37 @@ export const appointmentsAPI = {
 // Doctors API endpoints
 export const doctorsAPI = {
   getDoctors: (params) => api.get('/doctors', { params }),
-  getDoctor: (id) => api.get(`/doctors/${id}`),
+  getDoctor: (id) => api.get(`/doctors/${id}`, { 
+    headers: { 
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache'
+    }
+  }),
   getDoctorStats: () => api.get('/doctors/dashboard/stats'),
-  updateProfile: (data) => api.put('/doctors/profile', data),
+  updateProfile: (data) => {
+    // Handle FormData for file uploads
+    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      }
+    }
+    return api.put('/doctors/profile', data, config)
+  },
   getPatients: (params) => api.get('/doctors/patients', { params }),
   getPatientHistory: (patientId) => api.get(`/doctors/patients/${patientId}/history`),
   getSchedule: () => api.get('/doctors/schedule'),
   
   // Doctor onboarding workflow
   checkProfileSetupRequired: () => api.get('/doctors/profile-setup/required'),
-  completeProfileSetup: (data) => api.post('/doctors/profile-setup', data)
+  completeProfileSetup: (data) => {
+    // Handle FormData for file uploads
+    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      }
+    }
+    return api.post('/doctors/profile-setup', data, config)
+  }
 };
 
 // Patients API endpoints
