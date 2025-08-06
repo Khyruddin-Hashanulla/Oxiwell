@@ -81,6 +81,9 @@ const AppointmentBooking = () => {
   // Check if this is a reschedule operation
   const rescheduleId = searchParams.get('reschedule')
 
+  // Add error state for better debugging
+  const [error, setError] = useState(null)
+
   // Step 1: Load available doctors
   useEffect(() => {
     if (currentStep === 1) {
@@ -105,6 +108,7 @@ const AppointmentBooking = () => {
   const loadAvailableDoctors = async () => {
     try {
       setIsLoading(true)
+      setError(null) // Clear any previous errors
       const queryParams = new URLSearchParams()
       
       if (filters.specialization) queryParams.append('specialization', filters.specialization)
@@ -127,9 +131,12 @@ const AppointmentBooking = () => {
         }
         
         setDoctors(doctorList)
+      } else {
+        throw new Error('Failed to load doctors')
       }
     } catch (error) {
       console.error('Error loading doctors:', error)
+      setError('Failed to load available doctors. Please refresh the page and try again.')
       toast.error('Failed to load available doctors')
     } finally {
       setIsLoading(false)
@@ -143,10 +150,13 @@ const AppointmentBooking = () => {
       
       if (response.data.status === 'success') {
         return response.data.data.doctor
+      } else {
+        throw new Error('Failed to load doctor details')
       }
     } catch (error) {
       console.error('Error loading doctor details:', error)
       toast.error('Failed to load doctor details')
+      return null // Explicitly return null on error
     } finally {
       setIsLoading(false)
     }
@@ -192,10 +202,22 @@ const AppointmentBooking = () => {
   }
 
   const handleDoctorSelect = async (doctor) => {
-    const doctorDetails = await loadDoctorDetails(doctor._id)
-    if (doctorDetails) {
-      setSelectedDoctor(doctorDetails)
-      setCurrentStep(2)
+    try {
+      const doctorDetails = await loadDoctorDetails(doctor._id)
+      if (doctorDetails) {
+        setSelectedDoctor(doctorDetails)
+        setCurrentStep(2)
+      } else {
+        // Fallback: use the basic doctor data from the list if detailed loading fails
+        console.warn('Using fallback doctor data due to API failure')
+        setSelectedDoctor(doctor)
+        setCurrentStep(2)
+      }
+    } catch (error) {
+      console.error('Error in handleDoctorSelect:', error)
+      toast.error('Error selecting doctor. Please try again.')
+      // Reset loading state
+      setIsLoading(false)
     }
   }
 
@@ -445,31 +467,41 @@ const AppointmentBooking = () => {
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-white mb-2">
-                  {workplace.hospital.name}
+                  {workplace.hospital?.name || 'Hospital Name Not Available'}
                 </h3>
                 <div className="space-y-2 text-sm text-gray-300">
                   <div className="flex items-center space-x-2">
                     <MapPin className="w-4 h-4" />
-                    <span>{workplace.hospital.address.street}, {workplace.hospital.address.city}</span>
+                    <span>
+                      {workplace.hospital?.address?.street && workplace.hospital?.address?.city 
+                        ? `${workplace.hospital.address.street}, ${workplace.hospital.address.city}`
+                        : workplace.hospital?.address?.city || 'Address not available'
+                      }
+                    </span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Phone className="w-4 h-4" />
-                    <span>{workplace.hospital.phone}</span>
+                    <span>{workplace.hospital?.phone || 'Phone not available'}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Star className="w-4 h-4 text-yellow-400" />
-                    <span>{workplace.hospital.rating?.average?.toFixed(1) || 'N/A'} rating</span>
+                    <span>{workplace.hospital?.rating?.average?.toFixed(1) || 'N/A'} rating</span>
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t border-gray-600">
                   <p className="text-green-400 font-semibold">
-                    Consultation Fee: ₹{workplace.consultationFee}
+                    Consultation Fee: ₹{workplace.consultationFee || 'Not specified'}
                   </p>
                 </div>
               </div>
             </div>
           </div>
-        ))}
+        )) || (
+          <div className="col-span-full text-center py-8">
+            <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-300">No workplace information available for this doctor</p>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -768,6 +800,37 @@ const AppointmentBooking = () => {
             </button>
           </div>
         </form>
+      </div>
+    )
+  }
+
+  // Add error display in the main render
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-red-500/50 max-w-md w-full text-center">
+          <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-white mb-4">Something went wrong</h2>
+          <p className="text-gray-300 mb-6">{error}</p>
+          <div className="space-y-3">
+            <button
+              onClick={() => {
+                setError(null)
+                setCurrentStep(1)
+                loadAvailableDoctors()
+              }}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={() => navigate('/patient/dashboard')}
+              className="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
       </div>
     )
   }

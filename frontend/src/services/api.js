@@ -20,7 +20,8 @@ const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = Cookies.get('token')
+    // Check localStorage first, then cookies as fallback
+    const token = localStorage.getItem('token') || Cookies.get('token')
     console.log('🔍 API Request Debug:', {
       url: config.url,
       method: config.method,
@@ -37,14 +38,6 @@ api.interceptors.request.use(
       
       if (isProtectedRoute) {
         console.warn('⚠️ Making request to protected route without token:', config.url)
-        // Try to get token from localStorage as fallback
-        const fallbackToken = localStorage.getItem('token')
-        if (fallbackToken) {
-          console.log('📦 Using fallback token from localStorage')
-          config.headers.Authorization = `Bearer ${fallbackToken}`
-          // Also set it in cookies for future use
-          Cookies.set('token', fallbackToken, { expires: 7, secure: false, sameSite: 'lax' })
-        }
       }
     }
     

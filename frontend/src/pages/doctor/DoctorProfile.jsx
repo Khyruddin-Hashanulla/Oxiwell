@@ -30,7 +30,7 @@ import { useNavigate } from 'react-router-dom'
 
 const DoctorProfile = () => {
   const navigate = useNavigate()
-  const { user, updateUser } = useAuth()
+  const { user } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [profileData, setProfileData] = useState(null)
@@ -78,60 +78,91 @@ const DoctorProfile = () => {
   ]
 
   // Load doctor profile data
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        setIsLoading(true)
-        const response = await doctorsAPI.getDoctor(user._id)
+  const loadProfile = async () => {
+    try {
+      console.log('🔄 Loading profile data...')
+      setIsLoading(true)
+      const response = await doctorsAPI.getDoctor(user._id)
+      
+      console.log('📥 Profile response:', response)
+      
+      if (response.data.status === 'success') {
+        const doctor = response.data.data.doctor
+        console.log('✅ Raw doctor data from backend:', doctor)
+        console.log('✅ Doctor workplaces:', doctor.workplaces)
+        console.log('✅ Doctor servicesProvided:', doctor.servicesProvided)
+        console.log('✅ Doctor professionalBio:', doctor.professionalBio)
+        console.log('✅ Doctor medicalRegistrationNumber:', doctor.medicalRegistrationNumber)
         
-        if (response.data.status === 'success') {
-          const doctor = response.data.data.doctor
-          setProfileData(doctor)
-          
-          // Pre-fill form with current data
-          setFormData({
-            firstName: doctor.firstName || '',
-            lastName: doctor.lastName || '',
-            email: doctor.email || '',
-            phone: doctor.phone || '',
-            dateOfBirth: doctor.dateOfBirth ? new Date(doctor.dateOfBirth).toISOString().split('T')[0] : '',
-            gender: doctor.gender || '',
-            specialization: doctor.specialization || '',
-            licenseNumber: doctor.licenseNumber || '',
-            medicalRegistrationNumber: doctor.medicalRegistrationNumber || '',
-            experience: doctor.experience?.toString() || '',
-            professionalBio: doctor.professionalBio || doctor.bio || '',
-            profileImage: doctor.profileImage || '',
-            profileImageFile: null,
-            languages: doctor.languages || ['English'],
-            servicesProvided: doctor.servicesProvided || [],
-            onlineConsultationAvailable: doctor.onlineConsultationAvailable !== false,
-            offlineConsultationAvailable: doctor.offlineConsultationAvailable !== false,
-            workplaces: doctor.workplaces || [],
-            qualifications: doctor.qualifications || [],
-            emergencyContact: {
-              name: doctor.emergencyContact?.name || '',
-              relationship: doctor.emergencyContact?.relationship || '',
-              phone: doctor.emergencyContact?.phone || '',
-              email: doctor.emergencyContact?.email || ''
-            },
-            address: {
-              street: doctor.address?.street || '',
-              city: doctor.address?.city || '',
-              state: doctor.address?.state || '',
-              zipCode: doctor.address?.zipCode || '',
-              country: doctor.address?.country || 'India'
-            }
-          })
-        }
-      } catch (error) {
-        console.error('Error loading profile:', error)
+        setProfileData(doctor)
+        
+        // Update form data with loaded profile data
+        setFormData({
+          firstName: doctor.firstName || '',
+          lastName: doctor.lastName || '',
+          email: doctor.email || '',
+          phone: doctor.phone || '',
+          dateOfBirth: doctor.dateOfBirth ? new Date(doctor.dateOfBirth).toISOString().split('T')[0] : '',
+          gender: doctor.gender || '',
+          specialization: doctor.specialization || '',
+          licenseNumber: doctor.licenseNumber || '',
+          medicalRegistrationNumber: doctor.medicalRegistrationNumber || '',
+          experience: doctor.experience?.toString() || '',
+          professionalBio: doctor.professionalBio || doctor.bio || '',
+          profileImage: doctor.profileImage || '',
+          profileImageFile: null,
+          languages: doctor.languages || ['English'],
+          servicesProvided: doctor.servicesProvided || [],
+          onlineConsultationAvailable: doctor.onlineConsultationAvailable !== false,
+          offlineConsultationAvailable: doctor.offlineConsultationAvailable !== false,
+          workplaces: (doctor.workplaces || []).map(workplace => ({
+            ...workplace,
+            hospital: workplace.hospital?.name || workplace.hospital || '',
+            consultationFee: workplace.consultationFee || 0,
+            availableSlots: workplace.availableSlots && workplace.availableSlots.length > 0 
+              ? workplace.availableSlots 
+              : ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => ({
+                  day,
+                  startTime: '09:00',
+                  endTime: '17:00',
+                  isAvailable: false
+                }))
+          })),
+          qualifications: doctor.qualifications || [],
+          emergencyContact: {
+            name: doctor.emergencyContact?.name || '',
+            relationship: doctor.emergencyContact?.relationship || '',
+            phone: doctor.emergencyContact?.phone || '',
+            email: doctor.emergencyContact?.email || ''
+          },
+          address: {
+            street: doctor.address?.street || '',
+            city: doctor.address?.city || '',
+            state: doctor.address?.state || '',
+            zipCode: doctor.address?.zipCode || '',
+            country: doctor.address?.country || 'India'
+          }
+        })
+        
+        console.log(' Form data after loading:', {
+          medicalRegistrationNumber: doctor.medicalRegistrationNumber || '',
+          professionalBio: doctor.professionalBio || doctor.bio || '',
+          servicesProvided: doctor.servicesProvided || [],
+          workplaces: doctor.workplaces || []
+        })
+      } else {
+        console.error('Failed to load profile data:', response.data.message)
         toast.error('Failed to load profile data')
-      } finally {
-        setIsLoading(false)
       }
+    } catch (error) {
+      console.error('Error loading profile:', error)
+      toast.error('Failed to load profile data')
+    } finally {
+      setIsLoading(false)
     }
+  }
 
+  useEffect(() => {
     if (user?._id) {
       loadProfile()
     }
@@ -223,40 +254,178 @@ const DoctorProfile = () => {
 
       // Add all form fields to FormData
       Object.keys(formData).forEach(key => {
-        if (key === 'profileImage' && formData[key] instanceof File) {
+        if (key === 'profileImageFile' && formData[key]) {
           submitData.append('profileImage', formData[key])
-        } else if (typeof formData[key] === 'object' && formData[key] !== null) {
+        } else if (key !== 'profileImageFile' && typeof formData[key] === 'object' && formData[key] !== null) {
           submitData.append(key, JSON.stringify(formData[key]))
-        } else if (formData[key] !== null && formData[key] !== undefined) {
+        } else if (key !== 'profileImageFile' && formData[key] !== null && formData[key] !== undefined) {
           submitData.append(key, formData[key])
         }
       })
 
-      console.log(' Submitting profile update data...')
+      console.log('Submitting profile update data...')
+      console.log('📤 Form data being sent:', {
+        medicalRegistrationNumber: formData.medicalRegistrationNumber,
+        professionalBio: formData.professionalBio,
+        servicesProvided: formData.servicesProvided,
+        workplaces: formData.workplaces,
+        hasProfileImage: !!formData.profileImageFile
+      })
+      
+      // Detailed workplace debugging
+      console.log('🏥 DETAILED WORKPLACE DATA BEING SENT:')
+      formData.workplaces.forEach((workplace, index) => {
+        console.log(`Workplace ${index + 1}:`, {
+          hospital: workplace.hospital,
+          consultationFee: workplace.consultationFee,
+          availableSlots: workplace.availableSlots,
+          availableSlotsCount: workplace.availableSlots?.length || 0,
+          availableDays: workplace.availableSlots?.filter(slot => slot.isAvailable).map(slot => `${slot.day}: ${slot.startTime}-${slot.endTime}`) || []
+        })
+        
+        // Show each day's availability in detail
+        console.log(`🕒 Workplace ${index + 1} - Day by day availability:`)
+        if (workplace.availableSlots && workplace.availableSlots.length > 0) {
+          workplace.availableSlots.forEach(slot => {
+            console.log(`  ${slot.day}: ${slot.isAvailable ? 'Available' : 'Not Available'} ${slot.isAvailable ? `(${slot.startTime}-${slot.endTime})` : ''}`)
+          })
+        } else {
+          console.log(`  ❌ NO AVAILABILITY SLOTS FOUND!`)
+        }
+      })
+      
+      // Check if any workplace has empty availability
+      const emptyWorkplaces = formData.workplaces.filter(w => !w.availableSlots || w.availableSlots.length === 0)
+      if (emptyWorkplaces.length > 0) {
+        console.error('🚨 WARNING: Found workplaces with empty availability slots:', emptyWorkplaces.map((w, i) => `Workplace ${formData.workplaces.indexOf(w) + 1}: ${w.hospital}`))
+      }
       
       // Use updateProfile instead of completeProfileSetup
       const response = await doctorsAPI.updateProfile(submitData)
       
-      console.log(' Profile update response:', response.data)
+      console.log('✅ Profile update response:', response.data)
 
-      toast.success('Profile updated successfully!')
-      setIsEditing(false)
-      
-      // Refresh profile data
-      const response2 = await doctorsAPI.getDoctor(user._id)
-      if (response2.data.status === 'success') {
-        setProfileData(response2.data.data.doctor)
-        await updateUser()
+      // Only show success if the response indicates success
+      if (response.data.status === 'success') {
+        toast.success('Profile updated successfully!')
+        setIsEditing(false)
+        
+        // Refresh profile data to show updated information
+        console.log('🔄 Refreshing profile data after update...')
+        try {
+          await loadProfile()
+          console.log('✅ Profile data refreshed successfully')
+        } catch (loadError) {
+          console.error('❌ Error refreshing profile data:', loadError)
+          toast.warning('Profile updated but failed to refresh display. Please reload the page.')
+        }
+      } else {
+        console.error('❌ Failed to update profile:', response.data.message)
+        throw new Error(response.data.message || 'Update failed')
       }
       
     } catch (error) {
-      console.error(' Profile update error:', error)
-      const errorMessage = error.response?.data?.message || 'Failed to update profile'
+      console.error('❌ Profile update error:', error)
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to update profile'
       toast.error(errorMessage)
       setErrors({ submit: errorMessage })
+      
+      // Ensure we don't stay in loading state
+      setIsEditing(true) // Keep editing mode open so user can try again
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleEditClick = () => {
+    // Initialize form data with current profile data when entering edit mode
+    if (profileData) {
+      setFormData({
+        firstName: profileData.firstName || '',
+        lastName: profileData.lastName || '',
+        email: profileData.email || '',
+        phone: profileData.phone || '',
+        dateOfBirth: profileData.dateOfBirth ? new Date(profileData.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: profileData.gender || '',
+        specialization: profileData.specialization || '',
+        licenseNumber: profileData.licenseNumber || '',
+        medicalRegistrationNumber: profileData.medicalRegistrationNumber || '',
+        experience: profileData.experience?.toString() || '',
+        professionalBio: profileData.professionalBio || profileData.bio || '',
+        profileImage: profileData.profileImage || '',
+        profileImageFile: null,
+        languages: profileData.languages || ['English'],
+        servicesProvided: profileData.servicesProvided || [],
+        onlineConsultationAvailable: profileData.onlineConsultationAvailable !== false,
+        offlineConsultationAvailable: profileData.offlineConsultationAvailable !== false,
+        workplaces: (profileData.workplaces || []).map(workplace => ({
+          ...workplace,
+          hospital: workplace.hospital?.name || workplace.hospital || '',
+          consultationFee: workplace.consultationFee || 0,
+          availableSlots: workplace.availableSlots && workplace.availableSlots.length > 0 
+            ? workplace.availableSlots 
+            : ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => ({
+                day,
+                startTime: '09:00',
+                endTime: '17:00',
+                isAvailable: false
+              }))
+        })),
+        qualifications: profileData.qualifications || [],
+        emergencyContact: {
+          name: profileData.emergencyContact?.name || '',
+          relationship: profileData.emergencyContact?.relationship || '',
+          phone: profileData.emergencyContact?.phone || '',
+          email: profileData.emergencyContact?.email || ''
+        },
+        address: {
+          street: profileData.address?.street || '',
+          city: profileData.address?.city || '',
+          state: profileData.address?.state || '',
+          zipCode: profileData.address?.zipCode || '',
+          country: profileData.address?.country || 'India'
+        }
+      })
+      
+      console.log('🔄 Form initialized for editing with profile data:', {
+        workplaces: profileData.workplaces?.length || 0,
+        availabilitySlots: profileData.workplaces?.map(w => w.availableSlots?.length || 0),
+        fullWorkplaces: JSON.stringify(profileData.workplaces, null, 2)
+      })
+      
+      // Debug each workplace being initialized
+      console.log('🏥 INITIALIZING WORKPLACES FOR EDIT MODE:')
+      profileData.workplaces?.forEach((workplace, index) => {
+        console.log(`Original Workplace ${index + 1}:`, {
+          hospital: workplace.hospital?.name || workplace.hospital,
+          consultationFee: workplace.consultationFee,
+          availableSlots: workplace.availableSlots,
+          availableSlotsCount: workplace.availableSlots?.length || 0
+        })
+        
+        const processedWorkplace = {
+          ...workplace,
+          hospital: workplace.hospital?.name || workplace.hospital || '',
+          consultationFee: workplace.consultationFee || 0,
+          availableSlots: workplace.availableSlots && workplace.availableSlots.length > 0 
+            ? workplace.availableSlots 
+            : ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => ({
+                day,
+                startTime: '09:00',
+                endTime: '17:00',
+                isAvailable: false
+              }))
+        }
+        
+        console.log(`Processed Workplace ${index + 1}:`, {
+          hospital: processedWorkplace.hospital,
+          consultationFee: processedWorkplace.consultationFee,
+          availableSlots: processedWorkplace.availableSlots,
+          availableSlotsCount: processedWorkplace.availableSlots?.length || 0
+        })
+      })
+    }
+    setIsEditing(true)
   }
 
   if (isLoading && !profileData) {
@@ -283,7 +452,7 @@ const DoctorProfile = () => {
           <div className="flex items-center space-x-4">
             {!isEditing ? (
               <button
-                onClick={() => setIsEditing(true)}
+                onClick={handleEditClick}
                 className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
                 <Edit className="w-4 h-4 mr-2" />
@@ -738,7 +907,7 @@ const DoctorProfile = () => {
                         <label className="block text-sm font-medium text-gray-300 mb-2">Hospital *</label>
                         <input
                           type="text"
-                          value={workplace?.hospital || ''}
+                          value={typeof workplace?.hospital === 'object' ? workplace?.hospital?.name || '' : workplace?.hospital || ''}
                           onChange={(e) => handleArrayNestedInputChange('workplaces', index, 'hospital', e.target.value)}
                           className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
                           placeholder="e.g., Apollo Hospital"
@@ -748,7 +917,7 @@ const DoctorProfile = () => {
                         <label className="block text-sm font-medium text-gray-300 mb-2">Consultation Fee *</label>
                         <input
                           type="number"
-                          value={workplace?.consultationFee || ''}
+                          value={workplace.consultationFee || ''}
                           onChange={(e) => handleArrayNestedInputChange('workplaces', index, 'consultationFee', e.target.value)}
                           className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
                           placeholder="e.g., 500"
@@ -761,7 +930,13 @@ const DoctorProfile = () => {
                       <label className="block text-sm font-medium text-gray-300 mb-3">Available Days & Working Hours</label>
                       <div className="space-y-3">
                         {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
-                          const daySlot = workplace?.availableSlots?.find(slot => slot.day === day) || { day, startTime: '09:00', endTime: '17:00', isAvailable: false }
+                          const currentWorkplace = isEditing ? formData.workplaces?.[index] : workplace;
+                          console.log('🕒 Debug availability for', day, ':', JSON.stringify(currentWorkplace?.availableSlots, null, 2));
+                          
+                          const daySlot = currentWorkplace?.availableSlots?.find(slot => slot.day === day) || { day, startTime: '09:00', endTime: '17:00', isAvailable: false }
+                          
+                          console.log('🔍 Edit mode - formData.workplaces[', index, ']:', JSON.stringify(formData.workplaces?.[index], null, 2));
+                          
                           return (
                             <div key={day} className="flex items-center space-x-4 p-3 bg-white/10 rounded-lg border border-gray-600">
                               <div className="flex items-center min-w-[120px]">
@@ -769,7 +944,14 @@ const DoctorProfile = () => {
                                   type="checkbox"
                                   checked={daySlot.isAvailable}
                                   onChange={(e) => {
-                                    const newSlots = workplace?.availableSlots ? [...workplace.availableSlots] : []
+                                    console.log(`🔄 Checkbox changed for ${day}:`, {
+                                      checked: e.target.checked,
+                                      currentDaySlot: daySlot,
+                                      workplaceIndex: index,
+                                      currentWorkplace: currentWorkplace
+                                    });
+                                    
+                                    const newSlots = currentWorkplace?.availableSlots ? [...currentWorkplace.availableSlots] : []
                                     const existingIndex = newSlots.findIndex(slot => slot.day === day)
                                     
                                     if (existingIndex >= 0) {
@@ -778,20 +960,38 @@ const DoctorProfile = () => {
                                       newSlots.push({ day, startTime: '09:00', endTime: '17:00', isAvailable: e.target.checked })
                                     }
                                     
-                                    handleArrayNestedInputChange('workplaces', index, 'availableSlots', newSlots)
+                                    console.log(`📝 Updated slots for workplace ${index}:`, newSlots);
+                                    
+                                    if (isEditing) {
+                                      handleArrayNestedInputChange('workplaces', index, 'availableSlots', newSlots)
+                                      
+                                      // Log the updated form data
+                                      setTimeout(() => {
+                                        console.log(`✅ Form data after checkbox update:`, {
+                                          workplaceIndex: index,
+                                          updatedWorkplace: formData.workplaces[index],
+                                          allWorkplaces: formData.workplaces.map((w, i) => ({
+                                            index: i,
+                                            hospital: w.hospital,
+                                            availableSlotsCount: w.availableSlots?.length || 0,
+                                            availableDays: w.availableSlots?.filter(s => s.isAvailable).map(s => s.day) || []
+                                          }))
+                                        });
+                                      }, 100);
+                                    }
                                   }}
                                   className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mr-2"
                                 />
                                 <span className="text-sm font-medium capitalize text-white">{day}</span>
                               </div>
                               
-                              {daySlot.isAvailable && (
+                              {daySlot.isAvailable ? (
                                 <div className="flex items-center space-x-2 flex-1">
                                   <input
                                     type="time"
-                                    value={daySlot.startTime}
+                                    value={daySlot.startTime || '09:00'}
                                     onChange={(e) => {
-                                      const newSlots = workplace?.availableSlots ? [...workplace.availableSlots] : []
+                                      const newSlots = currentWorkplace?.availableSlots ? [...currentWorkplace.availableSlots] : []
                                       const existingIndex = newSlots.findIndex(slot => slot.day === day)
                                       
                                       if (existingIndex >= 0) {
@@ -800,16 +1000,18 @@ const DoctorProfile = () => {
                                         newSlots.push({ day, startTime: e.target.value, endTime: '17:00', isAvailable: true })
                                       }
                                       
-                                      handleArrayNestedInputChange('workplaces', index, 'availableSlots', newSlots)
+                                      if (isEditing) {
+                                        handleArrayNestedInputChange('workplaces', index, 'availableSlots', newSlots)
+                                      }
                                     }}
                                     className="px-3 py-2 bg-white/10 border border-gray-600 rounded-md text-sm text-white"
                                   />
                                   <span className="text-gray-300">to</span>
                                   <input
                                     type="time"
-                                    value={daySlot.endTime}
+                                    value={daySlot.endTime || '17:00'}
                                     onChange={(e) => {
-                                      const newSlots = workplace?.availableSlots ? [...workplace.availableSlots] : []
+                                      const newSlots = currentWorkplace?.availableSlots ? [...currentWorkplace.availableSlots] : []
                                       const existingIndex = newSlots.findIndex(slot => slot.day === day)
                                       
                                       if (existingIndex >= 0) {
@@ -818,12 +1020,14 @@ const DoctorProfile = () => {
                                         newSlots.push({ day, startTime: '09:00', endTime: e.target.value, isAvailable: true })
                                       }
                                       
-                                      handleArrayNestedInputChange('workplaces', index, 'availableSlots', newSlots)
+                                      if (isEditing) {
+                                        handleArrayNestedInputChange('workplaces', index, 'availableSlots', newSlots)
+                                      }
                                     }}
                                     className="px-3 py-2 bg-white/10 border border-gray-600 rounded-md text-sm text-white"
                                   />
                                 </div>
-                              )}
+                              ) : null}
                             </div>
                           )
                         })}
@@ -861,13 +1065,43 @@ const DoctorProfile = () => {
                   profileData.workplaces.map((workplace, index) => (
                     <div key={index} className="border border-gray-600 rounded-lg p-4 bg-white/5">
                       <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-lg font-medium text-white">{workplace.hospital}</h3>
+                        <h3 className="text-lg font-medium text-white">
+                          {typeof workplace.hospital === 'object' ? workplace.hospital?.name : workplace.hospital}
+                        </h3>
                         <span className="text-green-400 font-medium">₹{workplace.consultationFee}</span>
                       </div>
+                      {typeof workplace.hospital === 'object' && workplace.hospital?.address && (
+                        <div className="text-sm text-gray-400 mb-2">
+                          {workplace.hospital.address.street}, {workplace.hospital.address.city}
+                        </div>
+                      )}
                       <div className="text-sm text-gray-300">
-                        Available: {workplace.availableSlots?.filter(slot => slot.isAvailable).map(slot => 
-                          `${slot.day.charAt(0).toUpperCase() + slot.day.slice(1)} (${slot.startTime}-${slot.endTime})`
-                        ).join(', ') || 'No availability set'}
+                        Available: {(() => {
+                          console.log('🕒 Workplace availability slots:', workplace.availableSlots);
+                          
+                          // Enhanced debugging to see exact slot values
+                          if (workplace.availableSlots && workplace.availableSlots.length > 0) {
+                            workplace.availableSlots.forEach((slot, index) => {
+                              console.log(`Slot ${index + 1}: ${slot.day} - Available: ${slot.isAvailable} (type: ${typeof slot.isAvailable}) (${slot.startTime}-${slot.endTime})`);
+                            });
+                          }
+                          
+                          if (!workplace.availableSlots || workplace.availableSlots.length === 0) {
+                            return 'No availability set';
+                          }
+                          
+                          // Filter for only available days since backend now preserves all slots
+                          const availableSlots = workplace.availableSlots
+                            .filter(slot => slot.isAvailable === true)
+                            .map(slot => {
+                              const day = slot.day ? slot.day.charAt(0).toUpperCase() + slot.day.slice(1) : 'Unknown';
+                              const timeRange = slot.startTime && slot.endTime ? `${slot.startTime}-${slot.endTime}` : 'Time not set';
+                              return `${day} (${timeRange})`;
+                            });
+                          
+                          console.log('🎯 Filtered available slots:', availableSlots);
+                          return availableSlots.length > 0 ? availableSlots.join(', ') : 'No availability set';
+                        })()}
                       </div>
                     </div>
                   ))

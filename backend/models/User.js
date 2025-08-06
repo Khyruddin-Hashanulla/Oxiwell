@@ -103,11 +103,37 @@ const userSchema = new mongoose.Schema({
     unique: true,
     sparse: true
   },
+  medicalRegistrationNumber: {
+    type: String,
+    required: function() {
+      return this.role === 'doctor' && this.profileSetupCompleted;
+    },
+    sparse: true
+  },
   experience: {
     type: Number,
     required: function() {
       return this.role === 'doctor' && this.isVerified && this.status === 'active';
     }
+  },
+  professionalBio: {
+    type: String,
+    maxlength: [1000, 'Professional bio cannot exceed 1000 characters']
+  },
+  languages: [{
+    type: String,
+    default: ['English']
+  }],
+  servicesProvided: [{
+    type: String
+  }],
+  onlineConsultationAvailable: {
+    type: Boolean,
+    default: true
+  },
+  offlineConsultationAvailable: {
+    type: Boolean,
+    default: true
   },
   qualifications: [{
     degree: String,
@@ -130,10 +156,9 @@ const userSchema = new mongoose.Schema({
   }],
   workplaces: [{
     hospital: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: [100, 'Hospital name cannot exceed 100 characters']
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Hospital',
+      required: true
     },
     availableSlots: [{
       day: {
@@ -141,7 +166,11 @@ const userSchema = new mongoose.Schema({
         enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
       },
       startTime: String,
-      endTime: String
+      endTime: String,
+      isAvailable: {
+        type: Boolean,
+        default: false
+      }
     }],
     consultationFee: {
       type: Number,
