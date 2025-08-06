@@ -165,6 +165,11 @@ const userSchema = new mongoose.Schema({
       ref: 'Hospital',
       required: true
     },
+    phone: {
+      type: String,
+      required: true,
+      match: [/^[\+]?[1-9][\d]{0,15}$/, 'Please enter a valid phone number']
+    },
     address: {
       street: {
         type: String,

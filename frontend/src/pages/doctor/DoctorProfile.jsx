@@ -119,6 +119,7 @@ const DoctorProfile = () => {
             ...workplace,
             hospital: workplace.hospital?.name || workplace.hospital || '',
             consultationFee: workplace.consultationFee || 0,
+            phone: workplace.phone || '',
             availableSlots: workplace.availableSlots && workplace.availableSlots.length > 0 
               ? workplace.availableSlots 
               : ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => ({
@@ -362,6 +363,7 @@ const DoctorProfile = () => {
           ...workplace,
           hospital: workplace.hospital?.name || workplace.hospital || '',
           consultationFee: workplace.consultationFee || 0,
+          phone: workplace.phone || '',
           availableSlots: workplace.availableSlots && workplace.availableSlots.length > 0 
             ? workplace.availableSlots 
             : ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => ({
@@ -407,6 +409,7 @@ const DoctorProfile = () => {
           ...workplace,
           hospital: workplace.hospital?.name || workplace.hospital || '',
           consultationFee: workplace.consultationFee || 0,
+          phone: workplace.phone || '',
           availableSlots: workplace.availableSlots && workplace.availableSlots.length > 0 
             ? workplace.availableSlots 
             : ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => ({
@@ -951,6 +954,17 @@ const DoctorProfile = () => {
                                               'Your Workplace Name'}`}
                         />
                       </div>
+                      {/* Phone Number */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Phone Number *</label>
+                        <input
+                          type="tel"
+                          value={workplace.phone || ''}
+                          onChange={(e) => handleArrayNestedInputChange('workplaces', index, 'phone', e.target.value)}
+                          className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                          placeholder="e.g., +91 98765 43210"
+                        />
+                      </div>
                       {/* Consultation Fee */}
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">Consultation Fee (₹) *</label>
@@ -1165,6 +1179,7 @@ const DoctorProfile = () => {
                     const newWorkplaces = [...formData.workplaces, { 
                       type: 'hospital',
                       hospital: '', 
+                      phone: '',
                       consultationFee: '', 
                       address: {
                         street: '',
@@ -1205,10 +1220,16 @@ const DoctorProfile = () => {
                               {workplace.type || 'hospital'}
                             </span>
                           </div>
+                          {/* Display phone number if available */}
+                          {workplace.phone && (
+                            <div className="text-sm text-gray-400 mb-1">
+                              📞 {workplace.phone}
+                            </div>
+                          )}
                           {/* Display workplace address if available */}
                           {workplace.address && (workplace.address.street || workplace.address.city) && (
                             <div className="text-sm text-gray-400 mb-2">
-                              {workplace.address.street && `${workplace.address.street}, `}
+                              📍 {workplace.address.street && `${workplace.address.street}, `}
                               {workplace.address.city && `${workplace.address.city}`}
                               {workplace.address.state && `, ${workplace.address.state}`}
                               {workplace.address.zipCode && ` - ${workplace.address.zipCode}`}
@@ -1218,7 +1239,7 @@ const DoctorProfile = () => {
                           {(!workplace.address || (!workplace.address.street && !workplace.address.city)) && 
                            typeof workplace.hospital === 'object' && workplace.hospital?.address && (
                             <div className="text-sm text-gray-400 mb-2">
-                              {workplace.hospital.address.street}, {workplace.hospital.address.city}
+                              📍 {workplace.hospital.address.street}, {workplace.hospital.address.city}
                             </div>
                           )}
                         </div>

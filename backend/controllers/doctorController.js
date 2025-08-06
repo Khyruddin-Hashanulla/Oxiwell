@@ -451,6 +451,7 @@ const updateDoctorProfile = asyncHandler(async (req, res, next) => {
       return {
         type: workplace.type || 'hospital',
         hospital: hospitalId,
+        phone: workplace.phone || '',
         address: workplace.address ? {
           street: workplace.address.street || '',
           city: workplace.address.city || '',
