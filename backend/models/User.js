@@ -97,9 +97,7 @@ const userSchema = new mongoose.Schema({
   },
   licenseNumber: {
     type: String,
-    required: function() {
-      return this.role === 'doctor' && this.isVerified && this.status === 'active';
-    },
+    required: false,
     unique: true,
     sparse: true
   },

@@ -222,7 +222,8 @@ const DoctorProfile = () => {
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required'
     if (!formData.phone.trim()) newErrors.phone = 'Phone is required'
     if (!formData.specialization) newErrors.specialization = 'Specialization is required'
-    if (!formData.licenseNumber.trim()) newErrors.licenseNumber = 'License number is required'
+    if (!formData.licenseNumber.trim() && !profileData?.profileSetupCompleted) newErrors.licenseNumber = 'License number is required'
+    if (!formData.medicalRegistrationNumber.trim() && !profileData?.profileSetupCompleted) newErrors.medicalRegistrationNumber = 'Medical registration number is required'
     if (!formData.professionalBio.trim()) newErrors.professionalBio = 'Professional bio is required'
     
     if (formData.qualifications.length === 0) {
@@ -656,14 +657,19 @@ const DoctorProfile = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">License Number *</label>
-                {isEditing ? (
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  License Number {!profileData?.profileSetupCompleted && '*'}
+                  {profileData?.profileSetupCompleted && (
+                    <span className="text-xs text-yellow-400 ml-2">(Cannot be edited after setup)</span>
+                  )}
+                </label>
+                {isEditing && !profileData?.profileSetupCompleted ? (
                   <input
                     type="text"
                     value={formData.licenseNumber}
                     onChange={(e) => handleInputChange('licenseNumber', e.target.value)}
                     className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
-                    placeholder="Enter license number"
+                    placeholder="Enter license number (optional)"
                   />
                 ) : (
                   <p className="text-white">{profileData?.licenseNumber || 'Not provided'}</p>
@@ -672,18 +678,24 @@ const DoctorProfile = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Medical Registration Number</label>
-                {isEditing ? (
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Medical Registration Number *
+                  {profileData?.profileSetupCompleted && (
+                    <span className="text-xs text-yellow-400 ml-2">(Cannot be edited after setup)</span>
+                  )}
+                </label>
+                {isEditing && !profileData?.profileSetupCompleted ? (
                   <input
                     type="text"
                     value={formData.medicalRegistrationNumber}
                     onChange={(e) => handleInputChange('medicalRegistrationNumber', e.target.value)}
                     className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
-                    placeholder="Enter registration number"
+                    placeholder="Enter registration number (required)"
                   />
                 ) : (
                   <p className="text-white">{profileData?.medicalRegistrationNumber || 'Not provided'}</p>
                 )}
+                {errors.medicalRegistrationNumber && <p className="text-red-400 text-sm mt-1">{errors.medicalRegistrationNumber}</p>}
               </div>
 
               <div>
