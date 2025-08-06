@@ -405,9 +405,15 @@ const updateDoctorProfile = asyncHandler(async (req, res, next) => {
           try {
             hospital = await Hospital.create({
               name: workplace.hospital,
-              type: 'hospital',
+              type: workplace.type || 'hospital', // Use workplace type from frontend
               licenseNumber: `LIC-${workplace.hospital.toUpperCase().replace(/\s+/g, '')}-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-              address: {
+              address: workplace.address ? {
+                street: workplace.address.street || 'Address to be updated',
+                city: workplace.address.city || 'City to be updated',
+                state: workplace.address.state || 'State to be updated',
+                zipCode: workplace.address.zipCode || '000000',
+                country: workplace.address.country || 'India'
+              } : {
                 street: 'Address to be updated',
                 city: 'City to be updated',
                 state: 'State to be updated',
@@ -416,7 +422,7 @@ const updateDoctorProfile = asyncHandler(async (req, res, next) => {
               },
               phone: '+919999999999',
               email: `info@${workplace.hospital.toLowerCase().replace(/\s+/g, '')}.com`,
-              description: `${workplace.hospital} - Healthcare facility`,
+              description: `${workplace.hospital} - ${workplace.type || 'Healthcare'} facility`,
               specialties: ['General Medicine'],
               services: ['General Consultation'],
               operatingHours: [
@@ -443,12 +449,27 @@ const updateDoctorProfile = asyncHandler(async (req, res, next) => {
       }
       
       return {
+        type: workplace.type || 'hospital',
         hospital: hospitalId,
+        address: workplace.address ? {
+          street: workplace.address.street || '',
+          city: workplace.address.city || '',
+          state: workplace.address.state || '',
+          zipCode: workplace.address.zipCode || '',
+          country: workplace.address.country || 'India'
+        } : {
+          street: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          country: 'India'
+        },
         consultationFee: workplace.consultationFee ? parseFloat(workplace.consultationFee) : 0,
         availableSlots: (workplace.availableSlots || []).map(slot => ({
           ...slot,
           isAvailable: Boolean(slot.isAvailable) // Convert undefined/null to false, true stays true
-        }))
+        })),
+        isPrimary: workplace.isPrimary || false
       };
     }));
     

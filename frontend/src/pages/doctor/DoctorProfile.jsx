@@ -902,19 +902,58 @@ const DoctorProfile = () => {
               <div className="space-y-4">
                 {formData.workplaces.map((workplace, index) => (
                   <div key={index} className="border border-gray-600 rounded-lg p-6 bg-white/5 space-y-4">
+                    {/* Workplace Type Dropdown */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Workplace Type *</label>
+                      <select
+                        value={workplace.type || 'hospital'}
+                        onChange={(e) => handleArrayNestedInputChange('workplaces', index, 'type', e.target.value)}
+                        className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                      >
+                        <option value="hospital">Hospital</option>
+                        <option value="clinic">Clinic</option>
+                        <option value="lab">Laboratory</option>
+                        <option value="diagnostic_center">Diagnostic Center</option>
+                        <option value="nursing_home">Nursing Home</option>
+                        <option value="medical_center">Medical Center</option>
+                        <option value="polyclinic">Polyclinic</option>
+                        <option value="specialty_center">Specialty Center</option>
+                      </select>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Workplace Name */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Hospital *</label>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          {workplace.type === 'hospital' ? 'Hospital Name' : 
+                           workplace.type === 'clinic' ? 'Clinic Name' :
+                           workplace.type === 'lab' ? 'Laboratory Name' :
+                           workplace.type === 'diagnostic_center' ? 'Diagnostic Center Name' :
+                           workplace.type === 'nursing_home' ? 'Nursing Home Name' :
+                           workplace.type === 'medical_center' ? 'Medical Center Name' :
+                           workplace.type === 'polyclinic' ? 'Polyclinic Name' :
+                           workplace.type === 'specialty_center' ? 'Specialty Center Name' :
+                           'Workplace Name'} *
+                        </label>
                         <input
                           type="text"
                           value={typeof workplace?.hospital === 'object' ? workplace?.hospital?.name || '' : workplace?.hospital || ''}
                           onChange={(e) => handleArrayNestedInputChange('workplaces', index, 'hospital', e.target.value)}
                           className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
-                          placeholder="e.g., Apollo Hospital"
+                          placeholder={`e.g., ${workplace.type === 'hospital' ? 'Apollo Hospital' : 
+                                              workplace.type === 'clinic' ? 'City Medical Clinic' :
+                                              workplace.type === 'lab' ? 'PathLab Diagnostics' :
+                                              workplace.type === 'diagnostic_center' ? 'Advanced Imaging Center' :
+                                              workplace.type === 'nursing_home' ? 'Care Plus Nursing Home' :
+                                              workplace.type === 'medical_center' ? 'Metro Medical Center' :
+                                              workplace.type === 'polyclinic' ? 'Family Polyclinic' :
+                                              workplace.type === 'specialty_center' ? 'Heart Care Center' :
+                                              'Your Workplace Name'}`}
                         />
                       </div>
+                      {/* Consultation Fee */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Consultation Fee *</label>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Consultation Fee (₹) *</label>
                         <input
                           type="number"
                           value={workplace.consultationFee || ''}
@@ -922,6 +961,78 @@ const DoctorProfile = () => {
                           className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
                           placeholder="e.g., 500"
                         />
+                      </div>
+                    </div>
+
+                    {/* Complete Address Section */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-3">Complete Address *</label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Street Address */}
+                        <div className="md:col-span-2">
+                          <input
+                            type="text"
+                            value={workplace.address?.street || ''}
+                            onChange={(e) => {
+                              const newAddress = { ...workplace.address, street: e.target.value };
+                              handleArrayNestedInputChange('workplaces', index, 'address', newAddress);
+                            }}
+                            className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                            placeholder="Street Address (e.g., 123 Main Street, Sector 5)"
+                          />
+                        </div>
+                        {/* City */}
+                        <div>
+                          <input
+                            type="text"
+                            value={workplace.address?.city || ''}
+                            onChange={(e) => {
+                              const newAddress = { ...workplace.address, city: e.target.value };
+                              handleArrayNestedInputChange('workplaces', index, 'address', newAddress);
+                            }}
+                            className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                            placeholder="City (e.g., Kolkata)"
+                          />
+                        </div>
+                        {/* State */}
+                        <div>
+                          <input
+                            type="text"
+                            value={workplace.address?.state || ''}
+                            onChange={(e) => {
+                              const newAddress = { ...workplace.address, state: e.target.value };
+                              handleArrayNestedInputChange('workplaces', index, 'address', newAddress);
+                            }}
+                            className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                            placeholder="State (e.g., West Bengal)"
+                          />
+                        </div>
+                        {/* ZIP Code */}
+                        <div>
+                          <input
+                            type="text"
+                            value={workplace.address?.zipCode || ''}
+                            onChange={(e) => {
+                              const newAddress = { ...workplace.address, zipCode: e.target.value };
+                              handleArrayNestedInputChange('workplaces', index, 'address', newAddress);
+                            }}
+                            className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                            placeholder="ZIP Code (e.g., 700001)"
+                          />
+                        </div>
+                        {/* Country */}
+                        <div>
+                          <input
+                            type="text"
+                            value={workplace.address?.country || 'India'}
+                            onChange={(e) => {
+                              const newAddress = { ...workplace.address, country: e.target.value };
+                              handleArrayNestedInputChange('workplaces', index, 'address', newAddress);
+                            }}
+                            className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+                            placeholder="Country (e.g., India)"
+                          />
+                        </div>
                       </div>
                     </div>
 
@@ -1051,10 +1162,30 @@ const DoctorProfile = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    const newWorkplaces = [...formData.workplaces, { hospital: '', consultationFee: '', availableSlots: [{ day: 'monday', startTime: '09:00', endTime: '17:00', isAvailable: true }] }]
+                    const newWorkplaces = [...formData.workplaces, { 
+                      type: 'hospital',
+                      hospital: '', 
+                      consultationFee: '', 
+                      address: {
+                        street: '',
+                        city: '',
+                        state: '',
+                        zipCode: '',
+                        country: 'India'
+                      },
+                      availableSlots: [
+                        { day: 'monday', startTime: '09:00', endTime: '17:00', isAvailable: false },
+                        { day: 'tuesday', startTime: '09:00', endTime: '17:00', isAvailable: false },
+                        { day: 'wednesday', startTime: '09:00', endTime: '17:00', isAvailable: false },
+                        { day: 'thursday', startTime: '09:00', endTime: '17:00', isAvailable: false },
+                        { day: 'friday', startTime: '09:00', endTime: '17:00', isAvailable: false },
+                        { day: 'saturday', startTime: '09:00', endTime: '17:00', isAvailable: false },
+                        { day: 'sunday', startTime: '09:00', endTime: '17:00', isAvailable: false }
+                      ]
+                    }]
                     handleInputChange('workplaces', newWorkplaces)
                   }}
-                  className="w-full py-2 border-2 border-dashed border-gray-600 rounded-lg text-gray-300 hover:border-green-500 hover:text-green-400"
+                  className="w-full py-3 border-2 border-dashed border-gray-600 rounded-lg text-gray-300 hover:border-green-500 hover:text-green-400 transition-colors"
                 >
                   + Add Another Workplace
                 </button>
@@ -1065,16 +1196,34 @@ const DoctorProfile = () => {
                   profileData.workplaces.map((workplace, index) => (
                     <div key={index} className="border border-gray-600 rounded-lg p-4 bg-white/5">
                       <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-lg font-medium text-white">
-                          {typeof workplace.hospital === 'object' ? workplace.hospital?.name : workplace.hospital}
-                        </h3>
+                        <div>
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h3 className="text-lg font-medium text-white">
+                              {typeof workplace.hospital === 'object' ? workplace.hospital?.name : workplace.hospital}
+                            </h3>
+                            <span className="px-2 py-1 bg-blue-500/20 text-blue-300 text-xs rounded-full capitalize">
+                              {workplace.type || 'hospital'}
+                            </span>
+                          </div>
+                          {/* Display workplace address if available */}
+                          {workplace.address && (workplace.address.street || workplace.address.city) && (
+                            <div className="text-sm text-gray-400 mb-2">
+                              {workplace.address.street && `${workplace.address.street}, `}
+                              {workplace.address.city && `${workplace.address.city}`}
+                              {workplace.address.state && `, ${workplace.address.state}`}
+                              {workplace.address.zipCode && ` - ${workplace.address.zipCode}`}
+                            </div>
+                          )}
+                          {/* Fallback to hospital address if workplace address not available */}
+                          {(!workplace.address || (!workplace.address.street && !workplace.address.city)) && 
+                           typeof workplace.hospital === 'object' && workplace.hospital?.address && (
+                            <div className="text-sm text-gray-400 mb-2">
+                              {workplace.hospital.address.street}, {workplace.hospital.address.city}
+                            </div>
+                          )}
+                        </div>
                         <span className="text-green-400 font-medium">₹{workplace.consultationFee}</span>
                       </div>
-                      {typeof workplace.hospital === 'object' && workplace.hospital?.address && (
-                        <div className="text-sm text-gray-400 mb-2">
-                          {workplace.hospital.address.street}, {workplace.hospital.address.city}
-                        </div>
-                      )}
                       <div className="text-sm text-gray-300">
                         Available: {(() => {
                           console.log('🕒 Workplace availability slots:', workplace.availableSlots);

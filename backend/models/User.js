@@ -155,10 +155,37 @@ const userSchema = new mongoose.Schema({
     endTime: String
   }],
   workplaces: [{
+    type: {
+      type: String,
+      enum: ['hospital', 'clinic', 'lab', 'diagnostic_center', 'nursing_home', 'medical_center', 'polyclinic', 'specialty_center'],
+      default: 'hospital'
+    },
     hospital: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Hospital',
       required: true
+    },
+    address: {
+      street: {
+        type: String,
+        required: true
+      },
+      city: {
+        type: String,
+        required: true
+      },
+      state: {
+        type: String,
+        required: true
+      },
+      zipCode: {
+        type: String,
+        required: true
+      },
+      country: {
+        type: String,
+        default: 'India'
+      }
     },
     availableSlots: [{
       day: {
