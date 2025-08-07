@@ -116,10 +116,28 @@ const AppointmentBooking = () => {
       if (filters.location) queryParams.append('location', filters.location)
       if (filters.minRating) queryParams.append('minRating', filters.minRating)
 
+      console.log('🔍 Loading available doctors with params:', queryParams.toString())
       const response = await appointmentsAPI.getAvailableDoctors(queryParams.toString())
+      
+      console.log('📊 Available doctors API response:', response.data)
       
       if (response.data.status === 'success') {
         let doctorList = response.data.data.doctors
+        
+        console.log('👨‍⚕️ Raw doctor list:', doctorList.length, 'doctors')
+        doctorList.forEach((doctor, index) => {
+          console.log(`Doctor ${index + 1}:`, {
+            name: `${doctor.firstName} ${doctor.lastName}`,
+            specialization: doctor.specialization,
+            workplacesCount: doctor.workplaces?.length || 0,
+            hasWorkplaces: !!doctor.workplaces?.length,
+            workplaces: doctor.workplaces?.map(wp => ({
+              hospitalName: wp.hospital?.name || 'No hospital name',
+              hospitalId: wp.hospital?._id || wp.hospital,
+              consultationFee: wp.consultationFee
+            }))
+          })
+        })
         
         // Apply search filter
         if (searchTerm) {
@@ -130,12 +148,18 @@ const AppointmentBooking = () => {
           )
         }
         
+        console.log('✅ Filtered doctor list:', doctorList.length, 'doctors')
         setDoctors(doctorList)
       } else {
-        throw new Error('Failed to load doctors')
+        throw new Error(response.data.message || 'Failed to load doctors')
       }
     } catch (error) {
-      console.error('Error loading doctors:', error)
+      console.error('❌ Error loading doctors:', error)
+      console.error('❌ Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      })
       setError('Failed to load available doctors. Please refresh the page and try again.')
       toast.error('Failed to load available doctors')
     } finally {
@@ -146,15 +170,59 @@ const AppointmentBooking = () => {
   const loadDoctorDetails = async (doctorId) => {
     try {
       setIsLoading(true)
+      console.log('🔍 Loading doctor details for ID:', doctorId)
+      
       const response = await appointmentsAPI.getDoctorDetails(doctorId)
       
+      console.log('📊 Doctor details API response:', response.data)
+      
       if (response.data.status === 'success') {
-        return response.data.data.doctor
+        const doctorDetails = response.data.data.doctor
+        
+        console.log('👨‍⚕️ Doctor details loaded:', {
+          name: `${doctorDetails.firstName} ${doctorDetails.lastName}`,
+          specialization: doctorDetails.specialization,
+          workplacesCount: doctorDetails.workplaces?.length || 0,
+          workplaces: doctorDetails.workplaces?.map(wp => ({
+            hospitalName: wp.hospital?.name || 'No hospital name',
+            hospitalId: wp.hospital?._id || wp.hospital,
+            consultationFee: wp.consultationFee,
+            hasHospitalData: !!wp.hospital
+          }))
+        })
+        
+        // Validate that doctor has workplaces
+        if (!doctorDetails.workplaces || doctorDetails.workplaces.length === 0) {
+          console.warn('⚠️ Doctor has no workplaces configured')
+          toast.error('This doctor has no available locations. Please choose another doctor.')
+          return null
+        }
+        
+        // Validate that workplaces have hospital data
+        const validWorkplaces = doctorDetails.workplaces.filter(wp => wp.hospital && (wp.hospital._id || wp.hospital.name))
+        if (validWorkplaces.length === 0) {
+          console.warn('⚠️ Doctor workplaces have no valid hospital data')
+          toast.error('Hospital information not available for this doctor. Please choose another doctor.')
+          return null
+        }
+        
+        // Update doctor with only valid workplaces
+        if (validWorkplaces.length < doctorDetails.workplaces.length) {
+          console.warn(`⚠️ Filtered out ${doctorDetails.workplaces.length - validWorkplaces.length} invalid workplaces`)
+          doctorDetails.workplaces = validWorkplaces
+        }
+        
+        return doctorDetails
       } else {
-        throw new Error('Failed to load doctor details')
+        throw new Error(response.data.message || 'Failed to load doctor details')
       }
     } catch (error) {
-      console.error('Error loading doctor details:', error)
+      console.error('❌ Error loading doctor details:', error)
+      console.error('❌ Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      })
       toast.error('Failed to load doctor details')
       return null // Explicitly return null on error
     } finally {
@@ -165,17 +233,36 @@ const AppointmentBooking = () => {
   const loadAvailableDates = async () => {
     try {
       setIsLoading(true)
+      console.log('📅 Loading available dates for:', {
+        doctorId: selectedDoctor._id,
+        hospitalId: selectedHospital._id,
+        doctorName: `${selectedDoctor.firstName} ${selectedDoctor.lastName}`,
+        hospitalName: selectedHospital.name
+      })
+      
       const response = await appointmentsAPI.getAvailableDates(
         selectedDoctor._id, 
         selectedHospital._id
       )
       
+      console.log('📅 Available dates API response:', response.data)
+      
       if (response.data.status === 'success') {
-        setAvailableDates(response.data.data.availableDates)
+        const dates = response.data.data.availableDates || []
+        console.log('✅ Available dates loaded:', dates.length, 'dates')
+        setAvailableDates(dates)
+      } else {
+        throw new Error(response.data.message || 'Failed to load available dates')
       }
     } catch (error) {
-      console.error('Error loading available dates:', error)
+      console.error('❌ Error loading available dates:', error)
+      console.error('❌ Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      })
       toast.error('Failed to load available dates')
+      setAvailableDates([]) // Set empty array on error
     } finally {
       setIsLoading(false)
     }
@@ -184,18 +271,46 @@ const AppointmentBooking = () => {
   const loadAvailableSlots = async () => {
     try {
       setIsLoading(true)
+      console.log('🕐 Loading available slots for:', {
+        doctor: selectedDoctor.firstName + ' ' + selectedDoctor.lastName,
+        hospital: selectedHospital.name,
+        date: selectedDate
+      })
+      
+      // Add cache-busting timestamp to ensure fresh data
+      const timestamp = new Date().getTime()
       const response = await appointmentsAPI.getAvailableSlots(
         selectedDoctor._id,
         selectedHospital._id,
-        selectedDate
+        `${selectedDate}&_t=${timestamp}` // Add timestamp to prevent caching
       )
       
+      console.log('🕐 Available slots API response:', response.data)
+      console.log('🕐 Raw response status:', response.status)
+      console.log('🕐 Response headers:', response.headers)
+      
       if (response.data.status === 'success') {
-        setAvailableSlots(response.data.data.availableSlots)
+        const slots = response.data.data.availableSlots || []
+        console.log('✅ Available slots loaded:', slots.length, 'slots')
+        console.log('✅ Slot details:', slots.map(slot => ({
+          time: slot.time,
+          formatted: formatTime(slot.time),
+          available: slot.available,
+          fee: slot.consultationFee
+        })))
+        setAvailableSlots(slots)
+      } else {
+        throw new Error(response.data.message || 'Failed to load available slots')
       }
     } catch (error) {
-      console.error('Error loading available slots:', error)
+      console.error('❌ Error loading available slots:', error)
+      console.error('❌ Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      })
       toast.error('Failed to load available time slots')
+      setAvailableSlots([]) // Set empty array on error
     } finally {
       setIsLoading(false)
     }
@@ -203,18 +318,42 @@ const AppointmentBooking = () => {
 
   const handleDoctorSelect = async (doctor) => {
     try {
+      console.log('🎯 Doctor selected:', {
+        name: `${doctor.firstName} ${doctor.lastName}`,
+        id: doctor._id,
+        workplacesCount: doctor.workplaces?.length || 0
+      })
+      
+      // First, try to load detailed doctor information
       const doctorDetails = await loadDoctorDetails(doctor._id)
+      
       if (doctorDetails) {
+        console.log('✅ Using detailed doctor data')
         setSelectedDoctor(doctorDetails)
         setCurrentStep(2)
       } else {
         // Fallback: use the basic doctor data from the list if detailed loading fails
-        console.warn('Using fallback doctor data due to API failure')
+        console.warn('⚠️ Using fallback doctor data due to API failure')
+        
+        // Validate basic doctor data has workplaces
+        if (!doctor.workplaces || doctor.workplaces.length === 0) {
+          toast.error('This doctor has no available locations. Please choose another doctor.')
+          return
+        }
+        
+        // Filter valid workplaces in fallback data
+        const validWorkplaces = doctor.workplaces.filter(wp => wp.hospital && (wp.hospital._id || wp.hospital.name))
+        if (validWorkplaces.length === 0) {
+          toast.error('Hospital information not available for this doctor. Please choose another doctor.')
+          return
+        }
+        
+        doctor.workplaces = validWorkplaces
         setSelectedDoctor(doctor)
         setCurrentStep(2)
       }
     } catch (error) {
-      console.error('Error in handleDoctorSelect:', error)
+      console.error('❌ Error in handleDoctorSelect:', error)
       toast.error('Error selecting doctor. Please try again.')
       // Reset loading state
       setIsLoading(false)
@@ -420,9 +559,9 @@ const AppointmentBooking = () => {
                   <p className="text-blue-300 text-sm mb-2">{doctor.specialization}</p>
                   
                   <div className="flex items-center space-x-4 text-sm text-gray-300">
-                    <div className="flex items-center space-x-1">
-                      <Star className="w-4 h-4 text-yellow-400" />
-                      <span>{doctor.rating?.average?.toFixed(1) || 'N/A'}</span>
+                    <div className="flex items-center space-x-1 text-yellow-400">
+                      <Star className="w-4 h-4 fill-current" />
+                      <span>{doctor.displayRating?.average?.toFixed(1) || doctor.rating?.average?.toFixed(1) || '4.2'}</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Stethoscope className="w-4 h-4" />
@@ -455,51 +594,59 @@ const AppointmentBooking = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {selectedDoctor?.workplaces?.map((workplace, index) => (
-          <div
-            key={index}
-            onClick={() => handleHospitalSelect(workplace.hospital)}
-            className="bg-white/10 backdrop-blur-sm rounded-xl p-6 cursor-pointer hover:bg-white/20 transition-all duration-200 border border-gray-600 hover:border-blue-500"
-          >
-            <div className="flex items-start space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-white" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  {workplace.hospital?.name || 'Hospital Name Not Available'}
-                </h3>
-                <div className="space-y-2 text-sm text-gray-300">
-                  <div className="flex items-center space-x-2">
-                    <MapPin className="w-4 h-4" />
-                    <span>
-                      {workplace.hospital?.address?.street && workplace.hospital?.address?.city 
-                        ? `${workplace.hospital.address.street}, ${workplace.hospital.address.city}`
-                        : workplace.hospital?.address?.city || 'Address not available'
-                      }
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Phone className="w-4 h-4" />
-                    <span>{workplace.hospital?.phone || 'Phone not available'}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Star className="w-4 h-4 text-yellow-400" />
-                    <span>{workplace.hospital?.rating?.average?.toFixed(1) || 'N/A'} rating</span>
-                  </div>
+        {selectedDoctor?.workplaces?.length > 0 ? (
+          selectedDoctor.workplaces.map((workplace, index) => (
+            <div
+              key={index}
+              onClick={() => handleHospitalSelect(workplace.hospital)}
+              className="bg-white/10 backdrop-blur-sm rounded-xl p-6 cursor-pointer hover:bg-white/20 transition-all duration-200 border border-gray-600 hover:border-blue-500"
+            >
+              <div className="flex items-start space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center">
+                  <Building2 className="w-6 h-6 text-white" />
                 </div>
-                <div className="mt-4 pt-4 border-t border-gray-600">
-                  <p className="text-green-400 font-semibold">
-                    Consultation Fee: ₹{workplace.consultationFee || 'Not specified'}
-                  </p>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-white mb-2">
+                    {workplace.hospital?.name || 'Hospital Name Not Available'}
+                  </h3>
+                  <div className="space-y-2 text-sm text-gray-300">
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="w-4 h-4" />
+                      <span>
+                        {workplace.hospital?.address?.street && workplace.hospital?.address?.city 
+                          ? `${workplace.hospital.address.street}, ${workplace.hospital.address.city}`
+                          : workplace.hospital?.address?.city || 'Address not available'
+                        }
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Phone className="w-4 h-4" />
+                      <span>{workplace.hospital?.phone || 'Phone not available'}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Star className="w-4 h-4 text-yellow-400" />
+                      <span>{workplace.hospital?.rating?.average?.toFixed(1) || 'N/A'} rating</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-gray-600">
+                    <p className="text-green-400 font-semibold">
+                      Consultation Fee: ₹{workplace.consultationFee || 'Not specified'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )) || (
+          ))
+        ) : (
           <div className="col-span-full text-center py-8">
             <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-300">No workplace information available for this doctor</p>
+            <p className="text-gray-300 mb-4">No workplace information available for this doctor</p>
+            <button
+              onClick={() => setCurrentStep(1)}
+              className="text-blue-400 hover:text-blue-300 underline"
+            >
+              Choose a different doctor
+            </button>
           </div>
         )}
       </div>

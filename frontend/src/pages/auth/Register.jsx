@@ -240,7 +240,7 @@ const Register = () => {
                     <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-white">Trusted by Healthcare Leaders</h3>
+                <h3 className="text-lg font-semibold text-white">Trusted by Founder</h3>
               </div>
               <p className="text-gray-300 text-sm leading-relaxed">
                 "Oxiwell has transformed how we manage patient care. The platform is intuitive, secure, and has significantly improved our operational efficiency."
@@ -250,8 +250,8 @@ const Register = () => {
                   <span className="text-white font-bold text-sm">DR</span>
                 </div>
                 <div>
-                  <div className="text-white font-medium text-sm">Dr. Sarah Johnson</div>
-                  <div className="text-gray-300 text-xs">Chief Medical Officer</div>
+                  <div className="text-white font-medium text-sm">Khyruddin Hashanulla</div>
+                  <div className="text-gray-300 text-xs">Software Engineer</div>
                 </div>
               </div>
             </div>
@@ -383,7 +383,7 @@ const Register = () => {
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-white mb-2">Medical License *</label>
+                        <label className="block text-sm font-medium text-white mb-2">Registration No *</label>
                         <input
                           type="text"
                           {...register('licenseNumber', { 

@@ -78,6 +78,31 @@ const DoctorProfile = () => {
     'Preventive Care', 'Mental Health Support'
   ]
 
+  // Helper function to convert 24-hour time to 12-hour format with AM/PM
+  const formatTime = (time24) => {
+    if (!time24) return ''
+    
+    const [hours, minutes] = time24.split(':')
+    const hour24 = parseInt(hours, 10)
+    const minute = minutes || '00'
+    
+    if (hour24 === 0) {
+      return `12:${minute} AM`
+    } else if (hour24 < 12) {
+      return `${hour24}:${minute} AM`
+    } else if (hour24 === 12) {
+      return `12:${minute} PM`
+    } else {
+      return `${hour24 - 12}:${minute} PM`
+    }
+  }
+
+  // Helper function to format time range for display
+  const formatTimeRange = (startTime, endTime) => {
+    if (!startTime || !endTime) return ''
+    return `${formatTime(startTime)} - ${formatTime(endTime)}`
+  }
+
   // Load doctor profile data
   const loadProfile = async () => {
     try {
@@ -1258,7 +1283,7 @@ const DoctorProfile = () => {
                     }]
                     handleInputChange('workplaces', newWorkplaces)
                   }}
-                  className="w-full py-3 border-2 border-dashed border-gray-600 rounded-lg text-gray-300 hover:border-green-500 hover:text-green-400 transition-colors"
+                  className="w-full py-3 border-2 border-dashed border-gray-600 rounded-lg text-gray-300 hover:border-green-500 hover:text-green-400"
                 >
                   + Add Another Workplace
                 </button>
@@ -1323,7 +1348,7 @@ const DoctorProfile = () => {
                             .filter(slot => slot.isAvailable === true)
                             .map(slot => {
                               const day = slot.day ? slot.day.charAt(0).toUpperCase() + slot.day.slice(1) : 'Unknown';
-                              const timeRange = slot.startTime && slot.endTime ? `${slot.startTime}-${slot.endTime}` : 'Time not set';
+                              const timeRange = formatTimeRange(slot.startTime, slot.endTime);
                               return `${day} (${timeRange})`;
                             });
                           
