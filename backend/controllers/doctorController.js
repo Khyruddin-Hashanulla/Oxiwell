@@ -720,11 +720,50 @@ const getDoctorSchedule = asyncHandler(async (req, res, next) => {
 // @route   POST /api/doctors/profile-setup
 // @access  Private (Doctor only)
 const completeProfileSetup = asyncHandler(async (req, res, next) => {
-  // Implementation would be similar to updateDoctorProfile but for initial setup
-  res.status(200).json({
-    status: 'success',
-    message: 'Profile setup completed successfully'
-  });
+  console.log('🔄 Starting profile setup completion...')
+  
+  try {
+    // First, mark profile as completed BEFORE processing the update
+    console.log('📝 Setting profile setup completion status...')
+    await User.findByIdAndUpdate(
+      req.user._id,
+      { 
+        $set: { 
+          profileSetupCompleted: true,
+          profileSetupCompletedAt: new Date()
+        }
+      }
+    )
+    console.log('✅ Profile setup completion status set to true')
+    
+    // Now call the existing updateDoctorProfile function to handle the actual profile update
+    // This will process all the form data and update the doctor's profile
+    console.log('🔄 Processing profile data update...')
+    await updateDoctorProfile(req, res, next)
+    
+    console.log('✅ Profile setup completion process finished')
+  } catch (error) {
+    console.error('❌ Error in profile setup completion:', error)
+    
+    // If there was an error, revert the completion status
+    try {
+      await User.findByIdAndUpdate(
+        req.user._id,
+        { 
+          $set: { 
+            profileSetupCompleted: false,
+            profileSetupCompletedAt: null
+          }
+        }
+      )
+      console.log('🔄 Reverted profile setup completion status due to error')
+    } catch (revertError) {
+      console.error('❌ Error reverting profile completion status:', revertError)
+    }
+    
+    // Re-throw the error to be handled by the error middleware
+    throw error
+  }
 });
 
 // @desc    Check if doctor profile setup is required

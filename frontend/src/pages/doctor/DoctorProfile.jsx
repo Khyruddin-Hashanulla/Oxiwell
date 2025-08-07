@@ -33,6 +33,7 @@ const DoctorProfile = () => {
   const { user } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [profileData, setProfileData] = useState(null)
   const [formData, setFormData] = useState({
     firstName: '',
@@ -242,40 +243,64 @@ const DoctorProfile = () => {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async () => {
-    if (!validateForm()) {
-      toast.error('Please fill in all required fields')
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    
+    // Prevent duplicate submissions
+    if (loading) {
+      console.log('⚠️ Profile update already in progress, ignoring duplicate submission')
       return
     }
-
+    
+    setLoading(true)
+    setErrors({})
+    
     try {
-      setIsLoading(true)
+      // Validate required fields
+      if (!formData.firstName || !formData.lastName || !formData.email) {
+        toast.error('Please fill in all required fields')
+        return
+      }
 
-      // Create FormData for file upload
+      // Convert form data to FormData for multipart/form-data submission
       const submitData = new FormData()
-
-      // Add all form fields to FormData
-      Object.keys(formData).forEach(key => {
-        if (key === 'profileImageFile' && formData[key]) {
-          submitData.append('profileImage', formData[key])
-        } else if (key !== 'profileImageFile' && typeof formData[key] === 'object' && formData[key] !== null) {
-          submitData.append(key, JSON.stringify(formData[key]))
-        } else if (key !== 'profileImageFile' && formData[key] !== null && formData[key] !== undefined) {
-          submitData.append(key, formData[key])
-        }
-      })
-
-      console.log('Submitting profile update data...')
-      console.log('📤 Form data being sent:', {
-        medicalRegistrationNumber: formData.medicalRegistrationNumber,
-        professionalBio: formData.professionalBio,
-        servicesProvided: formData.servicesProvided,
-        workplaces: formData.workplaces,
-        hasProfileImage: !!formData.profileImageFile
-      })
       
-      // Detailed workplace debugging
-      console.log('🏥 DETAILED WORKPLACE DATA BEING SENT:')
+      // Add basic fields
+      submitData.append('firstName', formData.firstName || '')
+      submitData.append('lastName', formData.lastName || '')
+      submitData.append('email', formData.email || '')
+      submitData.append('phone', formData.phone || '')
+      submitData.append('gender', formData.gender || '')
+      submitData.append('dateOfBirth', formData.dateOfBirth || '')
+      submitData.append('specialization', formData.specialization || '')
+      submitData.append('licenseNumber', formData.licenseNumber || '')
+      submitData.append('medicalRegistrationNumber', formData.medicalRegistrationNumber || '')
+      submitData.append('experience', formData.experience || '')
+      submitData.append('professionalBio', formData.professionalBio || '')
+      submitData.append('onlineConsultationAvailable', formData.onlineConsultationAvailable || false)
+      submitData.append('offlineConsultationAvailable', formData.offlineConsultationAvailable !== false)
+      
+      // Add JSON fields as strings
+      submitData.append('languages', JSON.stringify(formData.languages || []))
+      submitData.append('servicesProvided', JSON.stringify(formData.servicesProvided || []))
+      submitData.append('workplaces', JSON.stringify(formData.workplaces || []))
+      submitData.append('emergencyContact', JSON.stringify(formData.emergencyContact || {}))
+      submitData.append('address', JSON.stringify(formData.address || {}))
+      submitData.append('qualifications', JSON.stringify(formData.qualifications || []))
+      
+      // Add profile image if exists
+      if (formData.profileImageFile) {
+        submitData.append('profileImage', formData.profileImageFile)
+      }
+
+      console.log('🔍 Submitting profile update with FormData')
+      console.log('🔍 FormData entries:')
+      for (let pair of submitData.entries()) {
+        console.log(`  ${pair[0]}:`, pair[1])
+      }
+      
+      // Debug workplace availability slots
+      console.log('🕒 WORKPLACE AVAILABILITY DEBUG:')
       formData.workplaces.forEach((workplace, index) => {
         console.log(`Workplace ${index + 1}:`, {
           hospital: workplace.hospital,
@@ -302,13 +327,14 @@ const DoctorProfile = () => {
         console.error('🚨 WARNING: Found workplaces with empty availability slots:', emptyWorkplaces.map((w, i) => `Workplace ${formData.workplaces.indexOf(w) + 1}: ${w.hospital}`))
       }
       
-      // Use updateProfile instead of completeProfileSetup
+      // Make the API call
+      console.log('📡 Making profile update API call...')
       const response = await doctorsAPI.updateProfile(submitData)
+      console.log('✅ Profile update response:', response)
       
-      console.log('✅ Profile update response:', response.data)
-
-      // Only show success if the response indicates success
-      if (response.data.status === 'success') {
+      // Check response status
+      if (response?.data?.status === 'success') {
+        console.log('✅ Profile updated successfully')
         toast.success('Profile updated successfully!')
         setIsEditing(false)
         
@@ -322,20 +348,40 @@ const DoctorProfile = () => {
           toast.warning('Profile updated but failed to refresh display. Please reload the page.')
         }
       } else {
-        console.error('❌ Failed to update profile:', response.data.message)
-        throw new Error(response.data.message || 'Update failed')
+        console.error('❌ Profile update failed:', response?.data)
+        toast.error(response?.data?.message || 'Failed to update profile. Please try again.')
       }
       
     } catch (error) {
       console.error('❌ Profile update error:', error)
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to update profile'
-      toast.error(errorMessage)
-      setErrors({ submit: errorMessage })
       
-      // Ensure we don't stay in loading state
-      setIsEditing(true) // Keep editing mode open so user can try again
+      // Handle different types of errors with specific messages
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        toast.error('Request timeout. Please check your connection and try again.')
+      } else if (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error')) {
+        toast.error('Network error. Please check your internet connection and server status.')
+      } else if (error.response?.status === 413) {
+        toast.error('File too large. Please use a smaller image.')
+      } else if (error.response?.status === 500) {
+        toast.error('Server error. Please try again later.')
+      } else if (error.response?.status === 401) {
+        toast.error('Authentication failed. Please log in again.')
+      } else if (error.response?.status === 403) {
+        toast.error('Access denied. You do not have permission to update this profile.')
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message)
+      } else if (error.response?.data?.errors && Array.isArray(error.response.data.errors)) {
+        // Handle validation errors
+        const errorMessages = error.response.data.errors.join(', ')
+        toast.error(`Validation errors: ${errorMessages}`)
+      } else {
+        toast.error('Failed to update profile. Please try again.')
+      }
+      
+      // Keep editing mode open so user can try again
+      setIsEditing(true)
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
@@ -466,11 +512,11 @@ const DoctorProfile = () => {
               <div className="flex space-x-2">
                 <button
                   onClick={handleSubmit}
-                  disabled={isLoading}
+                  disabled={loading}
                   className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                 >
                   <Save className="w-4 h-4 mr-2" />
-                  {isLoading ? 'Saving...' : 'Save Changes'}
+                  {loading ? 'Saving...' : 'Save Changes'}
                 </button>
                 <button
                   onClick={() => setIsEditing(false)}

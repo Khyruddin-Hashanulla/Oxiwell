@@ -225,11 +225,14 @@ export const doctorsAPI = {
   }),
   getDoctorStats: () => api.get('/doctors/dashboard/stats'),
   updateProfile: (data) => {
-    // Handle FormData for file uploads
+    // Handle FormData for file uploads with timeout configuration
     const config = {
       headers: {
         'Content-Type': 'multipart/form-data',
-      }
+      },
+      timeout: 30000, // 30 second timeout for profile updates
+      maxContentLength: 50 * 1024 * 1024, // 50MB max content length
+      maxBodyLength: 50 * 1024 * 1024 // 50MB max body length
     }
     return api.put('/doctors/profile', data, config)
   },

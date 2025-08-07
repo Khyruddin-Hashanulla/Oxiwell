@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 
 const DoctorProfileSetup = () => {
-  const { user, updateUser, isLoading: authLoading } = useAuth()
+  const { user, updateProfile, isLoading: authLoading } = useAuth()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [dataLoading, setDataLoading] = useState(true)
@@ -45,7 +45,16 @@ const DoctorProfileSetup = () => {
     
     // Workplaces & Availability (per hospital)
     workplaces: [{
+      type: 'hospital',
       hospital: '',
+      phone: '',
+      address: {
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: 'India'
+      },
       consultationFee: '',
       availableSlots: [{ day: 'monday', startTime: '09:00', endTime: '17:00', isAvailable: true }]
     }],
@@ -114,17 +123,19 @@ const DoctorProfileSetup = () => {
         console.log(' Full API response:', response)
         console.log(' Response status:', response?.status)
         console.log(' Response data:', response?.data)
-        console.log(' Doctor data:', response?.data?.doctor)
+        console.log(' Doctor data:', response?.data?.data?.doctor)
         console.log(' Response data keys:', response?.data ? Object.keys(response.data) : 'No data')
         console.log(' Response data structure:', JSON.stringify(response?.data, null, 2))
         
         // Check if response and data exist
-        if (!response?.data?.doctor) {
+        const doctorData = response?.data?.data?.doctor
+        if (!doctorData) {
           console.error(' No doctor data received from API')
           console.error(' Response structure:', {
             hasResponse: !!response,
             hasData: !!response?.data,
-            hasDoctor: !!response?.data?.doctor,
+            hasNestedData: !!response?.data?.data,
+            hasDoctor: !!response?.data?.data?.doctor,
             responseKeys: response ? Object.keys(response) : 'No response',
             dataKeys: response?.data ? Object.keys(response.data) : 'No data'
           })
@@ -149,7 +160,7 @@ const DoctorProfileSetup = () => {
               languages: user.languages || [],
               servicesProvided: user.servicesProvided || [],
               onlineConsultationAvailable: user.onlineConsultationAvailable || false,
-              offlineConsultationAvailable: user.offlineConsultationAvailable || true,
+              offlineConsultationAvailable: user.offlineConsultationAvailable !== false,
               workplaces: user.workplaces || [],
               emergencyContact: user.emergencyContact || {},
               address: user.address || {}
@@ -165,75 +176,88 @@ const DoctorProfileSetup = () => {
           return
         }
 
-        const doctorData = response.data.doctor
-        console.log('Doctor data loaded successfully:', doctorData)
+        console.log('✅ Doctor data loaded successfully:', doctorData)
         
         // Safely prefill form with existing data using optional chaining
-        setFormData(prev => ({
-          ...prev,
-          firstName: doctorData.firstName || user.firstName || '',
-          lastName: doctorData.lastName || user.lastName || '',
-          email: doctorData.email || user.email || '',
-          phone: doctorData.phone || user.phone || '',
-          gender: doctorData.gender || user.gender || '',
-          dateOfBirth: doctorData.dateOfBirth ? new Date(doctorData.dateOfBirth).toISOString().split('T')[0] : '',
-          specialization: doctorData.specialization || user.specialization || '',
-          licenseNumber: doctorData.licenseNumber || user.licenseNumber || '',
-          medicalRegistrationNumber: doctorData.medicalRegistrationNumber || user.medicalRegistrationNumber || '',
-          experience: doctorData.experience || user.experience || '',
-          qualifications: (doctorData.qualifications && doctorData.qualifications.length > 0) ? doctorData.qualifications : [{ degree: '', institution: '', year: '' }],
+        setFormData(prevData => ({
+          ...prevData,
+          firstName: doctorData.firstName || '',
+          lastName: doctorData.lastName || '',
+          email: doctorData.email || '',
+          phone: doctorData.phone || '',
+          gender: doctorData.gender || '',
+          dateOfBirth: doctorData.dateOfBirth ? doctorData.dateOfBirth.split('T')[0] : '',
+          specialization: doctorData.specialization || '',
+          licenseNumber: doctorData.licenseNumber || '',
+          medicalRegistrationNumber: doctorData.medicalRegistrationNumber || '',
+          experience: doctorData.experience || '',
+          qualifications: Array.isArray(doctorData.qualifications) ? doctorData.qualifications : [],
           professionalBio: doctorData.professionalBio || '',
-          languages: (doctorData.languages && doctorData.languages.length > 0) ? doctorData.languages : ['English'],
-          servicesProvided: doctorData.servicesProvided || [],
+          profileImage: doctorData.profileImage || '',
+          languages: Array.isArray(doctorData.languages) ? doctorData.languages : [],
+          servicesProvided: Array.isArray(doctorData.servicesProvided) ? doctorData.servicesProvided : [],
           onlineConsultationAvailable: doctorData.onlineConsultationAvailable || false,
           offlineConsultationAvailable: doctorData.offlineConsultationAvailable !== false,
-          workplaces: (doctorData.workplaces && doctorData.workplaces.length > 0) ? doctorData.workplaces : [{
-            hospital: '',
-            consultationFee: '',
-            availableSlots: [{ day: 'monday', startTime: '09:00', endTime: '17:00', isAvailable: true }]
-          }],
+          workplaces: Array.isArray(doctorData.workplaces) ? doctorData.workplaces : [],
           emergencyContact: doctorData.emergencyContact || {
             name: '',
             relationship: '',
-            phone: '',
-            email: ''
+            phone: ''
           },
-          address: doctorData.address || { 
-            street: '', 
-            city: '', 
-            state: '', 
-            zipCode: '', 
-            country: 'India' 
-          },
-          profileImagePreview: doctorData.profileImage || ''
+          address: doctorData.address || {
+            street: '',
+            city: '',
+            state: '',
+            zipCode: '',
+            country: 'India'
+          }
         }))
-      } catch (error) {
-        console.error('Error loading doctor data:', error)
-        
-        // Handle different types of errors
-        if (error.response?.status === 401) {
-          toast.error('Authentication failed. Please log in again.')
-        } else if (error.response?.status === 404) {
-          toast.error('Doctor profile not found')
-        } else if (error.response?.status >= 500) {
-          toast.error('Server error. Please try again later.')
-        } else {
-          toast.error('Failed to load profile data. Using default values.')
-        }
 
-        // Set default values if API call fails
-        setFormData(prev => ({
-          ...prev,
-          firstName: user?.firstName || '',
-          lastName: user?.lastName || '',
-          email: user?.email || '',
-          phone: user?.phone || '',
-          gender: user?.gender || '',
-          specialization: user?.specialization || '',
-          licenseNumber: user?.licenseNumber || '',
-          medicalRegistrationNumber: user?.medicalRegistrationNumber || '',
-          experience: user?.experience || '',
-        }))
+        console.log('✅ Form data updated with doctor information')
+      } catch (error) {
+        console.error('❌ Error loading doctor data:', error)
+        
+        // On error, try to use fallback data from auth context
+        if (user) {
+          console.log('🔄 Using fallback data from auth context due to error')
+          const fallbackData = {
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            email: user.email || '',
+            phone: user.phone || '',
+            gender: user.gender || '',
+            dateOfBirth: user.dateOfBirth || '',
+            specialization: user.specialization || '',
+            licenseNumber: user.licenseNumber || '',
+            medicalRegistrationNumber: user.medicalRegistrationNumber || '',
+            experience: user.experience || '',
+            qualifications: user.qualifications || [],
+            professionalBio: user.professionalBio || '',
+            profileImage: user.profileImage || '',
+            languages: user.languages || [],
+            servicesProvided: user.servicesProvided || [],
+            onlineConsultationAvailable: user.onlineConsultationAvailable || false,
+            offlineConsultationAvailable: user.offlineConsultationAvailable !== false,
+            workplaces: user.workplaces || [],
+            emergencyContact: user.emergencyContact || {
+              name: '',
+              relationship: '',
+              phone: ''
+            },
+            address: user.address || {
+              street: '',
+              city: '',
+              state: '',
+              zipCode: '',
+              country: 'India'
+            }
+          }
+          
+          setFormData(prevData => ({
+            ...prevData,
+            ...fallbackData
+          }))
+        }
       } finally {
         setDataLoading(false)
       }
@@ -269,10 +293,25 @@ const DoctorProfileSetup = () => {
   const handleArrayNestedInputChange = (arrayField, index, childField, value) => {
     setFormData(prev => {
       const newArray = [...prev[arrayField]]
-      newArray[index] = {
-        ...newArray[index],
-        [childField]: value
+      
+      // Handle nested object properties (e.g., address.street, address.city)
+      if (childField.includes('.')) {
+        const [parentField, nestedField] = childField.split('.')
+        newArray[index] = {
+          ...newArray[index],
+          [parentField]: {
+            ...newArray[index][parentField],
+            [nestedField]: value
+          }
+        }
+      } else {
+        // Handle simple properties
+        newArray[index] = {
+          ...newArray[index],
+          [childField]: value
+        }
       }
+      
       return {
         ...prev,
         [arrayField]: newArray
@@ -316,9 +355,8 @@ const DoctorProfileSetup = () => {
       }
     } else if (step === 2) {
       // Step 2: Professional Information
-      if (!formData.specialization || !formData.licenseNumber || !formData.medicalRegistrationNumber) {
+      if (!formData.specialization || !formData.medicalRegistrationNumber) {
         newErrors.specialization = 'Specialization is required'
-        newErrors.licenseNumber = 'License number is required'
         newErrors.medicalRegistrationNumber = 'Medical registration number is required'
       }
       
@@ -353,7 +391,7 @@ const DoctorProfileSetup = () => {
         // Check if all workplaces are complete
         for (let i = 0; i < formData.workplaces.length; i++) {
           const workplace = formData.workplaces[i]
-          if (!workplace.hospital || !workplace.consultationFee) {
+          if (!workplace.type || !workplace.hospital || !workplace.phone || !workplace.address.street || !workplace.address.city || !workplace.address.state || !workplace.address.zipCode || !workplace.consultationFee) {
             newErrors.workplaces = 'All workplace fields must be completed'
             break
           }
@@ -429,13 +467,29 @@ const DoctorProfileSetup = () => {
         console.log(`  ${pair[0]}:`, pair[1])
       }
       
-      await doctorsAPI.completeProfileSetup(submitData)
+      const response = await doctorsAPI.completeProfileSetup(submitData)
+      console.log('✅ Profile setup response:', response)
+      
+      // Only show success toast if API call was successful
       toast.success('Profile setup completed!')
-      await updateUser()
+      
+      // Navigate directly to dashboard without calling updateProfile
+      // The profile data will be refreshed when the dashboard loads
+      console.log('🔄 Navigating to dashboard...')
       navigate('/doctor/dashboard')
     } catch (error) {
       console.error('❌ Profile setup error:', error)
-      toast.error('Failed to complete setup')
+      
+      // Extract error message from response if available
+      let errorMessage = 'Failed to complete setup'
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      toast.error(errorMessage)
+      // Don't navigate on error, stay on the setup page
     } finally {
       setLoading(false)
     }
@@ -523,15 +577,14 @@ const DoctorProfileSetup = () => {
                 {errors.specialization && <p className="text-red-500 text-sm mt-1">{errors.specialization}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">License Number *</label>
+                <label className="block text-sm font-medium mb-2">License Number</label>
                 <input
                   type="text"
                   value={formData.licenseNumber}
                   onChange={(e) => handleInputChange('licenseNumber', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg ${errors.licenseNumber ? 'border-red-500' : 'border-gray-300'}`}
+                  className="w-full px-4 py-3 border rounded-lg border-gray-300"
                   placeholder="e.g., 123456"
                 />
-                {errors.licenseNumber && <p className="text-red-500 text-sm mt-1">{errors.licenseNumber}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Medical Registration Number *</label>
@@ -724,28 +777,103 @@ const DoctorProfileSetup = () => {
               <p className="text-gray-600">Add your workplaces and availability</p>
             </div>
             <div className="space-y-4">
-              {(formData.workplaces && Array.isArray(formData.workplaces) ? formData.workplaces : [{ hospital: '', consultationFee: '', availableSlots: [{ day: 'monday', startTime: '09:00', endTime: '17:00', isAvailable: true }] }]).map((workplace, index) => (
+              {(formData.workplaces && Array.isArray(formData.workplaces) ? formData.workplaces : [{ type: 'hospital', hospital: '', phone: '', address: { street: '', city: '', state: '', zipCode: '', country: 'India' }, consultationFee: '', availableSlots: [{ day: 'monday', startTime: '09:00', endTime: '17:00', isAvailable: true }] }]).map((workplace, index) => (
                 <div key={index} className="border rounded-lg p-6 bg-gray-50 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2">Hospital *</label>
+                      <label className="block text-sm font-medium mb-2">Workplace Type *</label>
+                      <select
+                        value={workplace.type}
+                        onChange={(e) => handleArrayNestedInputChange('workplaces', index, 'type', e.target.value)}
+                        className={`w-full px-4 py-3 border rounded-lg ${errors.workplaces && errors.workplaces[index] && errors.workplaces[index].type ? 'border-red-500' : 'border-gray-300'}`}
+                      >
+                        <option value="hospital">Hospital</option>
+                        <option value="clinic">Clinic</option>
+                        <option value="other">Other</option>
+                      </select>
+                      {errors.workplaces && errors.workplaces[index] && errors.workplaces[index].type && <p className="text-red-500 text-sm mt-1">{errors.workplaces[index].type}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Workplace Name *</label>
                       <input
                         type="text"
-                        value={workplace?.hospital || ''}
+                        value={workplace.hospital}
                         onChange={(e) => handleArrayNestedInputChange('workplaces', index, 'hospital', e.target.value)}
                         className={`w-full px-4 py-3 border rounded-lg ${errors.workplaces && errors.workplaces[index] && errors.workplaces[index].hospital ? 'border-red-500' : 'border-gray-300'}`}
                         placeholder="e.g., Apollo Hospital"
                       />
+                      {errors.workplaces && errors.workplaces[index] && errors.workplaces[index].hospital && <p className="text-red-500 text-sm mt-1">{errors.workplaces[index].hospital}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Phone *</label>
+                      <input
+                        type="text"
+                        value={workplace.phone}
+                        onChange={(e) => handleArrayNestedInputChange('workplaces', index, 'phone', e.target.value)}
+                        className={`w-full px-4 py-3 border rounded-lg ${errors.workplaces && errors.workplaces[index] && errors.workplaces[index].phone ? 'border-red-500' : 'border-gray-300'}`}
+                        placeholder="+91 1234567890"
+                      />
+                      {errors.workplaces && errors.workplaces[index] && errors.workplaces[index].phone && <p className="text-red-500 text-sm mt-1">{errors.workplaces[index].phone}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Address *</label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Street Address *</label>
+                          <input
+                            type="text"
+                            value={workplace.address.street}
+                            onChange={(e) => handleArrayNestedInputChange('workplaces', index, 'address.street', e.target.value)}
+                            className={`w-full px-4 py-3 border rounded-lg ${errors.workplaces && errors.workplaces[index] && errors.workplaces[index].address && errors.workplaces[index].address.street ? 'border-red-500' : 'border-gray-300'}`}
+                            placeholder="e.g., 123 Main Street"
+                          />
+                          {errors.workplaces && errors.workplaces[index] && errors.workplaces[index].address && errors.workplaces[index].address.street && <p className="text-red-500 text-sm mt-1">{errors.workplaces[index].address.street}</p>}
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">City *</label>
+                          <input
+                            type="text"
+                            value={workplace.address.city}
+                            onChange={(e) => handleArrayNestedInputChange('workplaces', index, 'address.city', e.target.value)}
+                            className={`w-full px-4 py-3 border rounded-lg ${errors.workplaces && errors.workplaces[index] && errors.workplaces[index].address && errors.workplaces[index].address.city ? 'border-red-500' : 'border-gray-300'}`}
+                            placeholder="e.g., Mumbai"
+                          />
+                          {errors.workplaces && errors.workplaces[index] && errors.workplaces[index].address && errors.workplaces[index].address.city && <p className="text-red-500 text-sm mt-1">{errors.workplaces[index].address.city}</p>}
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">State *</label>
+                          <input
+                            type="text"
+                            value={workplace.address.state}
+                            onChange={(e) => handleArrayNestedInputChange('workplaces', index, 'address.state', e.target.value)}
+                            className={`w-full px-4 py-3 border rounded-lg ${errors.workplaces && errors.workplaces[index] && errors.workplaces[index].address && errors.workplaces[index].address.state ? 'border-red-500' : 'border-gray-300'}`}
+                            placeholder="e.g., Maharashtra"
+                          />
+                          {errors.workplaces && errors.workplaces[index] && errors.workplaces[index].address && errors.workplaces[index].address.state && <p className="text-red-500 text-sm mt-1">{errors.workplaces[index].address.state}</p>}
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">ZIP Code *</label>
+                          <input
+                            type="text"
+                            value={workplace.address.zipCode}
+                            onChange={(e) => handleArrayNestedInputChange('workplaces', index, 'address.zipCode', e.target.value)}
+                            className={`w-full px-4 py-3 border rounded-lg ${errors.workplaces && errors.workplaces[index] && errors.workplaces[index].address && errors.workplaces[index].address.zipCode ? 'border-red-500' : 'border-gray-300'}`}
+                            placeholder="e.g., 400001"
+                          />
+                          {errors.workplaces && errors.workplaces[index] && errors.workplaces[index].address && errors.workplaces[index].address.zipCode && <p className="text-red-500 text-sm mt-1">{errors.workplaces[index].address.zipCode}</p>}
+                        </div>
+                      </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-2">Consultation Fee *</label>
                       <input
                         type="number"
-                        value={workplace?.consultationFee || ''}
+                        value={workplace.consultationFee}
                         onChange={(e) => handleArrayNestedInputChange('workplaces', index, 'consultationFee', e.target.value)}
                         className={`w-full px-4 py-3 border rounded-lg ${errors.workplaces && errors.workplaces[index] && errors.workplaces[index].consultationFee ? 'border-red-500' : 'border-gray-300'}`}
                         placeholder="e.g., 500"
                       />
+                      {errors.workplaces && errors.workplaces[index] && errors.workplaces[index].consultationFee && <p className="text-red-500 text-sm mt-1">{errors.workplaces[index].consultationFee}</p>}
                     </div>
                   </div>
 
@@ -841,7 +969,7 @@ const DoctorProfileSetup = () => {
                 type="button"
                 onClick={() => {
                   const currentWorkplaces = formData.workplaces && Array.isArray(formData.workplaces) ? formData.workplaces : []
-                  const newWorkplaces = [...currentWorkplaces, { hospital: '', consultationFee: '', availableSlots: [{ day: 'monday', startTime: '09:00', endTime: '17:00', isAvailable: true }] }]
+                  const newWorkplaces = [...currentWorkplaces, { type: 'hospital', hospital: '', phone: '', address: { street: '', city: '', state: '', zipCode: '', country: 'India' }, consultationFee: '', availableSlots: [{ day: 'monday', startTime: '09:00', endTime: '17:00', isAvailable: true }] }]
                   handleInputChange('workplaces', newWorkplaces)
                 }}
                 className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-green-500 hover:text-green-600"
