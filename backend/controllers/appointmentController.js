@@ -39,17 +39,77 @@ const getAppointments = asyncHandler(async (req, res, next) => {
 
   const appointments = await Appointment.find(query)
     .populate('patient', 'firstName lastName email phone dateOfBirth bloodGroup')
-    .populate('doctor', 'firstName lastName specialization phone email')
+    .populate({
+      path: 'doctor',
+      select: 'firstName lastName specialization phone email workplaces',
+      populate: {
+        path: 'workplaces.hospital',
+        select: 'name address phone rating'
+      }
+    })
     .populate('hospital', 'name phone address rating')
     .sort({ appointmentDate: 1, appointmentTime: 1 })
     .limit(limit * 1)
     .skip(startIndex);
 
+  console.log('🚀 DEBUG: getAppointments function called - Processing workplace data');
+  console.log('🔍 DEBUG: Found appointments count:', appointments.length);
+
+  // Process appointments to use workplace data over hospital data
+  const processedAppointments = appointments.map(appointment => {
+    const appointmentObj = appointment.toObject();
+    
+    console.log('🔍 DEBUG: Processing appointment:', {
+      appointmentId: appointmentObj._id,
+      hospitalId: appointmentObj.hospital?._id,
+      hospitalName: appointmentObj.hospital?.name,
+      hospitalPhone: appointmentObj.hospital?.phone,
+      doctorId: appointmentObj.doctor?._id,
+      doctorName: `${appointmentObj.doctor?.firstName} ${appointmentObj.doctor?.lastName}`,
+      workplacesCount: appointmentObj.doctor?.workplaces?.length || 0
+    });
+    
+    // Find the doctor's workplace that matches this appointment's hospital
+    if (appointmentObj.doctor && appointmentObj.doctor.workplaces && appointmentObj.hospital) {
+      const workplace = appointmentObj.doctor.workplaces.find(wp => 
+        wp.hospital && wp.hospital._id && wp.hospital._id.toString() === appointmentObj.hospital._id.toString()
+      );
+      
+      if (workplace) {
+        console.log('✅ DEBUG: Found matching workplace for appointment:', {
+          appointmentId: appointmentObj._id,
+          hospitalName: appointmentObj.hospital.name,
+          workplacePhone: workplace.phone,
+          originalHospitalPhone: appointmentObj.hospital.phone
+        });
+        
+        // Use workplace phone if available
+        if (workplace.phone) {
+          appointmentObj.hospital.phone = workplace.phone;
+          console.log('📞 DEBUG: Updated hospital phone to:', workplace.phone);
+        }
+        
+        // Use workplace address if available
+        if (workplace.address && workplace.address.street) {
+          appointmentObj.hospital.address = {
+            ...appointmentObj.hospital.address,
+            ...workplace.address
+          };
+          console.log('📍 DEBUG: Updated hospital address');
+        }
+      } else {
+        console.log('❌ DEBUG: No matching workplace found for appointment:', appointmentObj._id);
+      }
+    }
+    
+    return appointmentObj;
+  });
+
   const total = await Appointment.countDocuments(query);
 
   res.status(200).json({
     status: 'success',
-    count: appointments.length,
+    count: processedAppointments.length,
     pagination: {
       page,
       limit,
@@ -57,7 +117,7 @@ const getAppointments = asyncHandler(async (req, res, next) => {
       pages: Math.ceil(total / limit)
     },
     data: {
-      appointments
+      appointments: processedAppointments
     }
   });
 });
@@ -223,8 +283,8 @@ const createAppointment = asyncHandler(async (req, res, next) => {
       duration: duration || 30,
       appointmentType: appointmentType || 'consultation',
       reason,
-      symptoms: symptoms || [],
-      patientNotes: patientNotes || '',
+      symptoms,
+      patientNotes,
       consultationFee: workplace.consultationFee,
       status: 'pending'
     };
@@ -361,6 +421,132 @@ const updateAppointment = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc    Reschedule appointment (update scheduling fields)
+// @route   PUT /api/appointments/:id/reschedule
+// @access  Private (Patient only for their own appointments)
+const rescheduleAppointment = asyncHandler(async (req, res, next) => {
+  const appointment = await Appointment.findById(req.params.id);
+
+  if (!appointment) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Appointment not found'
+    });
+  }
+
+  // Check authorization - only patient can reschedule their own appointment
+  if (req.user.role !== 'admin' && req.user._id.toString() !== appointment.patient.toString()) {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Not authorized to reschedule this appointment'
+    });
+  }
+
+  // Only pending appointments can be rescheduled
+  if (appointment.status !== 'pending') {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Can only reschedule pending appointments'
+    });
+  }
+
+  const { doctor, hospital, appointmentDate, appointmentTime, reason, symptoms, notes } = req.body;
+
+  // Validate required fields
+  if (!doctor || !hospital || !appointmentDate || !appointmentTime) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Doctor, hospital, appointment date, and time are required'
+    });
+  }
+
+  // Validate appointment date (must be in the future)
+  const appointmentDateTime = new Date(`${appointmentDate}T${appointmentTime}`);
+  if (appointmentDateTime <= new Date()) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Appointment date and time must be in the future'
+    });
+  }
+
+  // Check if the new time slot is available
+  const existingAppointment = await Appointment.findOne({
+    doctor,
+    hospital,
+    appointmentDate,
+    appointmentTime,
+    status: { $in: ['pending', 'confirmed'] },
+    _id: { $ne: req.params.id } // Exclude current appointment
+  });
+
+  if (existingAppointment) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'This time slot is already booked'
+    });
+  }
+
+  // Verify doctor exists and is active
+  const doctorUser = await User.findOne({ 
+    _id: doctor, 
+    role: 'doctor', 
+    status: 'active',
+    isVerified: true 
+  });
+
+  if (!doctorUser) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Doctor not found or not available'
+    });
+  }
+
+  // Verify hospital exists
+  const hospitalDoc = await Hospital.findById(hospital);
+  if (!hospitalDoc) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Hospital not found'
+    });
+  }
+
+  // Get consultation fee from doctor's workplace
+  const workplace = doctorUser.workplaces.find(wp => wp.hospital.toString() === hospital);
+  const consultationFee = workplace?.consultationFee || doctorUser.consultationFee || 500;
+
+  // Update the appointment
+  const updatedAppointment = await Appointment.findByIdAndUpdate(
+    req.params.id,
+    {
+      doctor,
+      hospital,
+      appointmentDate,
+      appointmentTime,
+      reason: reason || appointment.reason,
+      symptoms: symptoms || appointment.symptoms,
+      patientNotes: notes || appointment.patientNotes,
+      consultationFee,
+      updatedAt: new Date()
+    },
+    {
+      new: true,
+      runValidators: true
+    }
+  ).populate('patient', 'firstName lastName email phone')
+   .populate('doctor', 'firstName lastName specialization phone profileImage')
+   .populate('hospital', 'name address phone type');
+
+  console.log(`✅ Appointment ${req.params.id} rescheduled successfully`);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Appointment rescheduled successfully',
+    data: {
+      appointment: updatedAppointment
+    }
+  });
+});
+
 // @desc    Cancel appointment
 // @route   PUT /api/appointments/:id/cancel
 // @access  Private
@@ -431,6 +617,8 @@ const cancelAppointment = asyncHandler(async (req, res, next) => {
 // @route   GET /api/appointments/patient/:patientId
 // @access  Private
 const getPatientAppointments = asyncHandler(async (req, res, next) => {
+  console.log('🚀 DEBUG: getPatientAppointments function called - NEW VERSION WITH WORKPLACE PROCESSING');
+  
   const { patientId } = req.params;
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 10;
@@ -470,7 +658,14 @@ const getPatientAppointments = asyncHandler(async (req, res, next) => {
   })));
 
   const appointments = await Appointment.find(query)
-    .populate('doctor', 'firstName lastName specialization consultationFee')
+    .populate({
+      path: 'doctor',
+      select: 'firstName lastName specialization consultationFee workplaces',
+      populate: {
+        path: 'workplaces.hospital',
+        select: 'name address phone rating'
+      }
+    })
     .populate('hospital', 'name address phone rating')
     .sort({ appointmentDate: -1 })
     .limit(limit * 1)
@@ -482,12 +677,48 @@ const getPatientAppointments = asyncHandler(async (req, res, next) => {
     console.log('🔍 DEBUG: First appointment doctor:', appointments[0].doctor);
   }
 
+  // Process appointments to use workplace data over hospital data
+  const processedAppointments = appointments.map(appointment => {
+    const appointmentObj = appointment.toObject();
+    
+    // Find the doctor's workplace that matches this appointment's hospital
+    if (appointmentObj.doctor && appointmentObj.doctor.workplaces && appointmentObj.hospital) {
+      const workplace = appointmentObj.doctor.workplaces.find(wp => 
+        wp.hospital && wp.hospital.toString() === appointmentObj.hospital._id.toString()
+      );
+      
+      if (workplace) {
+        console.log('🏥 DEBUG: Found matching workplace for appointment:', {
+          appointmentId: appointmentObj._id,
+          hospitalName: appointmentObj.hospital.name,
+          workplacePhone: workplace.phone,
+          workplaceAddress: workplace.address
+        });
+        
+        // Use workplace phone if available
+        if (workplace.phone) {
+          appointmentObj.hospital.phone = workplace.phone;
+        }
+        
+        // Use workplace address if available
+        if (workplace.address && workplace.address.street) {
+          appointmentObj.hospital.address = {
+            ...appointmentObj.hospital.address,
+            ...workplace.address
+          };
+        }
+      }
+    }
+    
+    return appointmentObj;
+  });
+
   const total = await Appointment.countDocuments(query);
   console.log('🔍 DEBUG: Total appointments count:', total);
 
   res.status(200).json({
     status: 'success',
-    count: appointments.length,
+    count: processedAppointments.length,
     pagination: {
       page,
       limit,
@@ -495,7 +726,7 @@ const getPatientAppointments = asyncHandler(async (req, res, next) => {
       pages: Math.ceil(total / limit)
     },
     data: {
-      appointments
+      appointments: processedAppointments
     }
   });
 });
@@ -1112,6 +1343,7 @@ module.exports = {
   createAppointment,
   updateAppointment,
   cancelAppointment,
+  rescheduleAppointment,
   getPatientAppointments,
   getDoctorAppointments,
   getAvailableSlots,

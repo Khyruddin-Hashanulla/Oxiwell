@@ -390,7 +390,18 @@ const AppointmentBooking = () => {
         notes: bookingData.notes
       }
 
-      const response = await appointmentsAPI.createAppointment(appointmentData)
+      let response;
+      
+      // Check if this is a reschedule operation
+      if (rescheduleId) {
+        console.log('🔄 Rescheduling appointment:', rescheduleId, appointmentData)
+        response = await appointmentsAPI.rescheduleAppointment(rescheduleId, appointmentData)
+        toast.success('Appointment rescheduled successfully!')
+      } else {
+        console.log('📅 Creating new appointment:', appointmentData)
+        response = await appointmentsAPI.createAppointment(appointmentData)
+        toast.success('Appointment booked successfully!')
+      }
       
       // Set the confirmed appointment data for the modal with all required fields
       setConfirmedAppointment({
@@ -405,10 +416,12 @@ const AppointmentBooking = () => {
       })
       setShowConfirmation(true)
       
-      toast.success('Appointment booked successfully!')
     } catch (error) {
       console.error('Booking error:', error)
-      toast.error(error.response?.data?.message || 'Failed to book appointment')
+      const errorMessage = rescheduleId 
+        ? 'Failed to reschedule appointment' 
+        : 'Failed to book appointment'
+      toast.error(error.response?.data?.message || errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -1022,11 +1035,12 @@ const AppointmentBooking = () => {
           {currentStep === 5 && renderStep5()}
         </div>
       </div>
-      {showConfirmation && (
+      {showConfirmation && confirmedAppointment && (
         <BookingConfirmation
           appointment={confirmedAppointment}
           onClose={handleConfirmationClose}
           onViewAppointments={handleViewAppointments}
+          isReschedule={!!rescheduleId}
         />
       )}
     </div>

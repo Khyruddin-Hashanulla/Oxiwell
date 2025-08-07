@@ -181,8 +181,7 @@ export const appointmentsAPI = {
   
   // Update appointment
   updateAppointment: (id, data) => api.put(`/appointments/${id}`, data),
-  
-  // Update appointment status
+  rescheduleAppointment: (id, data) => api.put(`/appointments/${id}/reschedule`, data),
   updateAppointmentStatus: (id, status) => api.put(`/appointments/${id}/status`, { status }),
   
   // Cancel appointment

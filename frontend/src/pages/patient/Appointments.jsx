@@ -15,6 +15,38 @@ const Appointments = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
 
+  // Helper function to format time from 24-hour to 12-hour AM/PM format
+  const formatTime = (timeString) => {
+    if (!timeString || typeof timeString !== 'string') {
+      return 'Time not specified'
+    }
+    
+    const [hours, minutes] = timeString.split(':')
+    if (!hours || !minutes) {
+      return 'Time not specified'
+    }
+    
+    const hour = parseInt(hours)
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    const displayHour = hour % 12 || 12
+    return `${displayHour}:${minutes} ${ampm}`
+  }
+
+  // Helper function to get the correct phone number from appointment data
+  const getContactPhone = (appointment) => {
+    // First try to get workplace phone from hospital data (updated by backend)
+    if (appointment.hospital?.phone && appointment.hospital.phone !== 'Contact not available') {
+      return appointment.hospital.phone
+    }
+    
+    // Fallback to doctor phone
+    if (appointment.doctor?.phone) {
+      return appointment.doctor.phone
+    }
+    
+    return 'Contact not available'
+  }
+
   // Fetch real appointments data from API
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -52,11 +84,11 @@ const Appointments = () => {
               doctorName: `${appointment.doctor?.firstName || 'Unknown'} ${appointment.doctor?.lastName || 'Doctor'}`,
               specialization: appointment.doctor?.specialization || 'General Medicine',
               date: new Date(appointment.appointmentDate).toISOString().split('T')[0],
-              time: appointment.appointmentTime || 'Not specified',
+              time: formatTime(appointment.appointmentTime) || 'Not specified',
               status: appointment.status || 'pending',
               reason: appointment.reason || 'No reason specified',
               location: appointment.hospital?.name || appointment.doctor?.location || 'Hospital not specified',
-              phone: appointment.hospital?.phone || appointment.doctor?.phone || 'Contact not available',
+              phone: getContactPhone(appointment) || 'Contact not available',
               notes: appointment.notes || '',
               fee: appointment.consultationFee || appointment.doctor?.consultationFee || 0,
               hospitalAddress: appointment.hospital?.address ? 
@@ -219,11 +251,11 @@ const Appointments = () => {
           doctorName: `${appointment.doctor?.firstName || 'Unknown'} ${appointment.doctor?.lastName || 'Doctor'}`,
           specialization: appointment.doctor?.specialization || 'General Medicine',
           date: new Date(appointment.appointmentDate).toISOString().split('T')[0],
-          time: appointment.appointmentTime || 'Not specified',
+          time: formatTime(appointment.appointmentTime) || 'Not specified',
           status: appointment.status || 'pending',
           reason: appointment.reason || 'No reason specified',
           location: appointment.hospital?.name || appointment.doctor?.location || 'Hospital not specified',
-          phone: appointment.hospital?.phone || appointment.doctor?.phone || 'Contact not available',
+          phone: getContactPhone(appointment) || 'Contact not available',
           notes: appointment.notes || '',
           fee: appointment.consultationFee || appointment.doctor?.consultationFee || 0,
           hospitalAddress: appointment.hospital?.address ? 

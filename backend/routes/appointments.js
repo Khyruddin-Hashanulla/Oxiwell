@@ -6,6 +6,7 @@ const {
   createAppointment,
   updateAppointment,
   cancelAppointment,
+  rescheduleAppointment,
   getPatientAppointments,
   getDoctorAppointments,
   getAvailableSlots,
@@ -178,6 +179,32 @@ router.put('/:id/status',
   requireAppointmentAccess,
   auditLog('UPDATE_APPOINTMENT_STATUS'),
   updateAppointment
+);
+
+// PUT /api/appointments/:id/reschedule - Reschedule appointment (update scheduling fields)
+// Patient: reschedule own pending appointments only
+router.put('/:id/reschedule', 
+  [
+    body('doctor')
+      .isMongoId()
+      .withMessage('Valid doctor ID is required'),
+    body('hospital')
+      .isMongoId()
+      .withMessage('Valid hospital ID is required'),
+    body('appointmentDate')
+      .isISO8601()
+      .withMessage('Valid appointment date is required'),
+    body('appointmentTime')
+      .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+      .withMessage('Valid appointment time is required (HH:MM format)'),
+    body('reason')
+      .optional()
+      .isLength({ min: 3, max: 200 })
+      .withMessage('Reason must be between 3 and 200 characters')
+  ],
+  requirePatient,
+  auditLog('RESCHEDULE_APPOINTMENT'),
+  rescheduleAppointment
 );
 
 // DELETE /api/appointments/:id - Cancel appointment

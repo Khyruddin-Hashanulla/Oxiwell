@@ -1,7 +1,7 @@
 import React from 'react'
 import { CheckCircle, Calendar, Clock, User, MapPin, Phone, Star, CreditCard } from 'lucide-react'
 
-const BookingConfirmation = ({ appointment, onClose, onViewAppointments }) => {
+const BookingConfirmation = ({ appointment, onClose, onViewAppointments, isReschedule = false }) => {
   if (!appointment) return null
 
   const formatDate = (dateString) => {
@@ -37,8 +37,15 @@ const BookingConfirmation = ({ appointment, onClose, onViewAppointments }) => {
           <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-12 h-12 text-white" />
           </div>
-          <h2 className="text-3xl font-bold text-white mb-2">Booking Confirmed!</h2>
-          <p className="text-gray-300">Your appointment has been successfully scheduled</p>
+          <h2 className="text-3xl font-bold text-white mb-2">
+            {isReschedule ? 'Appointment Rescheduled!' : 'Booking Confirmed!'}
+          </h2>
+          <p className="text-gray-300">
+            {isReschedule 
+              ? 'Your appointment has been successfully rescheduled' 
+              : 'Your appointment has been successfully scheduled'
+            }
+          </p>
         </div>
 
         {/* Appointment Details */}
