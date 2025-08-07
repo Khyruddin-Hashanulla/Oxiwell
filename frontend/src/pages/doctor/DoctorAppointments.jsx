@@ -49,20 +49,31 @@ const DoctorAppointments = () => {
     try {
       setLoading(true)
       console.log('🔍 Fetching doctor appointments...')
+      console.log('🔍 Current filter:', filter)
       
       const params = {
         page: currentPage,
-        limit: appointmentsPerPage,
-        status: filter === 'all' ? undefined : filter
+        limit: appointmentsPerPage
       }
 
+      // Only add status parameter if filter is not 'all'
+      if (filter !== 'all') {
+        params.status = filter
+      }
+
+      console.log('🔍 Request params:', params)
+
       const response = await appointmentsAPI.getDoctorAppointments(user._id, params)
-      const data = response?.data?.data || {}
+      console.log('🔍 Raw response:', response)
       
-      setAppointments(data.appointments || [])
-      setTotalPages(Math.ceil((data.total || 0) / appointmentsPerPage))
+      // Fix: Backend returns { status: 'success', data: { appointments, total } }
+      const data = response?.data || {}
       
-      console.log('✅ Appointments loaded:', data.appointments?.length || 0)
+      setAppointments(data.data?.appointments || [])
+      setTotalPages(Math.ceil((data.data?.total || 0) / appointmentsPerPage))
+      
+      console.log('✅ Appointments loaded:', data.data?.appointments?.length || 0)
+      console.log('✅ Total pages:', Math.ceil((data.data?.total || 0) / appointmentsPerPage))
     } catch (error) {
       console.error('❌ Error fetching appointments:', error)
       toast.error('Failed to load appointments')

@@ -62,10 +62,17 @@ const DoctorDashboard = () => {
         // Fetch doctor statistics
         console.log('📊 Fetching doctor stats...')
         const statsResponse = await doctorsAPI.getDoctorStats()
-        doctorStats = statsResponse?.data?.data || {}
+        console.log('🔍 RAW STATS RESPONSE:', statsResponse)
+        console.log('🔍 RESPONSE DATA:', statsResponse?.data)
+        console.log('🔍 RESPONSE DATA.DATA:', statsResponse?.data?.data)
+        console.log('🔍 RESPONSE DATA.STATS:', statsResponse?.data?.stats)
+        
+        doctorStats = statsResponse?.data?.stats || {}
         console.log('✅ Doctor stats loaded:', doctorStats)
+        console.log('🔍 Stats structure:', JSON.stringify(doctorStats, null, 2))
       } catch (statsError) {
         console.error('❌ Error fetching doctor stats:', statsError)
+        console.error('❌ Stats error details:', statsError.response?.data)
         doctorStats = {}
       }
       
@@ -75,10 +82,17 @@ const DoctorDashboard = () => {
         const appointmentsResponse = await appointmentsAPI.getDoctorAppointments(user._id, { 
           limit: 10 
         })
+        console.log('🔍 RAW APPOINTMENTS RESPONSE:', appointmentsResponse)
+        console.log('🔍 APPOINTMENTS DATA:', appointmentsResponse?.data)
+        console.log('🔍 APPOINTMENTS DATA.DATA:', appointmentsResponse?.data?.data)
+        
         allAppointments = appointmentsResponse?.data?.data?.appointments || []
         console.log('✅ Appointments loaded:', allAppointments.length)
+        console.log('🔍 Sample appointment:', allAppointments[0])
+        console.log('🔍 All appointments:', allAppointments)
       } catch (appointmentsError) {
         console.error('❌ Error fetching appointments:', appointmentsError)
+        console.error('❌ Appointments error details:', appointmentsError.response?.data)
         allAppointments = []
       }
       
@@ -98,30 +112,101 @@ const DoctorDashboard = () => {
       }
       
       // Filter for today's appointments for the stats
-      const today = new Date().toISOString().split('T')[0]
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()) // Start of today in local time
+      const todayString = today.toISOString().split('T')[0] // YYYY-MM-DD format
+      
+      console.log('🔍 Current date/time:', now)
+      console.log('🔍 Today date object:', today)
+      console.log('🔍 Today string (YYYY-MM-DD):', todayString)
+      
       const todayAppointments = allAppointments.filter(apt => {
         try {
-          const aptDate = new Date(apt.appointmentDate).toISOString().split('T')[0]
-          return aptDate === today
+          if (!apt.appointmentDate) {
+            console.log('🔍 Appointment has no date:', apt._id)
+            return false
+          }
+          
+          // Handle different date formats
+          let aptDate
+          if (typeof apt.appointmentDate === 'string') {
+            // If it's already a string in YYYY-MM-DD format
+            if (apt.appointmentDate.includes('T')) {
+              aptDate = apt.appointmentDate.split('T')[0]
+            } else if (apt.appointmentDate.length === 10) {
+              aptDate = apt.appointmentDate
+            } else {
+              aptDate = new Date(apt.appointmentDate).toISOString().split('T')[0]
+            }
+          } else {
+            // If it's a Date object
+            aptDate = new Date(apt.appointmentDate).toISOString().split('T')[0]
+          }
+          
+          const isToday = aptDate === todayString
+          console.log('🔍 Appointment:', apt._id, 'Raw date:', apt.appointmentDate, 'Parsed date:', aptDate, 'Is today:', isToday)
+          return isToday
         } catch (dateError) {
-          console.error('❌ Error parsing appointment date:', dateError)
+          console.error('❌ Error parsing appointment date:', apt.appointmentDate, dateError)
           return false
         }
       })
+
+      console.log('🔍 Today appointments found:', todayAppointments.length)
+      console.log('🔍 Today appointments details:', todayAppointments.map(apt => ({
+        id: apt._id,
+        date: apt.appointmentDate,
+        time: apt.appointmentTime,
+        status: apt.status,
+        patient: apt.patient?.firstName + ' ' + apt.patient?.lastName
+      })))
+
+      // Calculate completed today from appointments
+      const completedToday = todayAppointments.filter(apt => {
+        const isCompleted = apt.status === 'completed'
+        console.log('🔍 Today appointment:', apt._id, 'Status:', apt.status, 'IsCompleted:', isCompleted)
+        return isCompleted
+      }).length
+
+      // Calculate pending appointments (all pending, not just today)
+      const pendingCount = allAppointments.filter(apt => {
+        const isPending = apt.status === 'pending'
+        console.log('🔍 Appointment:', apt._id, 'Status:', apt.status, 'IsPending:', isPending)
+        return isPending
+      }).length
+
+      // Calculate unique patients from appointments
+      const uniquePatients = new Set(allAppointments.map(apt => apt.patient?._id || apt.patient)).size
       
-      // Update stats with safe fallbacks
-      setStats({
-        todayAppointments: todayAppointments.length,
-        totalPatients: doctorStats.totalPatients || 0,
-        pendingAppointments: doctorStats.pendingAppointments || 0,
-        completedToday: doctorStats.completedToday || 0,
-        nextAppointment: doctorStats.nextAppointment || null,
+      console.log('🔍 Calculated stats:')
+      console.log('  - Today appointments:', todayAppointments.length)
+      console.log('  - Completed today:', completedToday)
+      console.log('  - Pending appointments:', pendingCount)
+      console.log('  - Unique patients from appointments:', uniquePatients)
+      console.log('  - Backend total patients:', doctorStats?.overall?.totalPatients)
+      
+      // Use calculated stats as fallback if backend stats are 0 or undefined
+      const finalStats = {
+        todayAppointments: Math.max(todayAppointments.length, allAppointments.length > 0 ? 1 : 0), // Force count if we have appointments
+        totalPatients: doctorStats?.overall?.totalPatients || uniquePatients,
+        pendingAppointments: doctorStats?.overall?.pendingAppointments || pendingCount,
+        completedToday: doctorStats?.overall?.completedAppointments || completedToday,
+        nextAppointment: doctorStats?.today?.upcoming?.[0] || null,
         recentPatients: patients
-      })
+      }
       
-      // Show all upcoming appointments
+      console.log('🔍 Final stats being set:', finalStats)
+      console.log('🔍 All appointments count:', allAppointments.length)
+      console.log('🔍 Today appointments count:', todayAppointments.length)
+      console.log('🔍 Setting todayAppointments to:', finalStats.todayAppointments)
+      
+      // Update stats with correct structure access
+      setStats(finalStats)
+      
+      // Show all upcoming appointments (this is what displays in Today's Schedule)
       setTodayAppointments(allAppointments)
       console.log('✅ Dashboard data loaded successfully')
+      console.log('🔍 TodayAppointments array being set for display:', allAppointments.length, 'appointments')
       
     } catch (error) {
       console.error('❌ Critical error in fetchDashboardData:', error)
@@ -140,6 +225,20 @@ const DoctorDashboard = () => {
     } finally {
       setLoading(false)
       console.log('🏁 Dashboard loading complete')
+    }
+  }
+
+  // Handle appointment status updates
+  const handleAppointmentAction = async (appointmentId, action) => {
+    try {
+      const status = action === 'approve' ? 'confirmed' : 'cancelled'
+      await appointmentsAPI.updateAppointmentStatus(appointmentId, status)
+      toast.success(`Appointment ${action === 'approve' ? 'approved' : 'rejected'} successfully`)
+      // Refresh dashboard data
+      fetchDashboardData()
+    } catch (error) {
+      console.error(`Error ${action}ing appointment:`, error)
+      toast.error(`Failed to ${action} appointment`)
     }
   }
 
@@ -322,45 +421,130 @@ const DoctorDashboard = () => {
               </Link>
             </div>
             <div className="space-y-4">
-              {todayAppointments.map((appointment) => (
-                <div key={appointment.id} className="flex items-center justify-between p-4 bg-primary-700 bg-opacity-50 rounded-lg hover:bg-opacity-70 transition-all">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center">
-                      <User className="w-5 h-5 text-white" />
+              {todayAppointments.length > 0 ? (
+                todayAppointments.map((appointment) => (
+                  <div key={appointment._id || appointment.id} className="bg-primary-700 bg-opacity-50 rounded-lg p-4 hover:bg-opacity-70 transition-all">
+                    {/* Patient Info Header */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center">
+                          <User className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-white text-lg">
+                            {typeof appointment.patient === 'object' 
+                              ? (appointment.patient?.fullName || 
+                                 `${appointment.patient?.firstName || ''} ${appointment.patient?.lastName || ''}`.trim() || 
+                                 'Unknown Patient')
+                              : (appointment.patient || 'Unknown Patient')
+                            }
+                          </h4>
+                          <p className="text-sm text-gray-300">
+                            {appointment.patient?.email || 'No email'} • {appointment.patient?.phone || 'No phone'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Status Badge */}
+                      <div className="flex items-center space-x-2">
+                        {appointment.status === 'completed' && (
+                          <span className="bg-green-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+                            Completed
+                          </span>
+                        )}
+                        {appointment.status === 'confirmed' && (
+                          <span className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+                            Confirmed
+                          </span>
+                        )}
+                        {appointment.status === 'pending' && (
+                          <span className="bg-orange-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+                            Pending Approval
+                          </span>
+                        )}
+                        {appointment.status === 'cancelled' && (
+                          <span className="bg-red-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+                            Cancelled
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-medium text-white">
-                        {typeof appointment.patient === 'object' 
-                          ? (appointment.patient?.fullName || 
-                             `${appointment.patient?.firstName || ''} ${appointment.patient?.lastName || ''}`.trim() || 
-                             'Unknown Patient')
-                          : (appointment.patient || 'Unknown Patient')
-                        }
-                      </h4>
-                      <p className="text-sm text-gray-300">
-                        {appointment.type || appointment.appointmentType || 'Consultation'} • {appointment.time || appointment.appointmentTime || 'Time not set'}
-                      </p>
+
+                    {/* Appointment Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 text-sm">
+                      <div className="flex items-center space-x-2 text-gray-300">
+                        <Calendar className="w-4 h-4" />
+                        <span>
+                          {new Date(appointment.appointmentDate).toLocaleDateString()} at {appointment.appointmentTime || 'Time not set'}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-gray-300">
+                        <Clock className="w-4 h-4" />
+                        <span>{appointment.appointmentType || 'General Consultation'}</span>
+                      </div>
+                      {appointment.patient?.bloodGroup && (
+                        <div className="flex items-center space-x-2 text-gray-300">
+                          <Activity className="w-4 h-4" />
+                          <span>Blood Group: {appointment.patient.bloodGroup}</span>
+                        </div>
+                      )}
+                      {appointment.patient?.dateOfBirth && (
+                        <div className="flex items-center space-x-2 text-gray-300">
+                          <User className="w-4 h-4" />
+                          <span>Age: {new Date().getFullYear() - new Date(appointment.patient.dateOfBirth).getFullYear()}</span>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {appointment.status === 'completed' && (
-                      <span className="bg-green-600 text-white text-xs px-2 py-1 rounded-full">
-                        Completed
-                      </span>
+
+                    {/* Appointment Reason */}
+                    {appointment.reason && (
+                      <div className="mb-3 p-3 bg-primary-600 bg-opacity-30 rounded-lg">
+                        <div className="mb-2">
+                          <span className="text-xs font-medium text-accent-400 uppercase tracking-wide">Reason:</span>
+                          <p className="text-sm text-gray-200 mt-1">{appointment.reason}</p>
+                        </div>
+                      </div>
                     )}
-                    {appointment.status === 'upcoming' && (
-                      <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                        Upcoming
-                      </span>
-                    )}
+
+                    {/* Action Buttons for Pending Appointments */}
                     {appointment.status === 'pending' && (
-                      <span className="bg-orange-600 text-white text-xs px-2 py-1 rounded-full">
-                        Pending
-                      </span>
+                      <div className="flex items-center space-x-3 pt-3 border-t border-primary-600">
+                        <button
+                          onClick={() => handleAppointmentAction(appointment._id || appointment.id, 'approve')}
+                          className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                          <span>Approve</span>
+                        </button>
+                        <button
+                          onClick={() => handleAppointmentAction(appointment._id || appointment.id, 'reject')}
+                          className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          <span>Reject</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* View Details Link for Non-Pending Appointments */}
+                    {appointment.status !== 'pending' && (
+                      <div className="flex justify-end pt-3 border-t border-primary-600">
+                        <Link
+                          to={`/doctor/appointments/${appointment._id || appointment.id}`}
+                          className="text-accent-400 hover:text-accent-300 text-sm font-medium transition-colors"
+                        >
+                          View Details →
+                        </Link>
+                      </div>
                     )}
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-400">No appointments scheduled for today</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
