@@ -111,10 +111,11 @@ const DoctorDashboard = () => {
         patients = []
       }
       
-      // Filter for today's appointments for the stats
+      // Fix: Use proper date calculation that accounts for timezone
       const now = new Date()
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()) // Start of today in local time
-      const todayString = today.toISOString().split('T')[0] // YYYY-MM-DD format
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      // Fix: Get today's date string in local timezone, not UTC
+      const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
       
       console.log('🔍 Current date/time:', now)
       console.log('🔍 Today date object:', today)
@@ -168,6 +169,13 @@ const DoctorDashboard = () => {
         return isCompleted
       }).length
 
+      console.log('🔍 DETAILED COMPLETED TODAY ANALYSIS:')
+      console.log('  - Total appointments fetched:', allAppointments.length)
+      console.log('  - Today appointments found:', todayAppointments.length)
+      console.log('  - Today appointments statuses:', todayAppointments.map(apt => ({ id: apt._id, status: apt.status, date: apt.appointmentDate })))
+      console.log('  - Completed today count:', completedToday)
+      console.log('  - All appointment statuses:', allAppointments.map(apt => ({ id: apt._id, status: apt.status, date: apt.appointmentDate })))
+
       // Calculate pending appointments (all pending, not just today)
       const pendingCount = allAppointments.filter(apt => {
         const isPending = apt.status === 'pending'
@@ -185,12 +193,12 @@ const DoctorDashboard = () => {
       console.log('  - Unique patients from appointments:', uniquePatients)
       console.log('  - Backend total patients:', doctorStats?.overall?.totalPatients)
       
-      // Use calculated stats as fallback if backend stats are 0 or undefined
+      // Use calculated stats from actual appointment data (more reliable than backend calculations)
       const finalStats = {
-        todayAppointments: Math.max(todayAppointments.length, allAppointments.length > 0 ? 1 : 0), // Force count if we have appointments
-        totalPatients: doctorStats?.overall?.totalPatients || uniquePatients,
-        pendingAppointments: doctorStats?.overall?.pendingAppointments || pendingCount,
-        completedToday: doctorStats?.overall?.completedAppointments || completedToday,
+        todayAppointments: todayAppointments.length, // Exact count of today's appointments
+        totalPatients: uniquePatients, // Exact count of unique patients from appointments
+        pendingAppointments: pendingCount, // Exact count of pending appointments
+        completedToday: completedToday, // Exact count of today's completed appointments
         nextAppointment: doctorStats?.today?.upcoming?.[0] || null,
         recentPatients: patients
       }
