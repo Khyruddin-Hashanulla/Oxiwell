@@ -11,10 +11,13 @@ console.log('🔧 Environment VITE_API_URL:', import.meta.env.VITE_API_URL)
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 60000, // Increased from 30s to 60s for slower connections
   headers: {
     'Content-Type': 'application/json',
   },
+  // Add retry configuration
+  retry: 3,
+  retryDelay: 1000
 })
 
 // Request interceptor to add auth token
@@ -49,13 +52,30 @@ api.interceptors.request.use(
   }
 )
 
-// Response interceptor for error handling
+// Add retry interceptor
 api.interceptors.response.use(
   (response) => {
     return response
   },
-  (error) => {
-    const { response } = error
+  async (error) => {
+    const { response, config } = error
+    
+    // Retry logic for network errors
+    if (!response && config && !config.__isRetryRequest) {
+      config.__retryCount = config.__retryCount || 0
+      
+      if (config.__retryCount < (config.retry || 3)) {
+        config.__retryCount++
+        config.__isRetryRequest = true
+        
+        console.log(`🔄 Retrying request (${config.__retryCount}/${config.retry || 3}):`, config.url)
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, config.retryDelay || 1000))
+        
+        return api(config)
+      }
+    }
 
     if (response) {
       const { status, data } = response
@@ -73,13 +93,13 @@ api.interceptors.response.use(
           // Unauthorized - clear token and redirect to login
           console.log('🔐 401 Unauthorized - clearing token and redirecting to login')
           Cookies.remove('token')
+          localStorage.removeItem('token')
           delete api.defaults.headers.common['Authorization']
-          // Temporarily comment out auto-redirect to debug
-          // if (window.location.pathname !== '/login') {
-          //   toast.error('Session expired. Please login again.')
-          //   window.location.href = '/login'
-          // }
-          toast.error('Authentication failed - check console for details')
+          toast.error('Session expired. Please login again.')
+          // Only redirect if not already on login page
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login'
+          }
           break
 
         case 403:
@@ -121,7 +141,8 @@ api.interceptors.response.use(
           url: error.config?.url,
           method: error.config?.method,
           baseURL: error.config?.baseURL,
-          timeout: error.config?.timeout
+          timeout: error.config?.timeout,
+          retryCount: error.config?.__retryCount || 0
         }
       })
       
@@ -130,7 +151,12 @@ api.interceptors.response.use(
       } else if (error.code === 'TIMEOUT' || error.message.includes('timeout')) {
         toast.error('Request timed out. Server may be slow or unavailable.')
       } else if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
-        toast.error('Network error. Please check your internet connection and server status.')
+        // More specific error for appointment loading
+        if (error.config?.url?.includes('/appointments')) {
+          toast.error('Failed to load appointments. Please check your connection and try refreshing the page.')
+        } else {
+          toast.error('Network error. Please check your internet connection and server status.')
+        }
       } else {
         toast.error(`Connection failed: ${error.message || 'Please check your connection and ensure backend is running.'}`)
       }

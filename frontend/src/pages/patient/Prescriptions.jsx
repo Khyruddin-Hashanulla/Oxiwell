@@ -112,26 +112,26 @@ const Prescriptions = () => {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'active':
-        return <CheckCircle className="h-5 w-5 text-green-500" />
+        return <CheckCircle className="h-5 w-5 text-success-500" />
       case 'completed':
-        return <CheckCircle className="h-5 w-5 text-blue-500" />
+        return <CheckCircle className="h-5 w-5 text-primary-500" />
       case 'expired':
-        return <AlertTriangle className="h-5 w-5 text-red-500" />
+        return <AlertTriangle className="h-5 w-5 text-error-500" />
       default:
-        return <Clock className="h-5 w-5 text-gray-500" />
+        return <AlertTriangle className="h-5 w-5 text-warning-500" />
     }
   }
 
   const getStatusColor = (status) => {
     switch (status) {
       case 'active':
-        return 'bg-green-100 text-green-800'
+        return 'bg-success-100 text-success-800'
       case 'completed':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-primary-100 text-primary-800'
       case 'expired':
-        return 'bg-red-100 text-red-800'
+        return 'bg-error-100 text-error-800'
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-warning-100 text-warning-800'
     }
   }
 
@@ -139,25 +139,25 @@ const Prescriptions = () => {
     switch (status) {
       case 'active':
         return (
-          <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-500 text-white">
+          <span className="px-3 py-1 rounded-full text-sm font-medium bg-success-500 text-white">
             Active
           </span>
         )
       case 'completed':
         return (
-          <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-500 text-white">
+          <span className="px-3 py-1 rounded-full text-sm font-medium bg-primary-500 text-white">
             Completed
           </span>
         )
       case 'expired':
         return (
-          <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-500 text-white">
+          <span className="px-3 py-1 rounded-full text-sm font-medium bg-error-500 text-white">
             Expired
           </span>
         )
       default:
         return (
-          <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-500 text-white">
+          <span className="px-3 py-1 rounded-full text-sm font-medium bg-warning-500 text-white">
             Pending
           </span>
         )
@@ -197,10 +197,10 @@ const Prescriptions = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">My Prescriptions</h1>
-          <p className="mt-2 text-gray-300">Manage your medications and prescriptions</p>
+          <p className="mt-2 text-primary-300">Manage your medications and prescriptions</p>
         </div>
         <div className="mt-4 sm:mt-0 flex space-x-3">
-          <button className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-medium rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200">
+          <button className="inline-flex items-center px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-all duration-200">
             <Download className="w-4 h-4 mr-2" />
             Export All
           </button>
@@ -212,13 +212,13 @@ const Prescriptions = () => {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-4">
           {/* Search */}
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-primary-400 w-5 h-5" />
             <input
               type="text"
               placeholder="Search medications..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-primary-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
             />
           </div>
 
@@ -236,7 +236,7 @@ const Prescriptions = () => {
                 className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
                   filter === filterOption.key
                     ? 'bg-accent-600 text-white shadow-lg'
-                    : 'bg-primary-600 text-gray-300 hover:bg-primary-500 hover:text-white'
+                    : 'bg-primary-600 text-primary-300 hover:bg-primary-500 hover:text-white'
                 }`}
               >
                 {filterOption.label}
@@ -254,7 +254,7 @@ const Prescriptions = () => {
         <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-300 text-sm font-medium">Total Prescriptions</p>
+              <p className="text-primary-300 text-sm font-medium">Total Prescriptions</p>
               <p className="text-3xl font-bold text-white mt-2">{prescriptions.length}</p>
             </div>
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
@@ -266,7 +266,7 @@ const Prescriptions = () => {
         <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-300 text-sm font-medium">Active Medications</p>
+              <p className="text-primary-300 text-sm font-medium">Active Medications</p>
               <p className="text-3xl font-bold text-white mt-2">
                 {prescriptions.filter(p => p.status === 'active').length}
               </p>
@@ -280,7 +280,7 @@ const Prescriptions = () => {
         <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-300 text-sm font-medium">Refills Available</p>
+              <p className="text-primary-300 text-sm font-medium">Refills Available</p>
               <p className="text-3xl font-bold text-white mt-2">
                 {prescriptions.reduce((sum, p) => sum + p.refillsRemaining, 0)}
               </p>
@@ -294,7 +294,7 @@ const Prescriptions = () => {
         <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-300 text-sm font-medium">Expiring Soon</p>
+              <p className="text-primary-300 text-sm font-medium">Expiring Soon</p>
               <p className="text-3xl font-bold text-white mt-2">
                 {prescriptions.filter(p => {
                   if (!p.endDate) return false;
@@ -321,9 +321,9 @@ const Prescriptions = () => {
           </div>
         ) : filteredPrescriptions.length === 0 ? (
           <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-12 text-center border border-primary-600">
-            <Pill className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <Pill className="w-16 h-16 text-primary-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-white mb-2">No prescriptions found</h3>
-            <p className="text-gray-300 mb-6">
+            <p className="text-primary-300 mb-6">
               {filter === 'all' 
                 ? "You don't have any prescriptions yet." 
                 : `No ${filter} prescriptions found.`}
@@ -342,10 +342,10 @@ const Prescriptions = () => {
                       <h3 className="text-xl font-semibold text-white mb-1">
                         {prescription.medicationName}
                       </h3>
-                      <p className="text-gray-300 text-sm mb-2">
+                      <p className="text-primary-300 text-sm mb-2">
                         {prescription.dosage} - {prescription.frequency}
                       </p>
-                      <div className="flex items-center space-x-4 text-sm text-gray-300">
+                      <div className="flex items-center space-x-4 text-sm text-primary-300">
                         <div className="flex items-center">
                           <User className="w-4 h-4 mr-1" />
                           {prescription.prescribedBy}
@@ -363,22 +363,22 @@ const Prescriptions = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div className="space-y-2">
-                      <div className="flex items-center text-gray-300">
+                      <div className="flex items-center text-primary-300">
                         <span className="font-medium text-white">Duration:</span>
                         <span className="ml-2">{prescription.duration}</span>
                       </div>
-                      <div className="flex items-center text-gray-300">
+                      <div className="flex items-center text-primary-300">
                         <span className="font-medium text-white">Pharmacy:</span>
                         <span className="ml-2">{prescription.pharmacy}</span>
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <div className="flex items-center text-gray-300">
+                      <div className="flex items-center text-primary-300">
                         <span className="font-medium text-white">Refills:</span>
                         <span className="ml-2">{prescription.refillsRemaining}/{prescription.totalRefills}</span>
                       </div>
                       {prescription.endDate && (
-                        <div className="flex items-center text-gray-300">
+                        <div className="flex items-center text-primary-300">
                           <span className="font-medium text-white">End Date:</span>
                           <span className="ml-2">{new Date(prescription.endDate).toLocaleDateString()}</span>
                         </div>
@@ -387,11 +387,11 @@ const Prescriptions = () => {
                   </div>
 
                   <div className="mt-4 p-3 bg-primary-700 bg-opacity-50 rounded-lg">
-                    <p className="text-sm text-gray-300">
+                    <p className="text-sm text-primary-300">
                       <span className="font-medium text-white">Instructions:</span> {prescription.instructions}
                     </p>
                     {prescription.notes && (
-                      <p className="text-sm text-gray-300 mt-2">
+                      <p className="text-sm text-primary-300 mt-2">
                         <span className="font-medium text-white">Notes:</span> {prescription.notes}
                       </p>
                     )}
@@ -405,11 +405,11 @@ const Prescriptions = () => {
                       Request Refill
                     </button>
                   )}
-                  <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-colors text-sm font-medium">
+                  <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium">
                     Download
                   </button>
                   {prescription.status === 'active' && (
-                    <button className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium">
+                    <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-colors text-sm font-medium">
                       Set Reminder
                     </button>
                   )}

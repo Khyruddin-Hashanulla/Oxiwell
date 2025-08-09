@@ -160,18 +160,27 @@ const PatientProfile = () => {
             <div className="flex space-x-2">
               <button
                 onClick={handleCancel}
-                className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               >
                 <X className="w-4 h-4 mr-2" />
                 Cancel
               </button>
               <button
-                onClick={handleSubmit(onSubmit)}
+                type="submit"
                 disabled={isLoading}
-                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                className="flex items-center px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors disabled:opacity-50"
               >
-                <Save className="w-4 h-4 mr-2" />
-                {isLoading ? 'Saving...' : 'Save Changes'}
+                {isLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Update Profile
+                  </>
+                )}
               </button>
             </div>
           )}
@@ -201,7 +210,7 @@ const PatientProfile = () => {
                     {profileData?.firstName || 'Not provided'}
                   </div>
                 )}
-                {errors.firstName && <p className="mt-1 text-sm text-red-400">{errors.firstName.message}</p>}
+                {errors.firstName && <p className="mt-1 text-sm text-error-400">{errors.firstName.message}</p>}
               </div>
 
               <div>
@@ -217,7 +226,7 @@ const PatientProfile = () => {
                     {profileData?.lastName || 'Not provided'}
                   </div>
                 )}
-                {errors.lastName && <p className="mt-1 text-sm text-red-400">{errors.lastName.message}</p>}
+                {errors.lastName && <p className="mt-1 text-sm text-error-400">{errors.lastName.message}</p>}
               </div>
 
               <div>
@@ -241,7 +250,7 @@ const PatientProfile = () => {
                     {profileData?.email || 'Not provided'}
                   </div>
                 )}
-                {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email.message}</p>}
+                {errors.email && <p className="mt-1 text-sm text-error-400">{errors.email.message}</p>}
               </div>
 
               <div>

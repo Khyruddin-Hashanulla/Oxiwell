@@ -96,28 +96,28 @@ const PatientDashboard = () => {
       description: 'Schedule a new appointment',
       icon: Calendar,
       link: '/patient/appointments/book',
-      color: 'bg-blue-500 hover:bg-blue-600'
+      color: 'bg-primary-600 hover:bg-primary-700'
     },
     {
       title: 'View Prescriptions',
       description: 'Check your medications',
       icon: Pill,
       link: '/patient/prescriptions',
-      color: 'bg-green-500 hover:bg-green-600'
+      color: 'bg-success-600 hover:bg-success-700'
     },
     {
       title: 'Upload Report',
       description: 'Share medical reports',
       icon: FileText,
       link: '/patient/reports/upload',
-      color: 'bg-purple-500 hover:bg-purple-600'
+      color: 'bg-accent-600 hover:bg-accent-700'
     },
     {
       title: 'Update Profile',
       description: 'Manage your information',
       icon: User,
       link: '/patient/profile',
-      color: 'bg-orange-500 hover:bg-orange-600'
+      color: 'bg-warning-600 hover:bg-warning-700'
     }
   ]
 

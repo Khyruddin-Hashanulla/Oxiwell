@@ -505,20 +505,20 @@ const DoctorProfile = () => {
 
   if (isLoading && !profileData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900 flex items-center justify-center">
         <div className="text-white text-xl">Loading profile...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900 p-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <button
             onClick={() => navigate('/doctor/dashboard')}
-            className="flex items-center text-white hover:text-green-400 transition-colors"
+            className="flex items-center text-white hover:text-success-400 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
             Back to Dashboard
@@ -527,28 +527,38 @@ const DoctorProfile = () => {
           <div className="flex items-center space-x-4">
             {!isEditing ? (
               <button
-                onClick={handleEditClick}
-                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                onClick={() => setIsEditing(!isEditing)}
+                className="flex items-center px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors"
               >
                 <Edit className="w-4 h-4 mr-2" />
-                Edit Profile
+                {isEditing ? 'Cancel Edit' : 'Edit Profile'}
               </button>
             ) : (
-              <div className="flex space-x-2">
+              <div className="flex space-x-3">
                 <button
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {loading ? 'Saving...' : 'Save Changes'}
-                </button>
-                <button
+                  type="button"
                   onClick={() => setIsEditing(false)}
                   className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                 >
                   <X className="w-4 h-4 mr-2" />
                   Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex items-center px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors disabled:opacity-50"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Save Changes
+                    </>
+                  )}
                 </button>
               </div>
             )}
@@ -574,13 +584,13 @@ const DoctorProfile = () => {
                 </div>
               </div>
               {isEditing && (
-                <label className="absolute bottom-0 right-0 bg-green-600 text-white p-2 rounded-full cursor-pointer hover:bg-green-700 transition-colors">
+                <label className="absolute bottom-0 right-0 bg-success-600 text-white p-2 rounded-full cursor-pointer hover:bg-success-700 transition-colors">
                   <Camera className="w-4 h-4" />
                   <input
                     type="file"
+                    className="hidden"
                     accept="image/*"
                     onChange={handleImageChange}
-                    className="hidden"
                   />
                 </label>
               )}
@@ -588,7 +598,7 @@ const DoctorProfile = () => {
             <h1 className="text-3xl font-bold text-white mt-4">
               Dr. {profileData?.firstName} {profileData?.lastName}
             </h1>
-            <p className="text-green-400 text-lg">{profileData?.specialization}</p>
+            <p className="text-success-400 text-lg">{profileData?.specialization}</p>
           </div>
 
           {/* Personal Information Section */}
@@ -611,7 +621,7 @@ const DoctorProfile = () => {
                 ) : (
                   <p className="text-white">{profileData?.firstName || 'Not provided'}</p>
                 )}
-                {errors.firstName && <p className="text-red-400 text-sm mt-1">{errors.firstName}</p>}
+                {errors.firstName && <p className="text-error-400 text-sm mt-1">{errors.firstName}</p>}
               </div>
               
               <div>
@@ -627,7 +637,7 @@ const DoctorProfile = () => {
                 ) : (
                   <p className="text-white">{profileData?.lastName || 'Not provided'}</p>
                 )}
-                {errors.lastName && <p className="text-red-400 text-sm mt-1">{errors.lastName}</p>}
+                {errors.lastName && <p className="text-error-400 text-sm mt-1">{errors.lastName}</p>}
               </div>
 
               <div>
@@ -654,7 +664,7 @@ const DoctorProfile = () => {
                     {profileData?.phone || 'Not provided'}
                   </p>
                 )}
-                {errors.phone && <p className="text-red-400 text-sm mt-1">{errors.phone}</p>}
+                {errors.phone && <p className="text-error-400 text-sm mt-1">{errors.phone}</p>}
               </div>
 
               <div>
@@ -724,14 +734,14 @@ const DoctorProfile = () => {
                 ) : (
                   <p className="text-white">{profileData?.specialization || 'Not provided'}</p>
                 )}
-                {errors.specialization && <p className="text-red-400 text-sm mt-1">{errors.specialization}</p>}
+                {errors.specialization && <p className="text-error-400 text-sm mt-1">{errors.specialization}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   License Number {!profileData?.profileSetupCompleted && '*'}
                   {profileData?.profileSetupCompleted && (
-                    <span className="text-xs text-yellow-400 ml-2">(Cannot be edited after setup)</span>
+                    <span className="text-xs text-warning-400 ml-2">(Cannot be edited after setup)</span>
                   )}
                 </label>
                 {isEditing && !profileData?.profileSetupCompleted ? (
@@ -745,14 +755,14 @@ const DoctorProfile = () => {
                 ) : (
                   <p className="text-white">{profileData?.licenseNumber || 'Not provided'}</p>
                 )}
-                {errors.licenseNumber && <p className="text-red-400 text-sm mt-1">{errors.licenseNumber}</p>}
+                {errors.licenseNumber && <p className="text-error-400 text-sm mt-1">{errors.licenseNumber}</p>}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Medical Registration Number *
                   {profileData?.profileSetupCompleted && (
-                    <span className="text-xs text-yellow-400 ml-2">(Cannot be edited after setup)</span>
+                    <span className="text-xs text-warning-400 ml-2">(Cannot be edited after setup)</span>
                   )}
                 </label>
                 {isEditing && !profileData?.profileSetupCompleted ? (
@@ -766,7 +776,7 @@ const DoctorProfile = () => {
                 ) : (
                   <p className="text-white">{profileData?.medicalRegistrationNumber || 'Not provided'}</p>
                 )}
-                {errors.medicalRegistrationNumber && <p className="text-red-400 text-sm mt-1">{errors.medicalRegistrationNumber}</p>}
+                {errors.medicalRegistrationNumber && <p className="text-error-400 text-sm mt-1">{errors.medicalRegistrationNumber}</p>}
               </div>
 
               <div>
@@ -799,7 +809,7 @@ const DoctorProfile = () => {
               ) : (
                 <p className="text-white">{profileData?.professionalBio || profileData?.bio || 'Not provided'}</p>
               )}
-              {errors.professionalBio && <p className="text-red-400 text-sm mt-1">{errors.professionalBio}</p>}
+              {errors.professionalBio && <p className="text-error-400 text-sm mt-1">{errors.professionalBio}</p>}
             </div>
           </div>
 
@@ -845,7 +855,7 @@ const DoctorProfile = () => {
                               const newQualifications = formData.qualifications.filter((_, i) => i !== index)
                               handleInputChange('qualifications', newQualifications)
                             }}
-                            className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            className="px-3 py-2 bg-error-600 text-white rounded-lg hover:bg-error-700"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -860,7 +870,7 @@ const DoctorProfile = () => {
                     const newQualifications = [...formData.qualifications, { degree: '', institution: '', year: '' }]
                     handleInputChange('qualifications', newQualifications)
                   }}
-                  className="w-full py-2 border-2 border-dashed border-gray-600 rounded-lg text-gray-300 hover:border-green-500 hover:text-green-400"
+                  className="w-full py-2 border-2 border-dashed border-gray-600 rounded-lg text-gray-300 hover:border-success-500 hover:text-success-400"
                 >
                   + Add Qualification
                 </button>
@@ -871,7 +881,7 @@ const DoctorProfile = () => {
                   profileData.qualifications.map((qualification, index) => (
                     <div key={index} className="text-white">
                       <span className="font-medium">{qualification.degree}</span> from{' '}
-                      <span className="text-green-400">{qualification.institution}</span> ({qualification.year})
+                      <span className="text-success-400">{qualification.institution}</span> ({qualification.year})
                     </div>
                   ))
                 ) : (
@@ -879,7 +889,7 @@ const DoctorProfile = () => {
                 )}
               </div>
             )}
-            {errors.qualifications && <p className="text-red-400 text-sm mt-1">{errors.qualifications}</p>}
+            {errors.qualifications && <p className="text-error-400 text-sm mt-1">{errors.qualifications}</p>}
           </div>
 
           {/* Services Provided */}
@@ -895,20 +905,16 @@ const DoctorProfile = () => {
                     key={service}
                     className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
                       formData.servicesProvided.includes(service)
-                        ? 'border-green-500 bg-green-500/20 text-green-300'
-                        : 'border-gray-600 bg-white/5 hover:border-green-400'
+                        ? 'border-success-500 bg-success-500/20 text-success-300'
+                        : 'border-gray-600 bg-white/5 hover:border-success-400'
                     }`}
+                    onClick={() => toggleService(service)}
                   >
                     <input
                       type="checkbox"
                       checked={formData.servicesProvided.includes(service)}
-                      onChange={(e) => {
-                        const updatedServices = e.target.checked
-                          ? [...formData.servicesProvided, service]
-                          : formData.servicesProvided.filter(s => s !== service)
-                        handleInputChange('servicesProvided', updatedServices)
-                      }}
-                      className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mr-3"
+                      onChange={() => toggleService(service)}
+                      className="w-4 h-4 text-success-600 border-gray-300 rounded focus:ring-success-500 mr-3"
                     />
                     <span className="text-sm font-medium text-white">{service}</span>
                   </label>
@@ -920,7 +926,7 @@ const DoctorProfile = () => {
                   profileData.servicesProvided.map((service, index) => (
                     <span
                       key={index}
-                      className="px-3 py-1 bg-green-500/20 text-green-300 rounded-full text-sm"
+                      className="px-3 py-1 bg-success-500/20 text-success-300 rounded-full text-sm"
                     >
                       {service}
                     </span>
@@ -930,7 +936,7 @@ const DoctorProfile = () => {
                 )}
               </div>
             )}
-            {errors.servicesProvided && <p className="text-red-400 text-sm mt-1">{errors.servicesProvided}</p>}
+            {errors.servicesProvided && <p className="text-error-400 text-sm mt-1">{errors.servicesProvided}</p>}
           </div>
 
           {/* Consultation Options */}
@@ -1188,7 +1194,7 @@ const DoctorProfile = () => {
                                       }, 100);
                                     }
                                   }}
-                                  className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mr-2"
+                                  className="w-4 h-4 text-success-600 border-gray-300 rounded focus:ring-success-500 mr-2"
                                 />
                                 <span className="text-sm font-medium capitalize text-white">{day}</span>
                               </div>
@@ -1249,7 +1255,7 @@ const DoctorProfile = () => {
                           const newWorkplaces = formData.workplaces.filter((_, i) => i !== index)
                           handleInputChange('workplaces', newWorkplaces)
                         }}
-                        className="mt-4 text-red-400 hover:text-red-300 text-sm font-medium"
+                        className="mt-4 text-error-400 hover:text-error-300 text-sm font-medium"
                       >
                         Remove Workplace
                       </button>
@@ -1283,7 +1289,7 @@ const DoctorProfile = () => {
                     }]
                     handleInputChange('workplaces', newWorkplaces)
                   }}
-                  className="w-full py-3 border-2 border-dashed border-gray-600 rounded-lg text-gray-300 hover:border-green-500 hover:text-green-400"
+                  className="w-full py-3 border-2 border-dashed border-gray-600 rounded-lg text-gray-300 hover:border-success-500 hover:text-success-400"
                 >
                   + Add Another Workplace
                 </button>
@@ -1326,7 +1332,7 @@ const DoctorProfile = () => {
                             </div>
                           )}
                         </div>
-                        <span className="text-green-400 font-medium">₹{workplace.consultationFee}</span>
+                        <span className="text-success-400 font-medium">₹{workplace.consultationFee}</span>
                       </div>
                       <div className="text-sm text-gray-300">
                         Available: {(() => {
@@ -1363,7 +1369,7 @@ const DoctorProfile = () => {
                 )}
               </div>
             )}
-            {errors.workplaces && <p className="text-red-400 text-sm mt-1">{errors.workplaces}</p>}
+            {errors.workplaces && <p className="text-error-400 text-sm mt-1">{errors.workplaces}</p>}
           </div>
 
           {/* Emergency Contact */}

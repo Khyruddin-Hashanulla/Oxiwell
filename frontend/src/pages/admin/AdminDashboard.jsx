@@ -120,32 +120,32 @@ const AdminDashboard = () => {
 
   const quickActions = [
     {
-      title: 'Manage Users',
-      description: 'Add, edit, or remove users',
+      title: 'Manage Doctors',
+      description: 'View and approve doctors',
       icon: Users,
-      link: '/admin/users',
-      color: 'bg-blue-500 hover:bg-blue-600'
+      link: '/admin/doctors',
+      color: 'bg-primary-600 hover:bg-primary-700'
     },
     {
-      title: 'System Analytics',
-      description: 'View detailed reports',
+      title: 'System Reports',
+      description: 'View analytics and reports',
       icon: BarChart3,
-      link: '/admin/analytics',
-      color: 'bg-green-500 hover:bg-green-600'
+      link: '/admin/reports',
+      color: 'bg-success-600 hover:bg-success-700'
     },
     {
-      title: 'Financial Reports',
-      description: 'Revenue and billing',
-      icon: DollarSign,
-      link: '/admin/finance',
-      color: 'bg-purple-500 hover:bg-purple-600'
+      title: 'User Management',
+      description: 'Manage user accounts',
+      icon: Shield,
+      link: '/admin/users',
+      color: 'bg-accent-600 hover:bg-accent-700'
     },
     {
-      title: 'System Settings',
-      description: 'Configure system',
+      title: 'Settings',
+      description: 'Configure system settings',
       icon: Settings,
       link: '/admin/settings',
-      color: 'bg-orange-500 hover:bg-orange-600'
+      color: 'bg-warning-600 hover:bg-warning-700'
     }
   ]
 
@@ -178,20 +178,20 @@ const AdminDashboard = () => {
 
       {/* System Alerts */}
       {stats.systemAlerts > 0 && (
-        <div className="bg-gradient-to-r from-red-800 to-red-700 border border-red-600 rounded-xl p-6 shadow-lg">
-          <div className="flex items-start space-x-4">
-            <AlertTriangle className="w-6 h-6 text-red-300 mt-1" />
+        <div className="bg-gradient-to-br from-error-700 to-error-800 rounded-xl border border-error-600 shadow-lg">
+          <div className="p-6 flex items-start space-x-4">
+            <AlertTriangle className="w-6 h-6 text-error-300 mt-1" />
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-white mb-2">
                 System Alerts
               </h3>
-              <p className="text-red-100">
+              <p className="text-error-100">
                 You have {stats.systemAlerts} system alerts that require attention.
               </p>
             </div>
             <Link
               to="/admin/alerts"
-              className="bg-white text-red-800 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+              className="bg-white text-error-800 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
             >
               View Alerts
             </Link>
@@ -284,13 +284,13 @@ const AdminDashboard = () => {
                   </div>
                   <div className="flex items-center space-x-2">
                     <button 
-                      className={`bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-3 py-1 rounded-lg transition-colors ${actionLoading[doctor.id] === 'approving' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`bg-success-600 hover:bg-success-700 text-white text-sm font-medium px-3 py-1 rounded-lg transition-colors ${actionLoading[doctor.id] === 'approving' ? 'opacity-50 cursor-not-allowed' : ''}`}
                       onClick={() => handleApproveDoctor(doctor.id)}
                     >
                       Approve
                     </button>
                     <button 
-                      className={`bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-3 py-1 rounded-lg transition-colors ${actionLoading[doctor.id] === 'rejecting' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      className={`bg-error-600 hover:bg-error-700 text-white text-sm font-medium px-3 py-1 rounded-lg transition-colors ${actionLoading[doctor.id] === 'rejecting' ? 'opacity-50 cursor-not-allowed' : ''}`}
                       onClick={() => handleRejectDoctor(doctor.id)}
                     >
                       Reject

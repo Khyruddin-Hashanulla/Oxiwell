@@ -9,8 +9,8 @@ const ForgotPassword = () => {
         <p className="mt-2 text-gray-600">Enter your email to reset your password</p>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-blue-800 text-sm">
+      <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
+        <p className="text-primary-600 text-sm">
           Password reset functionality is under development.
         </p>
       </div>

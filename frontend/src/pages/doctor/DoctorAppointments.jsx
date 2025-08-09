@@ -142,19 +142,19 @@ const DoctorAppointments = () => {
 
   const getUrgencyColor = (level) => {
     switch (level) {
-      case 'high': return 'bg-red-100 text-red-800 border-red-200'
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'low': return 'bg-green-100 text-green-800 border-green-200'
+      case 'high': return 'bg-error-100 text-error-800 border-error-200'
+      case 'medium': return 'bg-warning-100 text-warning-800 border-warning-200'
+      case 'low': return 'bg-success-100 text-success-800 border-success-200'
       default: return 'bg-gray-100 text-gray-800 border-gray-200'
     }
   }
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
-      case 'confirmed': return 'bg-blue-100 text-blue-800 border-blue-200'
-      case 'completed': return 'bg-green-100 text-green-800 border-green-200'
-      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200'
+      case 'pending': return 'bg-warning-100 text-warning-800 border-warning-200'
+      case 'confirmed': return 'bg-primary-100 text-primary-800 border-primary-200'
+      case 'completed': return 'bg-success-100 text-success-800 border-success-200'
+      case 'cancelled': return 'bg-error-100 text-error-800 border-error-200'
       default: return 'bg-gray-100 text-gray-800 border-gray-200'
     }
   }
@@ -369,22 +369,22 @@ const DoctorAppointments = () => {
 
                           {/* Appointment Details */}
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div className="bg-primary-700/50 rounded-lg p-3">
+                            <div className="bg-success-500/10 rounded-lg p-3 border border-success-500/20">
                               <h4 className="text-white font-medium mb-1 text-sm flex items-center">
                                 <Stethoscope className="w-4 h-4 mr-2" />
                                 Reason for Visit
                               </h4>
                               <p className="text-gray-300 text-sm">{appointment.reason || 'Not specified'}</p>
                             </div>
-                            <div className="bg-green-500/10 rounded-lg p-3 border border-green-500/20">
+                            <div className="bg-primary-500/10 rounded-lg p-3 border border-primary-500/20">
                               <h4 className="text-white font-medium mb-1 text-sm">Consultation Fee</h4>
-                              <p className="text-green-400 font-bold text-lg">₹{appointment.consultationFee || 0}</p>
+                              <p className="text-primary-400 font-bold text-lg">₹{appointment.consultationFee || 0}</p>
                             </div>
                           </div>
 
                           {/* Patient Notes */}
                           {appointment.patientNotes && (
-                            <div className="mt-4 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                            <div className="mt-4 p-3 bg-primary-500/10 rounded-lg border border-primary-500/20">
                               <h4 className="text-white font-medium mb-2 text-sm flex items-center">
                                 <MessageSquare className="w-4 h-4 mr-2" />
                                 Patient Notes
@@ -395,7 +395,7 @@ const DoctorAppointments = () => {
 
                           {/* Doctor Notes */}
                           {appointment.doctorNotes && (
-                            <div className="mt-4 p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+                            <div className="mt-4 p-3 bg-warning-500/10 rounded-lg border border-warning-500/20">
                               <h4 className="text-white font-medium mb-2 text-sm flex items-center">
                                 <FileText className="w-4 h-4 mr-2" />
                                 Doctor Notes
@@ -419,14 +419,14 @@ const DoctorAppointments = () => {
                             <div className="flex flex-col space-y-2">
                               <button
                                 onClick={() => handleStatusUpdate(appointment._id, 'confirmed')}
-                                className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                                className="flex items-center justify-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                               >
                                 <CheckCircle className="w-4 h-4" />
                                 <span>Confirm</span>
                               </button>
                               <button
                                 onClick={() => handleStatusUpdate(appointment._id, 'cancelled')}
-                                className="flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                                className="flex items-center justify-center space-x-2 bg-error-600 hover:bg-error-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                               >
                                 <XCircle className="w-4 h-4" />
                                 <span>Cancel</span>
@@ -438,14 +438,14 @@ const DoctorAppointments = () => {
                             <div className="flex flex-col space-y-2">
                               <button
                                 onClick={() => handleStatusUpdate(appointment._id, 'completed')}
-                                className="flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                                className="flex items-center justify-center space-x-2 bg-success-600 hover:bg-success-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                               >
                                 <CheckCircle className="w-4 h-4" />
                                 <span>Complete</span>
                               </button>
                               <button
                                 onClick={() => handleStatusUpdate(appointment._id, 'cancelled')}
-                                className="flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                                className="flex items-center justify-center space-x-2 bg-error-600 hover:bg-error-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                               >
                                 <XCircle className="w-4 h-4" />
                                 <span>Cancel</span>

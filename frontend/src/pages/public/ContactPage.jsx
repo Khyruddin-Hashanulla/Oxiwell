@@ -318,7 +318,7 @@ const ContactPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Emergency Contact */}
             <motion.div
-              className="bg-gradient-to-br from-red-800 to-red-700 rounded-xl p-8 border border-red-600"
+              className="bg-error-700 rounded-xl p-8 border border-error-600"
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
@@ -327,10 +327,10 @@ const ContactPage = () => {
               <h3 className="text-2xl font-bold text-white mb-4">
                 Emergency Contact
               </h3>
-              <p className="text-red-100 mb-4">
+              <p className="text-error-100 mb-4">
                 For medical emergencies, please call 911 immediately or visit your nearest emergency room.
               </p>
-              <div className="bg-red-700 bg-opacity-50 rounded-lg p-4">
+              <div className="bg-error-600 bg-opacity-50 rounded-lg p-4">
                 <p className="text-white font-bold text-lg">
                   24/7 Emergency Line: (555) 911-HELP
                 </p>

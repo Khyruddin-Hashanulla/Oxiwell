@@ -31,6 +31,7 @@ const DoctorDashboard = () => {
   })
   const [todayAppointments, setTodayAppointments] = useState([])
   const [loading, setLoading] = useState(true)
+  const [showAllAppointments, setShowAllAppointments] = useState(false)
 
   // Helper function to calculate age from date of birth
   const calculateAge = (dateOfBirth) => {
@@ -103,11 +104,33 @@ const DoctorDashboard = () => {
       }
       
       try {
-        // Fetch upcoming appointments
+        // Fetch upcoming appointments with retry logic
         console.log('📅 Fetching doctor appointments...')
-        const appointmentsResponse = await appointmentsAPI.getDoctorAppointments(user._id, { 
-          limit: 10 
-        })
+        let appointmentsResponse
+        let retryCount = 0
+        const maxRetries = 3
+        
+        while (retryCount < maxRetries) {
+          try {
+            appointmentsResponse = await appointmentsAPI.getDoctorAppointments(user._id, { 
+              limit: 10 
+            })
+            break // Success, exit retry loop
+          } catch (appointmentError) {
+            retryCount++
+            console.log(`⚠️ Appointment fetch attempt ${retryCount}/${maxRetries} failed:`, appointmentError.message)
+            
+            if (retryCount >= maxRetries) {
+              throw appointmentError // Re-throw after max retries
+            }
+            
+            // Wait before retrying (exponential backoff)
+            const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 5000)
+            console.log(`🔄 Retrying appointment fetch in ${delay}ms...`)
+            await new Promise(resolve => setTimeout(resolve, delay))
+          }
+        }
+        
         console.log('🔍 RAW APPOINTMENTS RESPONSE:', appointmentsResponse)
         console.log('🔍 APPOINTMENTS DATA:', appointmentsResponse?.data)
         console.log('🔍 APPOINTMENTS DATA.DATA:', appointmentsResponse?.data?.data)
@@ -117,8 +140,18 @@ const DoctorDashboard = () => {
         console.log('🔍 Sample appointment:', allAppointments[0])
         console.log('🔍 All appointments:', allAppointments)
       } catch (appointmentsError) {
-        console.error('❌ Error fetching appointments:', appointmentsError)
+        console.error('❌ Error fetching appointments after retries:', appointmentsError)
         console.error('❌ Appointments error details:', appointmentsError.response?.data)
+        
+        // Show more specific error message for appointments
+        if (appointmentsError.code === 'NETWORK_ERROR' || appointmentsError.message?.includes('Network Error')) {
+          toast.error('Unable to load appointments. Please check your connection and try refreshing.')
+        } else if (appointmentsError.response?.status === 403) {
+          toast.error('Access denied. Please ensure you are logged in as a doctor.')
+        } else {
+          toast.error('Failed to load appointments. Please try again.')
+        }
+        
         allAppointments = []
       }
       
@@ -285,28 +318,28 @@ const DoctorDashboard = () => {
       description: 'Manage today\'s schedule',
       icon: Calendar,
       link: '/doctor/appointments',
-      color: 'bg-blue-500 hover:bg-blue-600'
+      color: 'bg-primary-500 hover:bg-primary-600'
     },
     {
       title: 'Patient Records',
       description: 'Access patient history',
       icon: Users,
       link: '/doctor/patients',
-      color: 'bg-green-500 hover:bg-green-600'
+      color: 'bg-success-500 hover:bg-success-600'
     },
     {
       title: 'Write Prescription',
       description: 'Create new prescription',
       icon: Pill,
       link: '/doctor/prescriptions/new',
-      color: 'bg-purple-500 hover:bg-purple-600'
+      color: 'bg-accent-500 hover:bg-accent-600'
     },
     {
       title: 'Medical Notes',
       description: 'Add consultation notes',
       icon: FileText,
       link: '/doctor/notes',
-      color: 'bg-orange-500 hover:bg-orange-600'
+      color: 'bg-warning-500 hover:bg-warning-600'
     }
   ]
 
@@ -459,7 +492,7 @@ const DoctorDashboard = () => {
             </div>
             <div className="space-y-4">
               {todayAppointments.length > 0 ? (
-                todayAppointments.map((appointment) => (
+                todayAppointments.slice(0, showAllAppointments ? todayAppointments.length : 3).map((appointment) => (
                   <div key={appointment._id || appointment.id} className="bg-primary-700 bg-opacity-50 rounded-lg p-4 hover:bg-opacity-70 transition-all">
                     {/* Patient Info Header */}
                     <div className="flex items-start justify-between mb-3">
@@ -468,7 +501,7 @@ const DoctorDashboard = () => {
                           <User className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-white text-lg">
+                          <h4 className="font-semibold text-white">
                             {typeof appointment.patient === 'object' 
                               ? (appointment.patient?.fullName || 
                                  `${appointment.patient?.firstName || ''} ${appointment.patient?.lastName || ''}`.trim() || 
@@ -485,22 +518,22 @@ const DoctorDashboard = () => {
                       {/* Status Badge */}
                       <div className="flex items-center space-x-2">
                         {appointment.status === 'completed' && (
-                          <span className="bg-green-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+                          <span className="bg-success-600 text-white text-xs px-3 py-1 rounded-full font-medium">
                             Completed
                           </span>
                         )}
                         {appointment.status === 'confirmed' && (
-                          <span className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+                          <span className="bg-primary-600 text-white text-xs px-3 py-1 rounded-full font-medium">
                             Confirmed
                           </span>
                         )}
                         {appointment.status === 'pending' && (
-                          <span className="bg-orange-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+                          <span className="bg-warning-600 text-white text-xs px-3 py-1 rounded-full font-medium">
                             Pending Approval
                           </span>
                         )}
                         {appointment.status === 'cancelled' && (
-                          <span className="bg-red-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+                          <span className="bg-error-600 text-white text-xs px-3 py-1 rounded-full font-medium">
                             Cancelled
                           </span>
                         )}
@@ -548,14 +581,14 @@ const DoctorDashboard = () => {
                       <div className="flex items-center space-x-3 pt-3 border-t border-primary-600">
                         <button
                           onClick={() => handleAppointmentAction(appointment._id || appointment.id, 'approve')}
-                          className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                          className="flex items-center space-x-2 bg-success-600 hover:bg-success-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                         >
                           <CheckCircle className="w-4 h-4" />
                           <span>Approve</span>
                         </button>
                         <button
                           onClick={() => handleAppointmentAction(appointment._id || appointment.id, 'reject')}
-                          className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                          className="flex items-center space-x-2 bg-error-600 hover:bg-error-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                         >
                           <XCircle className="w-4 h-4" />
                           <span>Reject</span>
@@ -580,6 +613,16 @@ const DoctorDashboard = () => {
                 <div className="text-center py-8">
                   <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                   <p className="text-gray-400">No appointments scheduled for today</p>
+                </div>
+              )}
+              {todayAppointments.length > 3 && (
+                <div className="flex justify-center pt-4">
+                  <button
+                    onClick={() => setShowAllAppointments(!showAllAppointments)}
+                    className="text-accent-400 hover:text-accent-300 text-sm font-medium transition-colors"
+                  >
+                    {showAllAppointments ? 'Show Less' : `Show All ${todayAppointments.length - 3} More`}
+                  </button>
                 </div>
               )}
             </div>

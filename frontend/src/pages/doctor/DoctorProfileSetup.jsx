@@ -501,7 +501,7 @@ const DoctorProfileSetup = () => {
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <User className="w-16 h-16 text-green-600 mx-auto mb-4" />
+              <User className="w-16 h-16 text-primary-600 mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2">Personal Information</h2>
               <p className="text-gray-600">Complete your personal details</p>
             </div>
@@ -557,7 +557,7 @@ const DoctorProfileSetup = () => {
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <Stethoscope className="w-16 h-16 text-green-600 mx-auto mb-4" />
+              <Stethoscope className="w-16 h-16 text-primary-600 mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2">Professional Information</h2>
               <p className="text-gray-600">Complete your professional details</p>
             </div>
@@ -671,7 +671,7 @@ const DoctorProfileSetup = () => {
                     const newQualifications = [...currentQualifications, { degree: '', institution: '', year: '' }]
                     handleInputChange('qualifications', newQualifications)
                   }}
-                  className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-green-500 hover:text-green-600"
+                  className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-300 hover:text-primary-600"
                 >
                   + Add Another Qualification
                 </button>
@@ -684,7 +684,7 @@ const DoctorProfileSetup = () => {
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <FileText className="w-16 h-16 text-green-600 mx-auto mb-4" />
+              <FileText className="w-16 h-16 text-primary-600 mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2">Profile & Bio</h2>
               <p className="text-gray-600">Complete your profile and bio</p>
             </div>
@@ -718,7 +718,7 @@ const DoctorProfileSetup = () => {
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <Globe className="w-16 h-16 text-green-600 mx-auto mb-4" />
+              <Globe className="w-16 h-16 text-primary-600 mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2">Services & Consultation</h2>
               <p className="text-gray-600">Select your services and consultation options</p>
             </div>
@@ -731,8 +731,8 @@ const DoctorProfileSetup = () => {
                       key={service}
                       className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
                         formData.servicesProvided.includes(service)
-                          ? 'border-green-500 bg-green-50 text-green-700'
-                          : 'border-gray-300 bg-white hover:border-green-300'
+                          ? 'border-success-500 bg-success-50 text-success-700'
+                          : 'border-gray-300 bg-white hover:border-primary-300'
                       }`}
                     >
                       <input
@@ -744,7 +744,7 @@ const DoctorProfileSetup = () => {
                             : formData.servicesProvided.filter(s => s !== service)
                           handleInputChange('servicesProvided', updatedServices)
                         }}
-                        className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mr-3"
+                        className="w-4 h-4 text-success-600 border-gray-300 rounded focus:ring-success-500 mr-3"
                       />
                       <span className="text-sm font-medium">{service}</span>
                     </label>
@@ -772,7 +772,7 @@ const DoctorProfileSetup = () => {
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <Building2 className="w-16 h-16 text-green-600 mx-auto mb-4" />
+              <Building2 className="w-16 h-16 text-primary-600 mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2">Workplaces & Availability</h2>
               <p className="text-gray-600">Add your workplaces and availability</p>
             </div>
@@ -901,7 +901,7 @@ const DoctorProfileSetup = () => {
                                   
                                   handleArrayNestedInputChange('workplaces', index, 'availableSlots', newSlots)
                                 }}
-                                className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 mr-2"
+                                className="w-4 h-4 text-success-600 border-gray-300 rounded focus:ring-success-500 mr-2"
                               />
                               <span className="text-sm font-medium capitalize">{day}</span>
                             </div>
@@ -972,7 +972,7 @@ const DoctorProfileSetup = () => {
                   const newWorkplaces = [...currentWorkplaces, { type: 'hospital', hospital: '', phone: '', address: { street: '', city: '', state: '', zipCode: '', country: 'India' }, consultationFee: '', availableSlots: [{ day: 'monday', startTime: '09:00', endTime: '17:00', isAvailable: true }] }]
                   handleInputChange('workplaces', newWorkplaces)
                 }}
-                className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-green-500 hover:text-green-600"
+                className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-300 hover:text-primary-600"
               >
                 + Add Another Workplace
               </button>
@@ -983,7 +983,7 @@ const DoctorProfileSetup = () => {
         return (
           <div className="space-y-6">
             <div className="text-center mb-8">
-              <Heart className="w-16 h-16 text-green-600 mx-auto mb-4" />
+              <Heart className="w-16 h-16 text-primary-600 mx-auto mb-4" />
               <h2 className="text-2xl font-bold mb-2">Emergency Contact & Address</h2>
               <p className="text-gray-600">Add your emergency contact and address details</p>
             </div>
@@ -1116,7 +1116,7 @@ const DoctorProfileSetup = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
           <p className="text-white">Loading your profile data...</p>
         </div>
       </div>
@@ -1136,8 +1136,8 @@ const DoctorProfileSetup = () => {
             <span className="text-sm font-medium text-white">Step {currentStep} of {totalSteps}</span>
             <span className="text-sm text-gray-300">{Math.round((currentStep / totalSteps) * 100)}%</span>
           </div>
-          <div className="w-full bg-gray-700 rounded-full h-2">
-            <div className="bg-green-600 h-2 rounded-full transition-all duration-300" style={{ width: `${(currentStep / totalSteps) * 100}%` }} />
+          <div className="w-full bg-primary-700 rounded-full h-2">
+            <div className="bg-success-600 h-2 rounded-full transition-all duration-300" style={{ width: `${(currentStep / totalSteps) * 100}%` }} />
           </div>
         </div>
 
@@ -1152,7 +1152,7 @@ const DoctorProfileSetup = () => {
             className={`px-6 py-3 rounded-lg font-medium transition-colors ${
               currentStep === 1 
                 ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
-                : 'bg-gray-700 text-white hover:bg-gray-600'
+                : 'bg-primary-700 text-white hover:bg-primary-600'
             }`}
           >
             Previous
@@ -1161,7 +1161,7 @@ const DoctorProfileSetup = () => {
           {currentStep < totalSteps ? (
             <button 
               onClick={handleNext} 
-              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center font-medium transition-colors"
+              className="px-6 py-3 bg-success-600 text-white rounded-lg hover:bg-success-700 flex items-center font-medium transition-colors"
             >
               Next <ArrowRight className="w-4 h-4 ml-2" />
             </button>
@@ -1169,7 +1169,7 @@ const DoctorProfileSetup = () => {
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center disabled:opacity-50 font-medium transition-colors"
+              className="px-6 py-3 bg-success-600 text-white rounded-lg hover:bg-success-700 flex items-center disabled:opacity-50 font-medium transition-colors"
             >
               {loading ? (
                 <>

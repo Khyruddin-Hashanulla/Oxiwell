@@ -144,7 +144,7 @@ const AdminProfile = () => {
             <div className="flex space-x-2">
               <button
                 onClick={handleCancel}
-                className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               >
                 <X className="w-4 h-4 mr-2" />
                 Cancel
@@ -152,7 +152,7 @@ const AdminProfile = () => {
               <button
                 onClick={handleSubmit(onSubmit)}
                 disabled={isLoading}
-                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                className="flex items-center px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors disabled:opacity-50"
               >
                 <Save className="w-4 h-4 mr-2" />
                 {isLoading ? 'Saving...' : 'Save Changes'}

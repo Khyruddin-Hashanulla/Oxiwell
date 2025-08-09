@@ -103,14 +103,14 @@ const DoctorPatients = () => {
 
   const getBloodGroupColor = (bloodGroup) => {
     const colors = {
-      'A+': 'bg-red-100 text-red-800',
-      'A-': 'bg-red-200 text-red-900',
-      'B+': 'bg-blue-100 text-blue-800',
-      'B-': 'bg-blue-200 text-blue-900',
-      'AB+': 'bg-purple-100 text-purple-800',
-      'AB-': 'bg-purple-200 text-purple-900',
-      'O+': 'bg-green-100 text-green-800',
-      'O-': 'bg-green-200 text-green-900'
+      'A+': 'bg-error-100 text-error-800',
+      'A-': 'bg-error-200 text-error-900',
+      'B+': 'bg-primary-100 text-primary-800',
+      'B-': 'bg-primary-200 text-primary-900',
+      'AB+': 'bg-accent-100 text-accent-800',
+      'AB-': 'bg-accent-200 text-accent-900',
+      'O+': 'bg-success-100 text-success-800',
+      'O-': 'bg-success-200 text-success-900'
     }
     return colors[bloodGroup] || 'bg-gray-100 text-gray-800'
   }

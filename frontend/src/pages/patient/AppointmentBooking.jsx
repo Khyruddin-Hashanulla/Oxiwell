@@ -461,14 +461,14 @@ const AppointmentBooking = () => {
         <div key={step} className="flex items-center">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold ${
             step <= currentStep 
-              ? 'bg-blue-500 text-white' 
-              : 'bg-gray-200 text-gray-500'
+              ? 'bg-primary-500 text-white' 
+              : 'bg-gray-600 text-gray-300'
           }`}>
             {step < currentStep ? <CheckCircle className="w-5 h-5" /> : step}
           </div>
           {step < 5 && (
             <div className={`w-12 h-1 mx-2 ${
-              step < currentStep ? 'bg-blue-500' : 'bg-gray-200'
+              step < currentStep ? 'bg-primary-500' : 'bg-gray-200'
             }`} />
           )}
         </div>
@@ -495,7 +495,7 @@ const AppointmentBooking = () => {
                 placeholder="Search doctors..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
           </div>
@@ -505,7 +505,7 @@ const AppointmentBooking = () => {
             <select
               value={filters.specialization}
               onChange={(e) => setFilters(prev => ({ ...prev, specialization: e.target.value }))}
-              className="w-full px-3 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">All Specializations</option>
               <option value="cardiology">Cardiology</option>
@@ -521,7 +521,7 @@ const AppointmentBooking = () => {
             <select
               value={filters.gender}
               onChange={(e) => setFilters(prev => ({ ...prev, gender: e.target.value }))}
-              className="w-full px-3 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-white/10 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">Any Gender</option>
               <option value="male">Male</option>
@@ -536,7 +536,7 @@ const AppointmentBooking = () => {
               placeholder="City or State"
               value={filters.location}
               onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
-              className="w-full px-3 py-2 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
         </div>
@@ -546,7 +546,7 @@ const AppointmentBooking = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading ? (
           <div className="col-span-full text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
             <p className="text-gray-300 mt-4">Loading doctors...</p>
           </div>
         ) : doctors.length === 0 ? (
@@ -559,20 +559,20 @@ const AppointmentBooking = () => {
             <div
               key={doctor._id}
               onClick={() => handleDoctorSelect(doctor)}
-              className="bg-white/10 backdrop-blur-sm rounded-xl p-6 cursor-pointer hover:bg-white/20 transition-all duration-200 border border-gray-600 hover:border-blue-500"
+              className="bg-white/10 backdrop-blur-sm rounded-xl p-6 cursor-pointer hover:bg-white/20 transition-all duration-200 border border-gray-600 hover:border-primary-500"
             >
               <div className="flex items-start space-x-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-purple-600 rounded-full flex items-center justify-center">
                   <User className="w-8 h-8 text-white" />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-white">
                     Dr. {doctor.firstName} {doctor.lastName}
                   </h3>
-                  <p className="text-blue-300 text-sm mb-2">{doctor.specialization}</p>
+                  <p className="text-primary-300 text-sm mb-2">{doctor.specialization}</p>
                   
                   <div className="flex items-center space-x-4 text-sm text-gray-300">
-                    <div className="flex items-center space-x-1 text-yellow-400">
+                    <div className="flex items-center space-x-1 text-warning-400">
                       <Star className="w-4 h-4 fill-current" />
                       <span>{doctor.displayRating?.average?.toFixed(1) || doctor.rating?.average?.toFixed(1) || '4.2'}</span>
                     </div>
@@ -612,7 +612,7 @@ const AppointmentBooking = () => {
             <div
               key={index}
               onClick={() => handleHospitalSelect(workplace.hospital)}
-              className="bg-white/10 backdrop-blur-sm rounded-xl p-6 cursor-pointer hover:bg-white/20 transition-all duration-200 border border-gray-600 hover:border-blue-500"
+              className="bg-white/10 backdrop-blur-sm rounded-xl p-6 cursor-pointer hover:bg-white/20 transition-all duration-200 border border-gray-600 hover:border-primary-500"
             >
               <div className="flex items-start space-x-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center">
@@ -656,7 +656,7 @@ const AppointmentBooking = () => {
             <p className="text-gray-300 mb-4">No workplace information available for this doctor</p>
             <button
               onClick={() => setCurrentStep(1)}
-              className="text-blue-400 hover:text-blue-300 underline"
+              className="text-primary-400 hover:text-primary-300 underline"
             >
               Choose a different doctor
             </button>
@@ -671,8 +671,8 @@ const AppointmentBooking = () => {
       <div className="text-center">
         <h2 className="text-2xl font-bold text-white mb-2">Select Date</h2>
         <p className="text-gray-300">Choose an available date for your appointment</p>
-        <div className="mt-4 p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
-          <p className="text-sm text-blue-300">
+        <div className="mt-4 p-4 bg-primary-500/10 rounded-lg border border-primary-500/20">
+          <p className="text-sm text-primary-300">
             <Calendar className="w-4 h-4 inline mr-2" />
             Available dates for Dr. {selectedDoctor?.firstName} {selectedDoctor?.lastName} at {selectedHospital?.name}
           </p>
@@ -682,7 +682,7 @@ const AppointmentBooking = () => {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
         {isLoading ? (
           <div className="col-span-full text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
             <p className="text-gray-300 mt-4">Loading available dates...</p>
           </div>
         ) : availableDates.length === 0 ? (
@@ -692,7 +692,7 @@ const AppointmentBooking = () => {
             <p className="text-gray-300 mb-4">No available dates found for the selected doctor and hospital.</p>
             <button
               onClick={() => setCurrentStep(2)}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
             >
               Choose Different Hospital
             </button>
@@ -708,12 +708,12 @@ const AppointmentBooking = () => {
               <div
                 key={dateInfo.date}
                 onClick={() => handleDateSelect(dateInfo.date)}
-                className={`bg-white/10 backdrop-blur-sm rounded-xl p-4 cursor-pointer hover:bg-white/20 transition-all duration-200 border border-gray-600 hover:border-blue-500 text-center group ${
-                  selectedDate === dateInfo.date ? 'bg-blue-500/20 border-blue-500' : ''
+                className={`bg-white/10 backdrop-blur-sm rounded-xl p-4 cursor-pointer hover:bg-white/20 transition-all duration-200 border border-gray-600 hover:border-primary-500 text-center group ${
+                  selectedDate === dateInfo.date ? 'bg-primary-500/20 border-primary-500' : ''
                 }`}
               >
                 <div className="space-y-2">
-                  <div className="text-2xl font-bold text-white group-hover:text-blue-300 transition-colors">
+                  <div className="text-2xl font-bold text-white group-hover:text-primary-300 transition-colors">
                     {date.getDate()}
                   </div>
                   <div className="text-sm font-medium text-gray-300 capitalize">
@@ -723,12 +723,12 @@ const AppointmentBooking = () => {
                     {date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                   </div>
                   {isToday && (
-                    <div className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full">
+                    <div className="text-xs bg-success-500/20 text-success-400 px-2 py-1 rounded-full">
                       Today
                     </div>
                   )}
                   {isTomorrow && (
-                    <div className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full">
+                    <div className="text-xs bg-primary-500/20 text-primary-400 px-2 py-1 rounded-full">
                       Tomorrow
                     </div>
                   )}
@@ -759,7 +759,7 @@ const AppointmentBooking = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {isLoading ? (
           <div className="col-span-full text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto"></div>
             <p className="text-gray-300 mt-2">Loading time slots...</p>
           </div>
         ) : availableSlots.length === 0 ? (
@@ -772,12 +772,12 @@ const AppointmentBooking = () => {
             <div
               key={slot.time}
               onClick={() => handleTimeSelect(slot.time)}
-              className="bg-white/10 backdrop-blur-sm rounded-xl p-4 cursor-pointer hover:bg-white/20 transition-all duration-200 border border-gray-600 hover:border-blue-500 text-center"
+              className="bg-white/10 backdrop-blur-sm rounded-xl p-4 cursor-pointer hover:bg-white/20 transition-all duration-200 border border-gray-600 hover:border-primary-500 text-center"
             >
               <div className="text-white font-semibold">
                 {formatTime(slot.time)}
               </div>
-              <div className="text-xs text-green-400 mt-1">
+              <div className="text-xs text-success-400 mt-1">
                 Available
               </div>
             </div>
@@ -806,18 +806,18 @@ const AppointmentBooking = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
-                <User className="w-5 h-5 text-blue-400" />
+                <User className="w-5 h-5 text-primary-400" />
                 <div>
                   <p className="text-gray-300 text-sm">Doctor</p>
                   <p className="text-white font-semibold">
                     Dr. {selectedDoctor.firstName} {selectedDoctor.lastName}
                   </p>
-                  <p className="text-blue-300 text-sm">{selectedDoctor.specialization}</p>
+                  <p className="text-primary-300 text-sm">{selectedDoctor.specialization}</p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-3">
-                <MapPin className="w-5 h-5 text-blue-400" />
+                <MapPin className="w-5 h-5 text-primary-400" />
                 <div>
                   <p className="text-gray-300 text-sm">Hospital</p>
                   <p className="text-white font-semibold">{selectedHospital.name}</p>
@@ -830,7 +830,7 @@ const AppointmentBooking = () => {
 
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
-                <Calendar className="w-5 h-5 text-blue-400" />
+                <Calendar className="w-5 h-5 text-primary-400" />
                 <div>
                   <p className="text-gray-300 text-sm">Date & Time</p>
                   <p className="text-white font-semibold">
@@ -841,17 +841,17 @@ const AppointmentBooking = () => {
                       day: 'numeric'
                     })}
                   </p>
-                  <p className="text-blue-300 text-sm">
+                  <p className="text-primary-300 text-sm">
                     {formatTime(selectedTime)}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-3">
-                <CreditCard className="w-5 h-5 text-blue-400" />
+                <CreditCard className="w-5 h-5 text-primary-400" />
                 <div>
                   <p className="text-gray-300 text-sm">Consultation Fee</p>
-                  <p className="text-green-400 font-semibold text-lg">₹{consultationFee}</p>
+                  <p className="text-success-400 font-semibold text-lg">₹{consultationFee}</p>
                 </div>
               </div>
             </div>
@@ -871,7 +871,7 @@ const AppointmentBooking = () => {
                 <select
                   value={bookingData.reason}
                   onChange={(e) => setBookingData(prev => ({ ...prev, reason: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                   required
                 >
                   <option value="" className="bg-gray-800 text-gray-300">Select reason for visit</option>
@@ -893,7 +893,7 @@ const AppointmentBooking = () => {
                     placeholder="Please specify your reason"
                     value={bookingData.customReason || ''}
                     onChange={(e) => setBookingData(prev => ({ ...prev, customReason: e.target.value }))}
-                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mt-2"
+                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 mt-2"
                     required
                   />
                 )}
@@ -910,7 +910,7 @@ const AppointmentBooking = () => {
                     ...prev, 
                     symptoms: e.target.value.split(',').map(s => s.trim()).filter(s => s)
                   }))}
-                  className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="Fever, headache, cough (separate with commas)"
                 />
               </div>
@@ -923,7 +923,7 @@ const AppointmentBooking = () => {
                   value={bookingData.notes}
                   onChange={(e) => setBookingData(prev => ({ ...prev, notes: e.target.value }))}
                   rows={3}
-                  className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
                   placeholder="Any additional information you'd like to share with the doctor"
                 />
               </div>
@@ -935,7 +935,7 @@ const AppointmentBooking = () => {
             <button
               type="button"
               onClick={goBack}
-              className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 flex items-center space-x-2"
+              className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors duration-200 flex items-center space-x-2"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back</span>
@@ -944,7 +944,7 @@ const AppointmentBooking = () => {
             <button
               type="submit"
               disabled={isLoading || !bookingData.reason.trim() || (bookingData.reason === 'Other' && !bookingData.customReason.trim())}
-              className="px-8 py-3 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg hover:from-green-600 hover:to-blue-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-8 py-3 bg-gradient-to-r from-success-500 to-primary-600 text-white rounded-lg hover:from-success-600 hover:to-primary-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
@@ -967,9 +967,9 @@ const AppointmentBooking = () => {
   // Add error display in the main render
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900 flex items-center justify-center p-4">
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-red-500/50 max-w-md w-full text-center">
-          <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <AlertCircle className="w-16 h-16 text-error-400 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-white mb-4">Something went wrong</h2>
           <p className="text-gray-300 mb-6">{error}</p>
           <div className="space-y-3">
@@ -979,13 +979,13 @@ const AppointmentBooking = () => {
                 setCurrentStep(1)
                 loadAvailableDoctors()
               }}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
             >
               Try Again
             </button>
             <button
               onClick={() => navigate('/patient/dashboard')}
-              className="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
             >
               Back to Dashboard
             </button>
@@ -996,7 +996,7 @@ const AppointmentBooking = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900 p-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -1011,7 +1011,7 @@ const AppointmentBooking = () => {
           <div className="text-center">
             <h1 className="text-3xl font-bold text-white">Book Appointment</h1>
             {rescheduleId && (
-              <p className="text-blue-300 text-sm mt-1">Rescheduling appointment</p>
+              <p className="text-primary-300 text-sm mt-1">Rescheduling appointment</p>
             )}
           </div>
           

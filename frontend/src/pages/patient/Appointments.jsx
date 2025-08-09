@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Calendar, Clock, User, MapPin, Phone, Plus, Filter, Search, MoreVertical, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { Calendar, Clock, User, MapPin, Phone, Plus, Filter, Search, MoreVertical, CheckCircle, XCircle, AlertCircle, FileText } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { appointmentsAPI } from '../../services/api'
 import { toast } from 'react-hot-toast'
@@ -129,7 +129,35 @@ const Appointments = () => {
     // Filter by status
     if (filter !== 'all') {
       console.log('🔍 Filtering by status:', filter)
-      filtered = filtered.filter(apt => apt.status === filter)
+      
+      if (filter === 'upcoming') {
+        // For upcoming appointments, filter by confirmed/pending status AND future date
+        const today = new Date()
+        today.setHours(0, 0, 0, 0) // Set to start of today for date comparison
+        
+        filtered = filtered.filter(apt => {
+          const appointmentDate = new Date(apt.date)
+          appointmentDate.setHours(0, 0, 0, 0) // Set to start of appointment date
+          
+          const isUpcoming = (apt.status === 'confirmed' || apt.status === 'pending') && 
+                           appointmentDate >= today
+          
+          console.log('🔍 Checking appointment:', {
+            id: apt.id,
+            status: apt.status,
+            date: apt.date,
+            appointmentDate: appointmentDate.toISOString(),
+            today: today.toISOString(),
+            isUpcoming
+          })
+          
+          return isUpcoming
+        })
+      } else {
+        // For other filters, use exact status match
+        filtered = filtered.filter(apt => apt.status === filter)
+      }
+      
       console.log('🔍 After status filter:', filtered.length, 'appointments')
     }
 
@@ -156,28 +184,28 @@ const Appointments = () => {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'confirmed':
-        return <CheckCircle className="h-5 w-5 text-green-500" />
+        return <CheckCircle className="h-5 w-5 text-success-500" />
       case 'pending':
-        return <AlertCircle className="h-5 w-5 text-yellow-500" />
+        return <AlertCircle className="h-5 w-5 text-warning-500" />
       case 'completed':
-        return <CheckCircle className="h-5 w-5 text-blue-500" />
+        return <CheckCircle className="h-5 w-5 text-primary-500" />
       case 'cancelled':
-        return <XCircle className="h-5 w-5 text-red-500" />
+        return <XCircle className="h-5 w-5 text-error-500" />
       default:
-        return <AlertCircle className="h-5 w-5 text-gray-500" />
+        return null
     }
   }
 
   const getStatusColor = (status) => {
     switch (status) {
       case 'confirmed':
-        return 'bg-green-100 text-green-800'
+        return 'bg-success-100 text-success-800'
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'bg-warning-100 text-warning-800'
       case 'completed':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-primary-100 text-primary-800'
       case 'cancelled':
-        return 'bg-red-100 text-red-800'
+        return 'bg-error-100 text-error-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -186,13 +214,13 @@ const Appointments = () => {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'confirmed':
-        return <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-500 text-white">Confirmed</span>
+        return <span className="px-3 py-1 rounded-full text-sm font-medium bg-success-500 text-white">Confirmed</span>
       case 'pending':
-        return <span className="px-3 py-1 rounded-full text-sm font-medium bg-yellow-500 text-white">Pending</span>
+        return <span className="px-3 py-1 rounded-full text-sm font-medium bg-warning-500 text-white">Pending</span>
       case 'completed':
-        return <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-500 text-white">Completed</span>
+        return <span className="px-3 py-1 rounded-full text-sm font-medium bg-primary-500 text-white">Completed</span>
       case 'cancelled':
-        return <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-500 text-white">Cancelled</span>
+        return <span className="px-3 py-1 rounded-full text-sm font-medium bg-error-500 text-white">Cancelled</span>
       default:
         return <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-500 text-white">Unknown</span>
     }
@@ -384,13 +412,13 @@ const Appointments = () => {
                         <h3 className="text-xl font-semibold text-white mb-1">
                           Dr. {appointment.doctorName}
                         </h3>
-                        <p className="text-blue-300 text-sm font-medium mb-1">
+                        <p className="text-primary-300 text-sm font-medium mb-1">
                           {appointment.specialization}
                         </p>
                         <div className="flex items-center space-x-2">
                           {getStatusBadge(appointment.status)}
                           {isUpcoming(appointment.date) && appointment.status === 'confirmed' && (
-                            <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">
+                            <span className="px-2 py-1 bg-success-500/20 text-success-400 text-xs rounded-full">
                               Upcoming
                             </span>
                           )}
@@ -404,22 +432,24 @@ const Appointments = () => {
                     {/* Date & Time */}
                     <div className="space-y-3">
                       <div className="flex items-center text-gray-300">
-                        <Calendar className="w-4 h-4 mr-3 text-blue-400" />
+                        <Calendar className="w-4 h-4 mr-3 text-primary-400" />
                         <div>
-                          <span className="font-medium text-white">Date:</span>
-                          <p className="text-sm">{new Date(appointment.date).toLocaleDateString('en-US', { 
-                            weekday: 'long', 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
-                          })}</p>
+                          <p className="text-white font-medium">
+                            {new Date(appointment.date).toLocaleDateString('en-US', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center text-gray-300">
-                        <Clock className="w-4 h-4 mr-3 text-green-400" />
+                        <Clock className="w-4 h-4 mr-3 text-success-400" />
                         <div>
-                          <span className="font-medium text-white">Time:</span>
-                          <p className="text-sm">{appointment.time}</p>
+                          <p className="text-white font-medium">
+                            {appointment.time}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -429,15 +459,17 @@ const Appointments = () => {
                       <div className="flex items-center text-gray-300">
                         <MapPin className="w-4 h-4 mr-3 text-purple-400" />
                         <div>
-                          <span className="font-medium text-white">Location:</span>
-                          <p className="text-sm">{appointment.location}</p>
+                          <p className="text-white font-medium">
+                            {appointment.location}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center text-gray-300">
-                        <Phone className="w-4 h-4 mr-3 text-orange-400" />
+                        <Phone className="w-4 h-4 mr-3 text-warning-400" />
                         <div>
-                          <span className="font-medium text-white">Contact:</span>
-                          <p className="text-sm">{appointment.phone}</p>
+                          <p className="text-white font-medium">
+                            {appointment.phone}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -445,30 +477,21 @@ const Appointments = () => {
 
                   {/* Reason & Fee Section */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div className="bg-primary-700/50 rounded-lg p-3">
-                      <h4 className="text-white font-medium mb-1 text-sm">Reason for Visit</h4>
-                      <p className="text-gray-300 text-sm">{appointment.reason}</p>
+                    <div className="bg-success-500/10 rounded-lg p-3 border border-success-500/20">
+                      <p className="text-sm text-gray-300 mb-1">Consultation Fee</p>
+                      <p className="text-success-400 font-bold text-lg">₹{appointment.fee}</p>
                     </div>
-                    <div className="bg-green-500/10 rounded-lg p-3 border border-green-500/20">
-                      <h4 className="text-white font-medium mb-1 text-sm">Consultation Fee</h4>
-                      <p className="text-green-400 font-bold text-lg">₹{appointment.fee}</p>
+                    <div className="bg-primary-500/10 rounded-lg p-3 border border-primary-500/20">
+                      <p className="text-sm text-gray-300 mb-1">Hospital Address</p>
+                      <p className="text-primary-400 text-sm">{appointment.hospitalAddress}</p>
                     </div>
                   </div>
 
-                  {/* Hospital Address */}
-                  <div className="bg-blue-500/10 rounded-lg p-3 border border-blue-500/20">
-                    <h4 className="text-white font-medium mb-1 text-sm">Hospital Address</h4>
-                    <p className="text-blue-400 text-sm">{appointment.hospitalAddress}</p>
-                  </div>
-
-                  {/* Notes Section */}
-                  {appointment.notes && (
-                    <div className="mt-4 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                      <h4 className="text-white font-medium mb-2 text-sm flex items-center">
-                        <AlertCircle className="w-4 h-4 mr-2" />
-                        Additional Notes
-                      </h4>
-                      <p className="text-gray-300 text-sm">{appointment.notes}</p>
+                  {/* Reason for Visit */}
+                  {appointment.reason && (
+                    <div className="mt-4 p-3 bg-primary-500/10 rounded-lg border border-primary-500/20">
+                      <p className="text-sm text-gray-300 mb-1">Reason for Visit</p>
+                      <p className="text-white text-sm">{appointment.reason}</p>
                     </div>
                   )}
 
@@ -486,14 +509,14 @@ const Appointments = () => {
                     <>
                       <button 
                         onClick={() => handleRescheduleAppointment(appointment.id)}
-                        className="flex-1 lg:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
+                        className="flex-1 lg:flex-none px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
                       >
                         <Calendar className="w-4 h-4" />
                         <span>Reschedule</span>
                       </button>
                       <button 
                         onClick={() => handleCancelAppointment(appointment.id)}
-                        className="flex-1 lg:flex-none px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
+                        className="flex-1 lg:flex-none px-4 py-2 bg-error-600 text-white rounded-lg hover:bg-error-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
                       >
                         <XCircle className="w-4 h-4" />
                         <span>Cancel</span>
@@ -503,16 +526,19 @@ const Appointments = () => {
                   {appointment.status === 'confirmed' && (
                     <button 
                       onClick={() => handleRescheduleAppointment(appointment.id)}
-                      className="flex-1 lg:flex-none px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
+                      className="flex-1 lg:flex-none px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
                     >
                       <Calendar className="w-4 h-4" />
                       <span>Reschedule</span>
                     </button>
                   )}
                   {appointment.status === 'completed' && (
-                    <button className="flex-1 lg:flex-none px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2">
-                      <CheckCircle className="w-4 h-4" />
-                      <span>View Report</span>
+                    <button 
+                      className="flex-1 lg:flex-none px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center justify-center space-x-2"
+                      onClick={() => navigate(`/patient/appointments/${appointment.id}/details`)}
+                    >
+                      <FileText className="w-4 h-4" />
+                      <span>View Details</span>
                     </button>
                   )}
                   {appointment.status === 'cancelled' && (
