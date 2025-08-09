@@ -32,8 +32,20 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // CORS configuration
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000'
+].filter(Boolean);
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow mobile apps or curl with no origin
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`CORS blocked: ${origin} not allowed`));
+  },
   credentials: true
 }));
 
@@ -86,8 +98,17 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 8080;
 
+// Global process-level error handlers to prevent server crashes
+process.on('uncaughtException', (err) => {
+  console.error(' Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error(' Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 app.listen(PORT, () => {
-  console.log(`🚀 Oxiwell server running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV}`);
-  console.log(`🌐 Health check: http://localhost:${PORT}/health`);
+  console.log(` Oxiwell server running on port ${PORT}`);
+  console.log(` Environment: ${process.env.NODE_ENV}`);
+  console.log(` Health check: http://localhost:${PORT}/health`);
 });

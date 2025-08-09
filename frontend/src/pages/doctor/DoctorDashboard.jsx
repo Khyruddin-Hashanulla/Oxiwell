@@ -32,6 +32,32 @@ const DoctorDashboard = () => {
   const [todayAppointments, setTodayAppointments] = useState([])
   const [loading, setLoading] = useState(true)
 
+  // Helper function to calculate age from date of birth
+  const calculateAge = (dateOfBirth) => {
+    if (!dateOfBirth) return null
+    
+    try {
+      const birthDate = new Date(dateOfBirth)
+      const today = new Date()
+      
+      // Check if the birth date is valid
+      if (isNaN(birthDate.getTime())) return null
+      
+      let age = today.getFullYear() - birthDate.getFullYear()
+      const monthDiff = today.getMonth() - birthDate.getMonth()
+      
+      // Adjust age if birthday hasn't occurred this year
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--
+      }
+      
+      return age >= 0 ? age : null
+    } catch (error) {
+      console.error('Error calculating age:', error)
+      return null
+    }
+  }
+
   // Fetch real data from API
   useEffect(() => {
     fetchDashboardData()
@@ -200,7 +226,10 @@ const DoctorDashboard = () => {
         pendingAppointments: pendingCount, // Exact count of pending appointments
         completedToday: completedToday, // Exact count of today's completed appointments
         nextAppointment: doctorStats?.today?.upcoming?.[0] || null,
-        recentPatients: patients
+        recentPatients: patients.map(patient => ({
+          ...patient,
+          age: calculateAge(patient.dateOfBirth)
+        }))
       }
       
       console.log('🔍 Final stats being set:', finalStats)
@@ -499,7 +528,7 @@ const DoctorDashboard = () => {
                       {appointment.patient?.dateOfBirth && (
                         <div className="flex items-center space-x-2 text-gray-300">
                           <User className="w-4 h-4" />
-                          <span>Age: {new Date().getFullYear() - new Date(appointment.patient.dateOfBirth).getFullYear()}</span>
+                          <span>Age: {calculateAge(appointment.patient.dateOfBirth) || 'N/A'}</span>
                         </div>
                       )}
                     </div>
@@ -583,7 +612,7 @@ const DoctorDashboard = () => {
                         {patient.fullName || `${patient.firstName || ''} ${patient.lastName || ''}`.trim() || 'Unknown Patient'}
                       </h4>
                       <p className="text-sm text-gray-300">
-                        {patient.email || 'No email'} • Age: {patient.age || 'N/A'}
+                        {patient.email || 'No email'} • Age: {patient.age !== null ? `${patient.age} years` : 'N/A'}
                       </p>
                     </div>
                     <Link

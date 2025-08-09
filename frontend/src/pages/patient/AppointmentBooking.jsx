@@ -282,7 +282,7 @@ const AppointmentBooking = () => {
       const response = await appointmentsAPI.getAvailableSlots(
         selectedDoctor._id,
         selectedHospital._id,
-        `${selectedDate}&_t=${timestamp}` // Add timestamp to prevent caching
+        selectedDate // Remove the timestamp from here - it should be in query params
       )
       
       console.log('🕐 Available slots API response:', response.data)

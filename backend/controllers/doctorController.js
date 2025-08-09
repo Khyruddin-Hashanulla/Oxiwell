@@ -468,7 +468,10 @@ const updateDoctorProfile = asyncHandler(async (req, res, next) => {
         consultationFee: workplace.consultationFee ? parseFloat(workplace.consultationFee) : 0,
         availableSlots: (workplace.availableSlots || []).map(slot => ({
           ...slot,
-          isAvailable: Boolean(slot.isAvailable) // Convert undefined/null to false, true stays true
+          // Fix: If slot has startTime and endTime, it should be available by default
+          // Only set to false if explicitly set to false
+          isAvailable: slot.isAvailable !== undefined ? Boolean(slot.isAvailable) : 
+                      (slot.startTime && slot.endTime ? true : false)
         })),
         isPrimary: workplace.isPrimary || false
       };

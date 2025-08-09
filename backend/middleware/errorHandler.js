@@ -5,6 +5,31 @@ const errorHandler = (err, req, res, next) => {
   // Log error
   console.error(err);
 
+  // Handle Multer file upload errors explicitly
+  if (err.name === 'MulterError') {
+    const message = err.message || 'File upload failed';
+    return res.status(400).json({
+      status: 'error',
+      message
+    });
+  }
+
+  // Invalid file type from custom fileFilter
+  if (err.message && /Invalid file type/i.test(err.message)) {
+    return res.status(400).json({
+      status: 'error',
+      message: err.message
+    });
+  }
+
+  // Cloudinary errors (common shape)
+  if (err.http_code && err.message) {
+    return res.status(err.http_code).json({
+      status: 'error',
+      message: err.message
+    });
+  }
+
   // Mongoose bad ObjectId
   if (err.name === 'CastError') {
     const message = 'Resource not found';

@@ -140,8 +140,8 @@ const getAppointment = asyncHandler(async (req, res, next) => {
 
   // Check authorization
   if (req.user.role !== 'admin' && 
-      req.user._id.toString() !== appointment.patient._id.toString() && 
-      req.user._id.toString() !== appointment.doctor._id.toString()) {
+      req.user._id.toString() !== appointment.patient.toString() && 
+      req.user._id.toString() !== appointment.doctor.toString()) {
     return res.status(403).json({
       status: 'error',
       message: 'Not authorized to access this appointment'
@@ -1231,9 +1231,10 @@ const getAvailableTimeSlots = asyncHandler(async (req, res, next) => {
   });
 
   // Get booked appointments for the date
-  const requestedDate = new Date(date);
-  const startOfDay = new Date(requestedDate.setHours(0, 0, 0, 0));
-  const endOfDay = new Date(requestedDate.setHours(23, 59, 59, 999));
+  const [year, month, day] = date.split('-').map(Number);
+  const requestedDate = new Date(year, month - 1, day); // month is 0-indexed
+  const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
+  const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
 
   const bookedAppointments = await Appointment.find({
     doctor: doctorId,
@@ -1322,6 +1323,14 @@ const getAvailableTimeSlots = asyncHandler(async (req, res, next) => {
       count: Math.max(50, doctor.rating?.count || 50)
     }
   };
+
+  console.log('🕐 DEBUG: Date parsing and day calculation:', {
+    originalDateString: date,
+    parsedComponents: { year, month: month - 1, day },
+    requestedDate: requestedDate.toISOString(),
+    dayOfWeek,
+    localDateString: requestedDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  });
 
   res.status(200).json({
     status: 'success',
