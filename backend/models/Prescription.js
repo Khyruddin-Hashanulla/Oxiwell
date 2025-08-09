@@ -42,8 +42,7 @@ const prescriptionSchema = new mongoose.Schema({
     },
     frequency: {
       type: String,
-      required: [true, 'Frequency is required'],
-      enum: ['once-daily', 'twice-daily', 'thrice-daily', 'four-times-daily', 'as-needed', 'custom']
+      required: [true, 'Frequency is required']
     },
     customFrequency: {
       type: String,

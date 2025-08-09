@@ -39,6 +39,7 @@ import DoctorPatients from './pages/doctor/DoctorPatients'
 import DoctorProfile from './pages/doctor/DoctorProfile'
 import DoctorProfileSetup from './pages/doctor/DoctorProfileSetup'
 import DoctorPrescriptions from './pages/doctor/DoctorPrescriptions'
+import DoctorPrescriptionsList from './pages/doctor/DoctorPrescriptionsList'
 import DoctorNotes from './pages/doctor/DoctorNotes'
 
 // Admin pages
@@ -115,10 +116,15 @@ function App() {
             } />
             <Route path="/doctor/prescriptions" element={
               <DoctorProfileSetupGuard>
-                <DoctorPrescriptions />
+                <DoctorPrescriptionsList />
               </DoctorProfileSetupGuard>
             } />
             <Route path="/doctor/prescriptions/new" element={
+              <DoctorProfileSetupGuard>
+                <DoctorPrescriptions />
+              </DoctorProfileSetupGuard>
+            } />
+            <Route path="/doctor/prescriptions/:id" element={
               <DoctorProfileSetupGuard>
                 <DoctorPrescriptions />
               </DoctorProfileSetupGuard>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { doctorsAPI, appointmentsAPI, prescriptionsAPI } from '../../services/api'
 import { toast } from 'react-hot-toast'
@@ -19,8 +19,12 @@ import {
 const DoctorPrescriptions = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { id: prescriptionId } = useParams()
   const [searchParams] = useSearchParams()
   const appointmentId = searchParams.get('appointmentId')
+  
+  const isEditMode = Boolean(prescriptionId)
+  const id = useParams().id
   
   const [isLoading, setIsLoading] = useState(false)
   const [patients, setPatients] = useState([])
@@ -55,7 +59,25 @@ const DoctorPrescriptions = () => {
     if (appointmentId) {
       fetchAppointmentDetails()
     }
-  }, [appointmentId])
+    
+    // Fetch prescription details for edit mode
+    if (isEditMode && id) {
+      console.log('🔍 Edit mode detected, fetching prescription:', id)
+      fetchPrescriptionDetails(id)
+    }
+  }, [isEditMode, id])
+
+  // Debug prescriptionData changes
+  useEffect(() => {
+    if (isEditMode) {
+      console.log('🔍 PrescriptionData state changed:', {
+        medications: prescriptionData.medications?.length || 0,
+        investigations: prescriptionData.investigations?.length || 0,
+        investigationsArray: prescriptionData.investigations,
+        notes: prescriptionData.notes ? 'has-notes' : 'no-notes'
+      })
+    }
+  }, [prescriptionData, isEditMode])
 
   const fetchAppointmentDetails = async () => {
     try {
@@ -102,6 +124,100 @@ const DoctorPrescriptions = () => {
       })
       toast.error('Failed to load patients')
       setPatients([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const fetchPrescriptionDetails = async (id) => {
+    try {
+      setIsLoading(true)
+      console.log('🔍 Fetching prescription details for ID:', id)
+      const resp = await prescriptionsAPI.getPrescription(id)
+      console.log('🔍 Fetch prescription details resp:', resp)
+      
+      // Try multiple possible response structures
+      let p = null
+      if (resp?.data?.data?.prescription) {
+        p = resp.data.data.prescription
+        console.log('🔍 Found prescription in resp.data.data.prescription')
+      } else if (resp?.data?.prescription) {
+        p = resp.data.prescription
+        console.log('🔍 Found prescription in resp.data.prescription')
+      } else if (resp?.data) {
+        p = resp.data
+        console.log('🔍 Found prescription in resp.data')
+      } else {
+        console.log('❌ No prescription data found in response')
+        toast.error('No prescription data found')
+        return
+      }
+      
+      console.log('🔍 Normalized prescription object:', p)
+      console.log('🔍 Prescription medications:', p.medications)
+      console.log('🔍 Prescription recommendedTests:', p.recommendedTests)
+      console.log('🔍 Prescription generalInstructions:', p.generalInstructions)
+      
+      if (p) {
+        // Prefill patient selection
+        if (p.patient) {
+          console.log('🔍 Setting selected patient:', p.patient)
+          setSelectedPatient(p.patient)
+        }
+        
+        // Process all prescription data in a single state update
+        const processedMedications = (p.medications || []).map(med => ({
+          ...med,
+          // Store frequency directly - no mapping needed
+          frequency: med.frequency
+        }))
+        
+        // Process investigations from backend recommendedTests
+        console.log('🔍 Processing investigations from recommendedTests:', p.recommendedTests)
+        let processedInvestigations = []
+        if (Array.isArray(p.recommendedTests) && p.recommendedTests.length > 0) {
+          processedInvestigations = p.recommendedTests.map(test => {
+            if (typeof test === 'string') {
+              return { name: test, description: '' }
+            }
+            if (test && typeof test === 'object') {
+              return { 
+                name: test.testName || test.name || '', 
+                description: test.instructions || test.description || '' 
+              }
+            }
+            return { name: '', description: '' }
+          })
+        } else {
+          console.log('🔍 No investigations found, adding empty investigation')
+          // Add empty investigation for editing
+          processedInvestigations = [{ name: '', description: '' }]
+          console.log('🔍 Added empty investigation for editing')
+        }
+        console.log('🔍 Final investigations array:', processedInvestigations)
+        
+        // Single state update with all processed data
+        setPrescriptionData(prev => ({
+          ...prev,
+          patientId: p.patient._id,
+          caseHistory: p.diagnosis || '',
+          medications: processedMedications,
+          investigations: processedInvestigations,
+          notes: p.generalInstructions || p.notes || p.additionalNotes || '',
+          followUpDate: p.followUpDate ? String(p.followUpDate).slice(0, 10) : ''
+        }))
+        
+        console.log('🔍 Final prescription data after processing:', {
+          medications: processedMedications?.length || 0,
+          investigations: processedInvestigations?.length || 0,
+          investigationsData: processedInvestigations,
+          firstInvestigation: processedInvestigations[0],
+          notes: p.generalInstructions || p.notes || 'no-notes'
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching prescription details:', error)
+      toast.error('Failed to load prescription')
     } finally {
       setIsLoading(false)
     }
@@ -170,12 +286,14 @@ const DoctorPrescriptions = () => {
   }
 
   const updateInvestigation = (index, field, value) => {
+    console.log('🔍 updateInvestigation called:', { index, field, value })
     setPrescriptionData(prev => ({
       ...prev,
       investigations: prev.investigations.map((inv, i) => 
         i === index ? { ...inv, [field]: value } : inv
       )
     }))
+    console.log('🔍 Investigation updated, new state should be:', { index, field, value })
   }
 
   const handleSubmit = async (e) => {
@@ -193,42 +311,136 @@ const DoctorPrescriptions = () => {
 
     try {
       setIsLoading(true)
-      console.log('🔍 Creating prescription with data:', prescriptionData)
-      
-      // Transform data to match backend API format
-      const apiData = {
-        patient: prescriptionData.patientId,  // patientId -> patient
-        appointment: prescriptionData.appointmentId || undefined,  // optional
-        diagnosis: prescriptionData.caseHistory,  // caseHistory -> diagnosis
-        medications: prescriptionData.medications.map(med => ({
-          name: med.name,
-          dosage: med.dosage,
-          frequency: med.frequency === 'custom' ? med.customFrequency : med.frequency,
-          duration: med.duration,
-          instructions: med.instructions || ''
-        })),
-        notes: prescriptionData.notes || '',
-        followUpDate: prescriptionData.followUpDate || undefined,
-        // Note: investigations are not supported by current backend API
-        // They would need to be added to backend schema and validation
+      // Build payload aligned to backend schema
+      const normalizeInvestigations = (items) => {
+        console.log('🔍 normalizeInvestigations input:', items)
+        if (!Array.isArray(items)) return []
+        const result = items
+          .map((it) => {
+            console.log('🔍 Processing investigation item:', it)
+            if (typeof it === 'string') return it.trim()
+            if (it && typeof it === 'object') {
+              // Handle both testName (backend format) and name (frontend format)
+              const name = it.testName || it.name || ''
+              console.log('🔍 Extracted name:', name)
+              return name.trim()
+            }
+            console.log('🔍 Unknown format, returning empty')
+            return ''
+          })
+          .filter(Boolean)
+        console.log('🔍 normalizeInvestigations result:', result)
+        return result
       }
       
-      console.log('🔄 Transformed API data:', apiData)
+      // Process and normalize medications
+      const processedMedications = prescriptionData.medications.map(med => {
+        // Store medication data directly - no normalization needed
+        const medicationData = {
+          name: med.name?.trim() || '',
+          dosage: med.dosage?.trim() || '',
+          frequency: med.frequency?.trim() || '',
+          duration: med.duration?.trim() || '',
+          instructions: med.instructions?.trim() || ''
+        }
+        
+        // Include customFrequency only if frequency is 'custom'
+        if (med.frequency === 'custom' && med.customFrequency) {
+          medicationData.customFrequency = med.customFrequency?.trim() || ''
+        }
+        
+        console.log('🔍 Final medication payload:', medicationData)
+        return medicationData
+      })
+
+      const payload = {
+        patient: prescriptionData.patientId,
+        appointment: prescriptionData.appointmentId || undefined,
+        diagnosis: prescriptionData.caseHistory,
+        medications: processedMedications,
+        generalInstructions: prescriptionData.notes || '',
+        recommendedTests: prescriptionData.investigations
+          .filter(inv => inv.name && inv.name.trim()) // Only include investigations with names
+          .map(inv => ({
+            testName: inv.name.trim(),
+            urgency: 'routine',
+            instructions: inv.description && inv.description.trim() ? inv.description.trim() : undefined
+          })),
+        followUpDate: prescriptionData.followUpDate || undefined
+      }
+
+      console.log('🔍 Submitting prescription payload:', payload)
       
-      // Create prescription using the real API
-      const response = await prescriptionsAPI.createPrescription(apiData)
-      console.log('✅ Prescription created successfully:', response)
+      // Detailed payload validation logging
+      console.log('🔍 Payload validation check:')
+      console.log('- Patient ID:', payload.patient)
+      console.log('- Diagnosis:', payload.diagnosis)
+      console.log('- Medications count:', payload.medications?.length)
+      console.log('- Medications details:', payload.medications)
+      console.log('- General instructions:', payload.generalInstructions)
+      console.log('- Recommended tests:', payload.recommendedTests)
+      console.log('- Follow-up date:', payload.followUpDate)
       
-      toast.success('Prescription created successfully!')
-      navigate('/doctor/dashboard')
+      // Check for empty required fields
+      if (!payload.patient) console.warn('⚠️ Missing patient ID')
+      if (!payload.diagnosis) console.warn('⚠️ Missing diagnosis')
+      if (!payload.medications || payload.medications.length === 0) console.warn('⚠️ No medications')
+      
+      payload.medications?.forEach((med, index) => {
+        if (!med.name) console.warn(`⚠️ Medication ${index + 1} missing name`)
+        if (!med.dosage) console.warn(`⚠️ Medication ${index + 1} missing dosage`)
+        if (!med.frequency) console.warn(`⚠️ Medication ${index + 1} missing frequency`)
+        if (!med.duration) console.warn(`⚠️ Medication ${index + 1} missing duration`)
+        if (med.frequency === 'custom' && !med.customFrequency) {
+          console.warn(`⚠️ Medication ${index + 1} has custom frequency but no customFrequency value`)
+        }
+      })
+
+      if (isEditMode) {
+        const resp = await prescriptionsAPI.updatePrescription(id, payload)
+        console.log('✅ Prescription updated:', resp)
+        toast.success('Prescription updated successfully')
+      } else {
+        const resp = await prescriptionsAPI.createPrescription(payload)
+        console.log('✅ Prescription created:', resp)
+        toast.success('Prescription created successfully')
+      }
+      navigate('/doctor/prescriptions')
     } catch (error) {
       console.error('❌ Error creating prescription:', error)
-      console.error('🔍 Error details:', {
+      console.log('🔍 Error details:', {
         message: error.message,
         status: error.response?.status,
-        data: error.response?.data
+        data: error.response?.data,
+        fullResponse: error.response
       })
-      toast.error('Failed to create prescription')
+      // Log the specific validation errors if available
+      if (error.response?.data?.errors) {
+        console.log('🚨 Validation errors:', error.response.data.errors)
+        // Log each validation error in detail
+        if (Array.isArray(error.response.data.errors)) {
+          error.response.data.errors.forEach((err, index) => {
+            console.log(`🚨 Validation Error ${index + 1}:`, err)
+          })
+        }
+      }
+      if (error.response?.data?.message) {
+        console.log('🚨 Backend error message:', error.response.data.message)
+      }
+      
+      // Show user-friendly error message based on validation errors
+      let errorMessage = 'Failed to update prescription'
+      if (error.response?.data?.errors) {
+        const errors = error.response.data.errors
+        if (Array.isArray(errors) && errors.length > 0) {
+          const firstError = errors[0]
+          if (firstError.path && firstError.message) {
+            errorMessage = `Validation error: ${firstError.message}`
+          }
+        }
+      }
+      
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -240,10 +452,13 @@ const DoctorPrescriptions = () => {
     patient.email?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  if (isLoading && !selectedPatient) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-500"></div>
+        <span className="ml-4 text-white">
+          {isEditMode ? 'Loading prescription details...' : 'Loading...'}
+        </span>
       </div>
     )
   }
@@ -388,9 +603,9 @@ const DoctorPrescriptions = () => {
                         <input
                           type="text"
                           value={medication.name}
+                          placeholder="Enter medicine name"
                           onChange={(e) => updateMedication(index, 'name', e.target.value)}
                           className="w-full px-3 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
-                          placeholder="e.g., Paracetamol"
                           required
                         />
                       </div>
@@ -411,15 +626,15 @@ const DoctorPrescriptions = () => {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-1">
-                          Frequency
+                          Frequency *
                         </label>
                         <select
-                          value={medication.frequency}
+                          value={medication.frequency || ''}
                           onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
                           className="w-full px-3 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-500"
+                          required
                         >
                           <option value="">Select frequency</option>
-                          
                           {/* Daily frequencies */}
                           <option value="Once daily">Once daily</option>
                           <option value="Twice daily">Twice daily</option>
@@ -427,7 +642,6 @@ const DoctorPrescriptions = () => {
                           <option value="Four times daily">Four times daily</option>
                           <option value="Five times daily">Five times daily</option>
                           <option value="Six times daily">Six times daily</option>
-                          
                           {/* Specific timing */}
                           <option value="Every morning">Every morning</option>
                           <option value="Every evening">Every evening</option>
@@ -435,27 +649,19 @@ const DoctorPrescriptions = () => {
                           <option value="After meals">After meals</option>
                           <option value="With meals">With meals</option>
                           <option value="At bedtime">At bedtime</option>
-                          
                           {/* Interval-based */}
                           <option value="Every 4 hours">Every 4 hours</option>
                           <option value="Every 6 hours">Every 6 hours</option>
                           <option value="Every 8 hours">Every 8 hours</option>
                           <option value="Every 12 hours">Every 12 hours</option>
-                          
                           {/* Weekly frequencies */}
-                          <option value="Once weekly">Once weekly</option>
-                          <option value="Twice weekly">Twice weekly</option>
-                          <option value="Three times weekly">Three times weekly</option>
-                          
+                          <option value="Weekly">Weekly</option>
+                          <option value="Monthly">Monthly</option>
                           {/* Special cases */}
                           <option value="As needed">As needed</option>
-                          <option value="As directed">As directed</option>
-                          <option value="Single dose">Single dose</option>
-                          
-                          {/* Custom option */}
-                          <option value="custom">Custom frequency...</option>
+                          {/* Custom option at the end */}
+                          <option value="custom">Custom frequency</option>
                         </select>
-                        
                         {/* Custom frequency input */}
                         {medication.frequency === 'custom' && (
                           <input
@@ -464,13 +670,14 @@ const DoctorPrescriptions = () => {
                             onChange={(e) => updateMedication(index, 'customFrequency', e.target.value)}
                             placeholder="Enter custom frequency (e.g., Every other day, Twice monthly)"
                             className="w-full px-3 py-2 mt-2 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                            required
                           />
                         )}
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-gray-300 mb-1">
-                          Duration
+                          Duration *
                         </label>
                         <input
                           type="text"
@@ -478,12 +685,13 @@ const DoctorPrescriptions = () => {
                           onChange={(e) => updateMedication(index, 'duration', e.target.value)}
                           className="w-full px-3 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
                           placeholder="e.g., 7 days"
+                          required
                         />
                       </div>
 
-                      <div className="md:col-span-2">
+                      <div>
                         <label className="block text-sm font-medium text-gray-300 mb-1">
-                          Instructions
+                          Instructions *
                         </label>
                         <input
                           type="text"
@@ -491,6 +699,7 @@ const DoctorPrescriptions = () => {
                           onChange={(e) => updateMedication(index, 'instructions', e.target.value)}
                           className="w-full px-3 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
                           placeholder="e.g., Take after meals"
+                          required
                         />
                       </div>
                     </div>
@@ -536,7 +745,18 @@ const DoctorPrescriptions = () => {
                         </label>
                         <input
                           type="text"
-                          value={investigation.name}
+                          value={investigation?.name || ''}
+                          ref={(input) => {
+                            if (input && index === 0) {
+                              console.log('🔍 Investigation input render:', {
+                                index,
+                                investigation,
+                                name: investigation?.name,
+                                value: investigation?.name || '',
+                                inputValue: input.value
+                              })
+                            }
+                          }}
                           onChange={(e) => updateInvestigation(index, 'name', e.target.value)}
                           className="w-full px-3 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
                           placeholder="e.g., Blood Test"
@@ -550,7 +770,18 @@ const DoctorPrescriptions = () => {
                         </label>
                         <input
                           type="text"
-                          value={investigation.description}
+                          value={investigation?.description || ''}
+                          ref={(input) => {
+                            if (input && index === 0) {
+                              console.log('🔍 Investigation description render:', {
+                                index,
+                                investigation,
+                                description: investigation?.description,
+                                value: investigation?.description || '',
+                                inputValue: input.value
+                              })
+                            }
+                          }}
                           onChange={(e) => updateInvestigation(index, 'description', e.target.value)}
                           className="w-full px-3 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
                           placeholder="e.g., Blood test for diabetes"
@@ -609,7 +840,7 @@ const DoctorPrescriptions = () => {
                 className="flex items-center px-6 py-3 bg-success-600 hover:bg-success-700 text-white rounded-lg transition-colors disabled:opacity-50"
               >
                 <Save className="w-4 h-4 mr-2" />
-                {isLoading ? 'Creating...' : 'Create Prescription'}
+                {isLoading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Prescription' : 'Create Prescription')}
               </button>
             </div>
           </form>

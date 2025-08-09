@@ -58,7 +58,7 @@ const Prescriptions = () => {
       filtered = filtered.filter(prescription => {
         const medicationName = prescription.medications?.[0]?.name || '';
         const doctorName = prescription.doctor ? `Dr. ${prescription.doctor.firstName} ${prescription.doctor.lastName}` : '';
-        const notes = prescription.notes || '';
+        const notes = prescription.generalInstructions || prescription.notes || '';
         const diagnosis = prescription.diagnosis || '';
         
         return medicationName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -176,7 +176,7 @@ ${index + 1}. ${med.name || 'Unknown medication'}
 
 ADDITIONAL NOTES
 ================
-${prescription.notes || 'No additional notes'}
+${prescription.generalInstructions || prescription.notes || 'No additional notes'}
 
 DIGITAL SIGNATURE
 =================
@@ -231,7 +231,7 @@ ${prescription.medications?.map((med, medIndex) => `
      Instructions: ${med.instructions || 'No specific instructions'}
 `).join('') || '  No medications listed'}
 
-Notes: ${prescription.notes || 'No additional notes'}
+Notes: ${prescription.generalInstructions || prescription.notes || 'No additional notes'}
 
 `).join('\n')}
     `.trim()
@@ -460,7 +460,7 @@ Notes: ${prescription.notes || 'No additional notes'}
                     </p>
                     {prescription.notes && (
                       <p className="text-sm text-primary-300 mt-2">
-                        <span className="font-medium text-white">Notes:</span> {prescription.notes}
+                        <span className="font-medium text-white">Notes:</span> {prescription.generalInstructions || prescription.notes}
                       </p>
                     )}
                     {prescription.diagnosis && (

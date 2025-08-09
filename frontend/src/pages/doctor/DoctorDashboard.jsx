@@ -329,9 +329,9 @@ const DoctorDashboard = () => {
     },
     {
       title: 'Write Prescription',
-      description: 'Create new prescription',
+      description: 'View all prescriptions',
       icon: Pill,
-      link: '/doctor/prescriptions/new',
+      link: '/doctor/prescriptions',
       color: 'bg-accent-500 hover:bg-accent-600'
     },
     {

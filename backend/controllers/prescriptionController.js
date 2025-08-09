@@ -166,7 +166,7 @@ const createPrescription = asyncHandler(async (req, res, next) => {
   // Transform frequency values to match schema enum
   const transformedMedications = medications.map(med => ({
     ...med,
-    frequency: transformFrequency(med.frequency)
+    frequency: med.frequency
   }));
 
   const prescription = await Prescription.create({
@@ -213,49 +213,6 @@ const createPrescription = asyncHandler(async (req, res, next) => {
     }
   });
 });
-
-// Helper function to transform frequency values
-function transformFrequency(frequency) {
-  const frequencyMap = {
-    'Once daily': 'once-daily',
-    'Twice daily': 'twice-daily', 
-    'Three times daily': 'thrice-daily',
-    'Four times daily': 'four-times-daily',
-    'Five times daily': 'custom',
-    'Six times daily': 'custom',
-    'Every morning': 'custom',
-    'Every evening': 'custom',
-    'Before meals': 'custom',
-    'After meals': 'custom',
-    'With meals': 'custom',
-    'At bedtime': 'custom',
-    'Every 4 hours': 'custom',
-    'Every 6 hours': 'custom',
-    'Every 8 hours': 'custom',
-    'Every 12 hours': 'custom',
-    'Once weekly': 'custom',
-    'Twice weekly': 'custom',
-    'Three times weekly': 'custom',
-    'As needed': 'as-needed',
-    'As directed': 'custom',
-    'Single dose': 'custom'
-  };
-  
-  return frequencyMap[frequency] || 'custom';
-}
-
-// Helper function to calculate age
-function calculateAge(dateOfBirth) {
-  if (!dateOfBirth) return null;
-  const today = new Date();
-  const birthDate = new Date(dateOfBirth);
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
-}
 
 // @desc    Update prescription
 // @route   PUT /api/prescriptions/:id
@@ -313,6 +270,15 @@ const updatePrescription = asyncHandler(async (req, res, next) => {
       updates[field] = req.body[field];
     }
   });
+
+  // No frequency transformation needed - store frequencies directly
+  if (Array.isArray(updates.medications)) {
+    updates.medications = updates.medications.map(med => ({
+      ...med,
+      // Remove customFrequency if frequency is not 'custom'
+      ...(med.frequency !== 'custom' && { customFrequency: undefined })
+    }));
+  }
 
   prescription = await Prescription.findByIdAndUpdate(req.params.id, updates, {
     new: true,
@@ -541,6 +507,19 @@ const addMedication = asyncHandler(async (req, res, next) => {
     }
   });
 });
+
+// Helper function to calculate age
+function calculateAge(dateOfBirth) {
+  if (!dateOfBirth) return null;
+  const today = new Date();
+  const birthDate = new Date(dateOfBirth);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
 
 module.exports = {
   getPrescriptions,
