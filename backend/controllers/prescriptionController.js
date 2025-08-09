@@ -112,18 +112,21 @@ const createPrescription = asyncHandler(async (req, res, next) => {
     validUntil
   } = req.body;
 
-  // Verify appointment exists and belongs to this doctor
-  const appointmentDoc = await Appointment.findOne({
-    _id: appointment,
-    doctor: req.user._id,
-    patient: patient
-  });
-
-  if (!appointmentDoc) {
-    return res.status(404).json({
-      status: 'error',
-      message: 'Appointment not found or you are not authorized to create prescription for this appointment'
+  // Verify appointment exists and belongs to this doctor (only if appointment is provided)
+  let appointmentDoc = null;
+  if (appointment) {
+    appointmentDoc = await Appointment.findOne({
+      _id: appointment,
+      doctor: req.user._id,
+      patient: patient
     });
+
+    if (!appointmentDoc) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Appointment not found or you are not authorized to create prescription for this appointment'
+      });
+    }
   }
 
   // Verify patient exists
@@ -135,27 +138,68 @@ const createPrescription = asyncHandler(async (req, res, next) => {
     });
   }
 
+  // Additional check: If no appointment, verify doctor has access to this patient
+  if (!appointment) {
+    // Check if doctor has treated this patient before or has access
+    const hasAccess = await Appointment.findOne({
+      doctor: req.user._id,
+      patient: patient
+    });
+
+    if (!hasAccess) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'You are not authorized to create prescriptions for this patient'
+      });
+    }
+  }
+
+  // Generate prescription number
+  const prescriptionNumber = `RX-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+  
+  // Generate digital signature (simplified for now)
+  const digitalSignature = `DR-${req.user._id}-${Date.now()}`;
+  
+  // Set valid until date (default: 30 days from now)
+  const validUntilDate = validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  
+  // Transform frequency values to match schema enum
+  const transformedMedications = medications.map(med => ({
+    ...med,
+    frequency: transformFrequency(med.frequency)
+  }));
+
   const prescription = await Prescription.create({
     patient,
     doctor: req.user._id,
-    appointment,
+    appointment: appointment || null, // Allow null for standalone prescriptions
+    prescriptionNumber,
+    digitalSignature,
     diagnosis,
-    medications,
+    medications: transformedMedications,
     generalInstructions,
     dietaryRestrictions,
     precautions,
     followUpDate,
     recommendedTests,
-    validUntil: validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days default
+    validUntil: validUntilDate,
+    notes: req.body.notes || '',
+    // Patient details for quick access
+    patientName: `${patientDoc.firstName} ${patientDoc.lastName}`,
+    patientAge: calculateAge(patientDoc.dateOfBirth),
+    patientGender: patientDoc.gender,
+    patientPhone: patientDoc.phone,
     emergencyContact: patientDoc.emergencyContact
   });
 
-  // Update appointment to mark prescription as given
-  await Appointment.findByIdAndUpdate(appointment, {
-    prescriptionGiven: true,
-    followUpRequired: !!followUpDate,
-    followUpDate: followUpDate
-  });
+  // Update appointment to mark prescription as given (only if appointment is provided)
+  if (appointment) {
+    await Appointment.findByIdAndUpdate(appointment, {
+      prescriptionGiven: true,
+      followUpRequired: !!followUpDate,
+      followUpDate: followUpDate
+    });
+  }
 
   const populatedPrescription = await Prescription.findById(prescription._id)
     .populate('patient', 'firstName lastName email phone')
@@ -169,6 +213,49 @@ const createPrescription = asyncHandler(async (req, res, next) => {
     }
   });
 });
+
+// Helper function to transform frequency values
+function transformFrequency(frequency) {
+  const frequencyMap = {
+    'Once daily': 'once-daily',
+    'Twice daily': 'twice-daily', 
+    'Three times daily': 'thrice-daily',
+    'Four times daily': 'four-times-daily',
+    'Five times daily': 'custom',
+    'Six times daily': 'custom',
+    'Every morning': 'custom',
+    'Every evening': 'custom',
+    'Before meals': 'custom',
+    'After meals': 'custom',
+    'With meals': 'custom',
+    'At bedtime': 'custom',
+    'Every 4 hours': 'custom',
+    'Every 6 hours': 'custom',
+    'Every 8 hours': 'custom',
+    'Every 12 hours': 'custom',
+    'Once weekly': 'custom',
+    'Twice weekly': 'custom',
+    'Three times weekly': 'custom',
+    'As needed': 'as-needed',
+    'As directed': 'custom',
+    'Single dose': 'custom'
+  };
+  
+  return frequencyMap[frequency] || 'custom';
+}
+
+// Helper function to calculate age
+function calculateAge(dateOfBirth) {
+  if (!dateOfBirth) return null;
+  const today = new Date();
+  const birthDate = new Date(dateOfBirth);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
 
 // @desc    Update prescription
 // @route   PUT /api/prescriptions/:id

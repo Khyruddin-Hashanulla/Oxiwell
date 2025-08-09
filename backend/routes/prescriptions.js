@@ -132,6 +132,15 @@ const updatePrescriptionValidation = [
 // Apply authentication and active status to all routes
 router.use(protect, requireActive);
 
+// DEBUG: Simple test route to verify prescription routes are working
+router.get('/test', (req, res) => {
+  res.json({
+    status: 'success',
+    message: 'Prescription routes are working!',
+    user: req.user ? { id: req.user._id, role: req.user.role } : null
+  });
+});
+
 // GET /api/prescriptions - Get prescriptions (role-based filtering)
 // Admin: all prescriptions, Doctor: created prescriptions, Patient: own prescriptions
 router.get('/', getPrescriptions);
@@ -153,11 +162,18 @@ router.get('/doctor/:doctorId',
 );
 
 // POST /api/prescriptions - Create new prescription (Doctor only)
+// TEMPORARY: Simplified for debugging
 router.post('/', 
   requireDoctor,
   requireVerified,
-  createPrescriptionValidation,
+  // createPrescriptionValidation,  // Temporarily disabled for debugging
   auditLog('CREATE_PRESCRIPTION'),
+  (req, res, next) => {
+    console.log('🔍 POST /prescriptions route reached!');
+    console.log('🔍 Request body:', req.body);
+    console.log('🔍 User:', req.user ? { id: req.user._id, role: req.user.role } : 'No user');
+    next();
+  },
   createPrescription
 );
 

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Pill, Clock, User, Calendar, AlertTriangle, CheckCircle, Download, Search, Filter } from 'lucide-react'
+import { patientsAPI } from '../../services/api'
+import { toast } from 'react-hot-toast'
 
 const Prescriptions = () => {
   const [prescriptions, setPrescriptions] = useState([])
@@ -8,84 +10,38 @@ const Prescriptions = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(true)
 
-  // Mock prescriptions data - in real app, this would come from API
+  // Fetch real prescriptions data from API
   useEffect(() => {
-    const mockPrescriptions = [
-      {
-        id: 1,
-        medicationName: 'Amoxicillin',
-        dosage: '500mg',
-        frequency: 'Three times daily',
-        duration: '7 days',
-        instructions: 'Take with food. Complete the full course.',
-        prescribedBy: 'Dr. Sarah Doctor',
-        prescribedDate: '2025-08-01',
-        startDate: '2025-08-01',
-        endDate: '2025-08-08',
-        status: 'active',
-        refillsRemaining: 2,
-        totalRefills: 3,
-        pharmacy: 'Central Pharmacy',
-        notes: 'For bacterial infection treatment'
-      },
-      {
-        id: 2,
-        medicationName: 'Lisinopril',
-        dosage: '10mg',
-        frequency: 'Once daily',
-        duration: 'Ongoing',
-        instructions: 'Take at the same time each day, preferably in the morning.',
-        prescribedBy: 'Dr. Michael Smith',
-        prescribedDate: '2025-07-15',
-        startDate: '2025-07-15',
-        endDate: null,
-        status: 'active',
-        refillsRemaining: 5,
-        totalRefills: 6,
-        pharmacy: 'Health Plus Pharmacy',
-        notes: 'For blood pressure management'
-      },
-      {
-        id: 3,
-        medicationName: 'Ibuprofen',
-        dosage: '400mg',
-        frequency: 'As needed',
-        duration: '14 days',
-        instructions: 'Take with food. Do not exceed 3 doses per day.',
-        prescribedBy: 'Dr. Emily Johnson',
-        prescribedDate: '2025-07-20',
-        startDate: '2025-07-20',
-        endDate: '2025-08-03',
-        status: 'completed',
-        refillsRemaining: 0,
-        totalRefills: 1,
-        pharmacy: 'City Pharmacy',
-        notes: 'For pain and inflammation relief'
-      },
-      {
-        id: 4,
-        medicationName: 'Metformin',
-        dosage: '850mg',
-        frequency: 'Twice daily',
-        duration: 'Ongoing',
-        instructions: 'Take with meals to reduce stomach upset.',
-        prescribedBy: 'Dr. Sarah Doctor',
-        prescribedDate: '2025-06-10',
-        startDate: '2025-06-10',
-        endDate: null,
-        status: 'expired',
-        refillsRemaining: 0,
-        totalRefills: 6,
-        pharmacy: 'Central Pharmacy',
-        notes: 'For diabetes management - needs renewal'
+    const fetchPrescriptions = async () => {
+      try {
+        setIsLoading(true)
+        console.log('🔍 Fetching patient prescriptions...')
+        const response = await patientsAPI.getPrescriptions()
+        console.log('📋 Raw prescriptions response:', response)
+        
+        // Handle different possible response structures
+        const prescriptionsData = response?.data?.data?.prescriptions || response?.data?.prescriptions || response?.data || []
+        console.log('💊 Extracted prescriptions data:', prescriptionsData)
+        console.log('📊 Number of prescriptions found:', prescriptionsData.length)
+        
+        setPrescriptions(Array.isArray(prescriptionsData) ? prescriptionsData : [])
+        setFilteredPrescriptions(Array.isArray(prescriptionsData) ? prescriptionsData : [])
+      } catch (error) {
+        console.error('❌ Error fetching prescriptions:', error)
+        console.error('🔍 Error details:', {
+          message: error.message,
+          status: error.response?.status,
+          data: error.response?.data
+        })
+        toast.error('Failed to load prescriptions')
+        setPrescriptions([])
+        setFilteredPrescriptions([])
+      } finally {
+        setIsLoading(false)
       }
-    ]
+    }
 
-    setTimeout(() => {
-      setPrescriptions(mockPrescriptions)
-      setFilteredPrescriptions(mockPrescriptions)
-      setIsLoading(false)
-    }, 1000)
+    fetchPrescriptions()
   }, [])
 
   // Filter prescriptions based on status and search term
@@ -99,11 +55,17 @@ const Prescriptions = () => {
 
     // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(prescription =>
-        prescription.medicationName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        prescription.prescribedBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        prescription.notes.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      filtered = filtered.filter(prescription => {
+        const medicationName = prescription.medications?.[0]?.name || '';
+        const doctorName = prescription.doctor ? `Dr. ${prescription.doctor.firstName} ${prescription.doctor.lastName}` : '';
+        const notes = prescription.notes || '';
+        const diagnosis = prescription.diagnosis || '';
+        
+        return medicationName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               doctorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               notes.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               diagnosis.toLowerCase().includes(searchTerm.toLowerCase())
+      })
     }
 
     setFilteredPrescriptions(filtered)
@@ -183,6 +145,110 @@ const Prescriptions = () => {
     return diffDays <= 3 && diffDays > 0
   }
 
+  // Download prescription as PDF/text
+  const handleDownloadPrescription = (prescription) => {
+    const prescriptionText = `
+PRESCRIPTION DETAILS
+====================
+
+Prescription Number: ${prescription.prescriptionNumber || 'N/A'}
+Date: ${new Date(prescription.createdAt).toLocaleDateString()}
+Doctor: ${prescription.doctor ? `Dr. ${prescription.doctor.firstName} ${prescription.doctor.lastName}` : 'Unknown Doctor'}
+Status: ${prescription.status || 'active'}
+
+PATIENT INFORMATION
+===================
+Valid Until: ${prescription.validUntil ? new Date(prescription.validUntil).toLocaleDateString() : 'N/A'}
+
+DIAGNOSIS
+=========
+${prescription.diagnosis || 'No diagnosis provided'}
+
+MEDICATIONS
+===========
+${prescription.medications?.map((med, index) => `
+${index + 1}. ${med.name || 'Unknown medication'}
+   Dosage: ${med.dosage || 'Not specified'}
+   Frequency: ${med.frequency || 'Not specified'}
+   Duration: ${med.duration || 'Not specified'}
+   Instructions: ${med.instructions || 'No specific instructions'}
+`).join('') || 'No medications listed'}
+
+ADDITIONAL NOTES
+================
+${prescription.notes || 'No additional notes'}
+
+DIGITAL SIGNATURE
+=================
+${prescription.digitalSignature || 'N/A'}
+    `.trim()
+
+    // Create and download the file
+    const blob = new Blob([prescriptionText], { type: 'text/plain' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `prescription-${prescription.prescriptionNumber || Date.now()}.txt`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    
+    toast.success('Prescription downloaded successfully!')
+  }
+
+  // Export all prescriptions
+  const handleExportAll = () => {
+    if (prescriptions.length === 0) {
+      toast.error('No prescriptions to export')
+      return
+    }
+
+    const allPrescriptionsText = `
+MY PRESCRIPTIONS EXPORT
+=======================
+Export Date: ${new Date().toLocaleDateString()}
+Total Prescriptions: ${prescriptions.length}
+
+${prescriptions.map((prescription, index) => `
+PRESCRIPTION ${index + 1}
+${'='.repeat(20)}
+
+Prescription Number: ${prescription.prescriptionNumber || 'N/A'}
+Date: ${new Date(prescription.createdAt).toLocaleDateString()}
+Doctor: ${prescription.doctor ? `Dr. ${prescription.doctor.firstName} ${prescription.doctor.lastName}` : 'Unknown Doctor'}
+Status: ${prescription.status || 'active'}
+Valid Until: ${prescription.validUntil ? new Date(prescription.validUntil).toLocaleDateString() : 'N/A'}
+
+Diagnosis: ${prescription.diagnosis || 'No diagnosis provided'}
+
+Medications:
+${prescription.medications?.map((med, medIndex) => `
+  ${medIndex + 1}. ${med.name || 'Unknown medication'}
+     Dosage: ${med.dosage || 'Not specified'}
+     Frequency: ${med.frequency || 'Not specified'}
+     Duration: ${med.duration || 'Not specified'}
+     Instructions: ${med.instructions || 'No specific instructions'}
+`).join('') || '  No medications listed'}
+
+Notes: ${prescription.notes || 'No additional notes'}
+
+`).join('\n')}
+    `.trim()
+
+    const blob = new Blob([allPrescriptionsText], { type: 'text/plain' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `all-prescriptions-${new Date().toISOString().split('T')[0]}.txt`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    
+    toast.success('All prescriptions exported successfully!')
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -200,7 +266,7 @@ const Prescriptions = () => {
           <p className="mt-2 text-primary-300">Manage your medications and prescriptions</p>
         </div>
         <div className="mt-4 sm:mt-0 flex space-x-3">
-          <button className="inline-flex items-center px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-all duration-200">
+          <button className="inline-flex items-center px-4 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-all duration-200" onClick={handleExportAll}>
             <Download className="w-4 h-4 mr-2" />
             Export All
           </button>
@@ -254,11 +320,13 @@ const Prescriptions = () => {
         <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-primary-300 text-sm font-medium">Total Prescriptions</p>
-              <p className="text-3xl font-bold text-white mt-2">{prescriptions.length}</p>
+              <p className="text-primary-300 text-sm font-medium">Total Medications</p>
+              <p className="text-3xl font-bold text-white mt-2">
+                {prescriptions.reduce((sum, p) => sum + (p.medications?.length || 0), 0)}
+              </p>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <Pill className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <Clock className="w-6 h-6 text-white" />
             </div>
           </div>
         </div>
@@ -282,7 +350,7 @@ const Prescriptions = () => {
             <div>
               <p className="text-primary-300 text-sm font-medium">Refills Available</p>
               <p className="text-3xl font-bold text-white mt-2">
-                {prescriptions.reduce((sum, p) => sum + p.refillsRemaining, 0)}
+                {prescriptions.reduce((sum, p) => sum + (p.refillsRemaining || 0), 0)}
               </p>
             </div>
             <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -297,10 +365,10 @@ const Prescriptions = () => {
               <p className="text-primary-300 text-sm font-medium">Expiring Soon</p>
               <p className="text-3xl font-bold text-white mt-2">
                 {prescriptions.filter(p => {
-                  if (!p.endDate) return false;
-                  const endDate = new Date(p.endDate);
+                  if (!p.validUntil) return false;
+                  const validUntil = new Date(p.validUntil);
                   const today = new Date();
-                  const diffTime = endDate - today;
+                  const diffTime = validUntil - today;
                   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                   return diffDays <= 7 && diffDays > 0;
                 }).length}
@@ -340,19 +408,19 @@ const Prescriptions = () => {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="text-xl font-semibold text-white mb-1">
-                        {prescription.medicationName}
+                        {prescription.medications?.[0]?.name || 'No medication name'}
                       </h3>
                       <p className="text-primary-300 text-sm mb-2">
-                        {prescription.dosage} - {prescription.frequency}
+                        {prescription.medications?.[0]?.dosage || 'No dosage'} - {prescription.medications?.[0]?.frequency || 'No frequency'}
                       </p>
                       <div className="flex items-center space-x-4 text-sm text-primary-300">
                         <div className="flex items-center">
                           <User className="w-4 h-4 mr-1" />
-                          {prescription.prescribedBy}
+                          {prescription.doctor ? `Dr. ${prescription.doctor.firstName} ${prescription.doctor.lastName}` : 'Unknown Doctor'}
                         </div>
                         <div className="flex items-center">
                           <Calendar className="w-4 h-4 mr-1" />
-                          {new Date(prescription.prescribedDate).toLocaleDateString()}
+                          {new Date(prescription.createdAt || prescription.prescribedDate).toLocaleDateString()}
                         </div>
                       </div>
                     </div>
@@ -365,22 +433,22 @@ const Prescriptions = () => {
                     <div className="space-y-2">
                       <div className="flex items-center text-primary-300">
                         <span className="font-medium text-white">Duration:</span>
-                        <span className="ml-2">{prescription.duration}</span>
+                        <span className="ml-2">{prescription.medications?.[0]?.duration || 'Not specified'}</span>
                       </div>
                       <div className="flex items-center text-primary-300">
-                        <span className="font-medium text-white">Pharmacy:</span>
-                        <span className="ml-2">{prescription.pharmacy}</span>
+                        <span className="font-medium text-white">Prescription #:</span>
+                        <span className="ml-2">{prescription.prescriptionNumber || 'N/A'}</span>
                       </div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center text-primary-300">
-                        <span className="font-medium text-white">Refills:</span>
-                        <span className="ml-2">{prescription.refillsRemaining}/{prescription.totalRefills}</span>
+                        <span className="font-medium text-white">Status:</span>
+                        <span className="ml-2 capitalize">{prescription.status || 'active'}</span>
                       </div>
-                      {prescription.endDate && (
+                      {prescription.validUntil && (
                         <div className="flex items-center text-primary-300">
-                          <span className="font-medium text-white">End Date:</span>
-                          <span className="ml-2">{new Date(prescription.endDate).toLocaleDateString()}</span>
+                          <span className="font-medium text-white">Valid Until:</span>
+                          <span className="ml-2">{new Date(prescription.validUntil).toLocaleDateString()}</span>
                         </div>
                       )}
                     </div>
@@ -388,11 +456,16 @@ const Prescriptions = () => {
 
                   <div className="mt-4 p-3 bg-primary-700 bg-opacity-50 rounded-lg">
                     <p className="text-sm text-primary-300">
-                      <span className="font-medium text-white">Instructions:</span> {prescription.instructions}
+                      <span className="font-medium text-white">Instructions:</span> {prescription.medications?.[0]?.instructions || 'No specific instructions'}
                     </p>
                     {prescription.notes && (
                       <p className="text-sm text-primary-300 mt-2">
                         <span className="font-medium text-white">Notes:</span> {prescription.notes}
+                      </p>
+                    )}
+                    {prescription.diagnosis && (
+                      <p className="text-sm text-primary-300 mt-2">
+                        <span className="font-medium text-white">Diagnosis:</span> {prescription.diagnosis}
                       </p>
                     )}
                   </div>
@@ -405,7 +478,7 @@ const Prescriptions = () => {
                       Request Refill
                     </button>
                   )}
-                  <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium">
+                  <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium" onClick={() => handleDownloadPrescription(prescription)}>
                     Download
                   </button>
                   {prescription.status === 'active' && (
