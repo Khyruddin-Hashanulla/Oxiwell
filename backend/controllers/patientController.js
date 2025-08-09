@@ -207,7 +207,16 @@ const getPatientPrescriptions = asyncHandler(async (req, res, next) => {
   }
 
   const prescriptions = await Prescription.find(query)
-    .populate('doctor', 'firstName lastName specialization')
+    .populate({
+      path: 'doctor',
+      select: 'firstName lastName specialization medicalRegistrationNumber licenseNumber qualifications workplaces',
+      populate: {
+        path: 'workplaces.hospital',
+        model: 'Hospital',
+        select: 'name address phone email'
+      }
+    })
+    .populate('patient', 'firstName lastName dateOfBirth gender email phone')
     .populate('appointment', 'appointmentDate reason')
     .sort({ createdAt: -1 })
     .limit(limit * 1)

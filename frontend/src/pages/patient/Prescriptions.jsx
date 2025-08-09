@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { Pill, Clock, User, Calendar, AlertTriangle, CheckCircle, Download, Search, Filter } from 'lucide-react'
 import { patientsAPI } from '../../services/api'
 import { toast } from 'react-hot-toast'
+import { jsPDF } from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 const Prescriptions = () => {
   const [prescriptions, setPrescriptions] = useState([])
@@ -147,54 +149,327 @@ const Prescriptions = () => {
 
   // Download prescription as PDF/text
   const handleDownloadPrescription = (prescription) => {
-    const prescriptionText = `
-PRESCRIPTION DETAILS
-====================
-
-Prescription Number: ${prescription.prescriptionNumber || 'N/A'}
-Date: ${new Date(prescription.createdAt).toLocaleDateString()}
-Doctor: ${prescription.doctor ? `Dr. ${prescription.doctor.firstName} ${prescription.doctor.lastName}` : 'Unknown Doctor'}
-Status: ${prescription.status || 'active'}
-
-PATIENT INFORMATION
-===================
-Valid Until: ${prescription.validUntil ? new Date(prescription.validUntil).toLocaleDateString() : 'N/A'}
-
-DIAGNOSIS
-=========
-${prescription.diagnosis || 'No diagnosis provided'}
-
-MEDICATIONS
-===========
-${prescription.medications?.map((med, index) => `
-${index + 1}. ${med.name || 'Unknown medication'}
-   Dosage: ${med.dosage || 'Not specified'}
-   Frequency: ${med.frequency || 'Not specified'}
-   Duration: ${med.duration || 'Not specified'}
-   Instructions: ${med.instructions || 'No specific instructions'}
-`).join('') || 'No medications listed'}
-
-ADDITIONAL NOTES
-================
-${prescription.generalInstructions || prescription.notes || 'No additional notes'}
-
-DIGITAL SIGNATURE
-=================
-${prescription.digitalSignature || 'N/A'}
-    `.trim()
-
-    // Create and download the file
-    const blob = new Blob([prescriptionText], { type: 'text/plain' })
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `prescription-${prescription.prescriptionNumber || Date.now()}.txt`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
-    
-    toast.success('Prescription downloaded successfully!')
+    try {
+      console.log('🔍 Generating professional prescription PDF:', prescription)
+      console.log('🔍 Prescription data structure:', {
+        patient: prescription.patient,
+        doctor: prescription.doctor,
+        medications: prescription.medications,
+        diagnosis: prescription.diagnosis,
+        recommendedTests: prescription.recommendedTests,
+        generalInstructions: prescription.generalInstructions
+      })
+      
+      // Create new PDF document
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      })
+      const pageWidth = doc.internal.pageSize.width
+      const pageHeight = doc.internal.pageSize.height
+      let yPosition = 20
+      
+      // Colors
+      const primaryBlue = [41, 128, 185]
+      const darkGray = [52, 73, 94]
+      const lightGray = [149, 165, 166]
+      const medicalGreen = [39, 174, 96]
+      
+      // Header - Hospital/Clinic Information
+      // Use real doctor workplace information instead of hardcoded data
+      // Get primary workplace or first available workplace
+      const primaryWorkplace = prescription.doctor?.workplaces?.find(w => w.isPrimary) || 
+                              prescription.doctor?.workplaces?.[0]
+      
+      const workplaceName = primaryWorkplace?.hospital?.name || 'OXIWELL HEALTH CENTER'
+      const workplaceAddress = primaryWorkplace?.address 
+        ? `${primaryWorkplace.address.street}, ${primaryWorkplace.address.city}, ${primaryWorkplace.address.state} - ${primaryWorkplace.address.zipCode}`
+        : '123 Medical District, Healthcare City, State - 123456'
+      const workplacePhone = primaryWorkplace?.phone || primaryWorkplace?.hospital?.phone || '+91-1234567890'
+      const workplaceEmail = primaryWorkplace?.hospital?.email || 'contact@oxiwell.com'
+      
+      doc.setFillColor(...primaryBlue)
+      doc.rect(0, 0, pageWidth, 35, 'F')
+      
+      // Hospital Logo Area (placeholder)
+      doc.setFillColor(255, 255, 255)
+      doc.circle(25, 17.5, 8, 'F')
+      doc.setTextColor(...primaryBlue)
+      doc.setFontSize(12)
+      doc.setFont('helvetica', 'bold')
+      doc.text(workplaceName.substring(0, 2).toUpperCase(), 21, 20)
+      
+      // Hospital Name and Details
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(20)
+      doc.setFont('helvetica', 'bold')
+      doc.text(workplaceName.toUpperCase(), 40, 15)
+      
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      doc.text('Advanced Healthcare & Medical Services', 40, 21)
+      doc.text(`Email: ${workplaceEmail} | Phone: ${workplacePhone}`, 40, 26)
+      doc.text(`Address: ${workplaceAddress}`, 40, 31)
+      
+      yPosition = 45
+      
+      // Doctor Information Section
+      doc.setFillColor(248, 249, 250)
+      doc.rect(10, yPosition, pageWidth - 20, 25, 'F')
+      doc.setDrawColor(...lightGray)
+      doc.rect(10, yPosition, pageWidth - 20, 25, 'S')
+      
+      yPosition += 8
+      doc.setTextColor(...darkGray)
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      // Handle different possible doctor data structures
+      const doctorFirstName = prescription.doctor?.firstName || 'Unknown'
+      const doctorLastName = prescription.doctor?.lastName || ''
+      const doctorName = `Dr. ${doctorFirstName} ${doctorLastName}`.trim()
+      doc.text(doctorName, 15, yPosition)
+      
+      yPosition += 6
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      
+      // Get doctor information with fallbacks
+      const doctorSpecialization = prescription.doctor?.specialization || 'General Medicine'
+      const doctorRegNo = prescription.doctor?.medicalRegistrationNumber || 'Not Available'
+      const doctorLicense = prescription.doctor?.licenseNumber || 'Not Available'
+      
+      // Get doctor qualifications
+      const doctorDegrees = prescription.doctor?.qualifications?.length > 0 
+        ? prescription.doctor.qualifications.map(q => q.degree).join(', ')
+        : `MBBS, MD ${doctorSpecialization}`
+      
+      const doctorInfo = [
+        `${doctorSpecialization} Specialist`,
+        doctorDegrees,
+        `Reg. No: ${doctorRegNo}`,
+        `License: ${doctorLicense}`
+      ]
+      
+      doctorInfo.forEach((info, index) => {
+        doc.text(info, 15, yPosition + (index * 4))
+      })
+      
+      // Digital Signature Area
+      doc.setFontSize(12)
+      doc.setFont('helvetica', 'italic')
+      doc.setTextColor(...primaryBlue)
+      doc.text('Dr. Signature', pageWidth - 50, yPosition + 5)
+      doc.setDrawColor(...primaryBlue)
+      doc.line(pageWidth - 50, yPosition + 7, pageWidth - 15, yPosition + 7)
+      
+      yPosition += 35
+      
+      // Prescription Header
+      doc.setFillColor(...medicalGreen)
+      doc.rect(10, yPosition, pageWidth - 20, 8, 'F')
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(12)
+      doc.setFont('helvetica', 'bold')
+      doc.text('MEDICAL PRESCRIPTION', 15, yPosition + 5.5)
+      
+      yPosition += 15
+      
+      // Patient and Prescription Details
+      doc.setTextColor(...darkGray)
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'normal')
+      
+      // Get patient information with fallbacks
+      const patientFirstName = prescription.patient?.firstName || 'Unknown'
+      const patientLastName = prescription.patient?.lastName || ''
+      const patientFullName = `${patientFirstName} ${patientLastName}`.trim()
+      const patientId = prescription.patient?._id?.slice(-8) || 'Not Available'
+      
+      // Calculate age from dateOfBirth
+      let patientAge = 'Not Available'
+      if (prescription.patient?.dateOfBirth) {
+        const today = new Date()
+        const birthDate = new Date(prescription.patient.dateOfBirth)
+        let age = today.getFullYear() - birthDate.getFullYear()
+        const monthDiff = today.getMonth() - birthDate.getMonth()
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--
+        }
+        patientAge = age
+      }
+      
+      const patientGender = prescription.patient?.gender || 'Not Available'
+      
+      const prescriptionDetails = [
+        [`Patient Name:`, patientFullName],
+        [`Patient ID:`, patientId],
+        [`Age/Gender:`, `${patientAge} / ${patientGender}`],
+        [`Prescription #:`, prescription.prescriptionNumber || prescription._id?.slice(-8) || 'Not Available'],
+        [`Date:`, new Date(prescription.createdAt).toLocaleDateString('en-IN')],
+        [`Follow-up:`, prescription.followUpDate ? new Date(prescription.followUpDate).toLocaleDateString('en-IN') : 'As needed']
+      ]
+      
+      prescriptionDetails.forEach(([label, value], index) => {
+        const xPos = index % 2 === 0 ? 15 : pageWidth / 2 + 5
+        const yPos = yPosition + Math.floor(index / 2) * 6
+        doc.setFont('helvetica', 'bold')
+        doc.text(label, xPos, yPos)
+        doc.setFont('helvetica', 'normal')
+        doc.text(value, xPos + 35, yPos)
+      })
+      
+      yPosition += 25
+      
+      // Diagnosis Section
+      const diagnosisText = prescription.diagnosis || prescription.caseHistory || prescription.symptoms
+      if (diagnosisText) {
+        doc.setFillColor(52, 152, 219)
+        doc.rect(10, yPosition, pageWidth - 20, 6, 'F')
+        doc.setTextColor(255, 255, 255)
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'bold')
+        doc.text('DIAGNOSIS', 15, yPosition + 4)
+        
+        yPosition += 10
+        doc.setTextColor(...darkGray)
+        doc.setFont('helvetica', 'normal')
+        const diagnosisLines = doc.splitTextToSize(diagnosisText, pageWidth - 30)
+        doc.text(diagnosisLines, 15, yPosition)
+        yPosition += diagnosisLines.length * 4 + 5
+      }
+      
+      // Medications Section
+      if (prescription.medications && prescription.medications.length > 0) {
+        doc.setFillColor(231, 76, 60)
+        doc.rect(10, yPosition, pageWidth - 20, 6, 'F')
+        doc.setTextColor(255, 255, 255)
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'bold')
+        doc.text(`MEDICATIONS (${prescription.medications.length})`, 15, yPosition + 4)
+        
+        yPosition += 12
+        
+        // Medications Table
+        const medicationData = prescription.medications.map((med, index) => [
+          `${index + 1}.`,
+          med.name || med.medicationName || 'Unknown',
+          med.dosage || med.dose || 'Not specified',
+          med.frequency === 'custom' && med.customFrequency ? med.customFrequency : med.frequency || 'N/A',
+          med.duration || 'Not specified',
+          med.instructions || 'As directed'
+        ])
+        
+        autoTable(doc, {
+          startY: yPosition,
+          head: [['#', 'Medicine Name', 'Dosage', 'Frequency', 'Duration', 'Instructions']],
+          body: medicationData,
+          theme: 'grid',
+          headStyles: { fillColor: [231, 76, 60], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+          bodyStyles: { fontSize: 8, textColor: [52, 73, 94] },
+          alternateRowStyles: { fillColor: [248, 249, 250] },
+          columnStyles: {
+            0: { cellWidth: 8 },
+            1: { cellWidth: 40 },
+            2: { cellWidth: 25 },
+            3: { cellWidth: 35 },
+            4: { cellWidth: 20 },
+            5: { cellWidth: 50 }
+          },
+          margin: { left: 15, right: 15 }
+        })
+        
+        yPosition = (doc.lastAutoTable && doc.lastAutoTable.finalY) || yPosition + 50
+      }
+      
+      // Recommended Tests Section
+      if (prescription.recommendedTests && prescription.recommendedTests.length > 0) {
+        doc.setFillColor(142, 68, 173)
+        doc.rect(10, yPosition, pageWidth - 20, 6, 'F')
+        doc.setTextColor(255, 255, 255)
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'bold')
+        doc.text(`RECOMMENDED TESTS (${prescription.recommendedTests.length})`, 15, yPosition + 4)
+        
+        yPosition += 12
+        
+        const testData = prescription.recommendedTests.map((test, index) => [
+          `${index + 1}.`,
+          test.testName || test.name || 'Unknown Test',
+          test.urgency || 'Routine',
+          test.instructions || 'Standard procedure'
+        ])
+        
+        autoTable(doc, {
+          startY: yPosition,
+          head: [['#', 'Test Name', 'Urgency', 'Instructions']],
+          body: testData,
+          theme: 'grid',
+          headStyles: { fillColor: [142, 68, 173], textColor: 255, fontSize: 9, fontStyle: 'bold' },
+          bodyStyles: { fontSize: 8, textColor: [52, 73, 94] },
+          alternateRowStyles: { fillColor: [248, 249, 250] },
+          columnStyles: {
+            0: { cellWidth: 8 },
+            1: { cellWidth: 60 },
+            2: { cellWidth: 25 },
+            3: { cellWidth: 85 }
+          },
+          margin: { left: 15, right: 15 }
+        })
+        
+        yPosition = (doc.lastAutoTable && doc.lastAutoTable.finalY) || yPosition + 50
+      }
+      
+      // General Instructions
+      const instructionsText = prescription.generalInstructions || prescription.notes || prescription.additionalNotes
+      if (instructionsText) {
+        doc.setFillColor(243, 156, 18)
+        doc.rect(10, yPosition, pageWidth - 20, 6, 'F')
+        doc.setTextColor(255, 255, 255)
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'bold')
+        doc.text('GENERAL INSTRUCTIONS', 15, yPosition + 4)
+        
+        yPosition += 10
+        doc.setTextColor(...darkGray)
+        doc.setFont('helvetica', 'normal')
+        const instructionLines = doc.splitTextToSize(instructionsText, pageWidth - 30)
+        doc.text(instructionLines, 15, yPosition)
+        yPosition += instructionLines.length * 4 + 10
+      }
+      
+      // Footer
+      const footerY = pageHeight - 25
+      doc.setDrawColor(...lightGray)
+      doc.line(15, footerY, pageWidth - 15, footerY)
+      
+      doc.setTextColor(...lightGray)
+      doc.setFontSize(8)
+      doc.setFont('helvetica', 'normal')
+      doc.text('This is a computer-generated prescription and is valid without signature.', 15, footerY + 5)
+      doc.text(`Generated on: ${new Date().toLocaleString('en-IN')}`, 15, footerY + 10)
+      doc.text('For any queries, contact: support@oxiwell.com | Emergency: +91-9876543210', 15, footerY + 15)
+      
+      // Verification QR Code area (placeholder)
+      doc.setDrawColor(...primaryBlue)
+      doc.rect(pageWidth - 35, footerY + 2, 20, 20, 'S')
+      doc.setTextColor(...primaryBlue)
+      doc.setFontSize(6)
+      doc.text('QR Code', pageWidth - 30, footerY + 8)
+      doc.text('Verification', pageWidth - 32, footerY + 12)
+      doc.text(`ID: ${prescription._id?.slice(-6) || '123456'}`, pageWidth - 32, footerY + 16)
+      
+      // Save the PDF
+      const fileName = `Prescription_${prescription.prescriptionNumber || prescription._id?.slice(-8) || 'Unknown'}_${new Date().toISOString().split('T')[0]}.pdf`
+      doc.save(fileName)
+      
+      toast.success('Professional prescription PDF downloaded successfully!')
+      
+    } catch (error) {
+      console.error('❌ Error generating prescription PDF:', error)
+      console.error('❌ Prescription object that failed:', prescription)
+      toast.error('Failed to generate prescription PDF')
+    }
   }
 
   // Export all prescriptions
@@ -408,10 +683,10 @@ Notes: ${prescription.generalInstructions || prescription.notes || 'No additiona
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="text-xl font-semibold text-white mb-1">
-                        {prescription.medications?.[0]?.name || 'No medication name'}
+                        Prescription #{prescription.prescriptionNumber || 'N/A'}
                       </h3>
                       <p className="text-primary-300 text-sm mb-2">
-                        {prescription.medications?.[0]?.dosage || 'No dosage'} - {prescription.medications?.[0]?.frequency || 'No frequency'}
+                        {prescription.medications?.length || 0} medication(s) prescribed
                       </p>
                       <div className="flex items-center space-x-4 text-sm text-primary-300">
                         <div className="flex items-center">
@@ -429,22 +704,112 @@ Notes: ${prescription.generalInstructions || prescription.notes || 'No additiona
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div className="space-y-2">
-                      <div className="flex items-center text-primary-300">
-                        <span className="font-medium text-white">Duration:</span>
-                        <span className="ml-2">{prescription.medications?.[0]?.duration || 'Not specified'}</span>
-                      </div>
-                      <div className="flex items-center text-primary-300">
-                        <span className="font-medium text-white">Prescription #:</span>
-                        <span className="ml-2">{prescription.prescriptionNumber || 'N/A'}</span>
+                  {/* Diagnosis */}
+                  {prescription.diagnosis && (
+                    <div className="mb-4 p-3 bg-blue-900/30 border border-blue-700 rounded-lg">
+                      <h4 className="font-medium text-white mb-2">Diagnosis</h4>
+                      <p className="text-sm text-blue-200">{prescription.diagnosis}</p>
+                    </div>
+                  )}
+
+                  {/* Medications */}
+                  {prescription.medications && prescription.medications.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="font-medium text-white mb-3">Medications ({prescription.medications.length})</h4>
+                      <div className="space-y-3">
+                        {prescription.medications.map((medication, index) => (
+                          <div key={index} className="p-3 bg-primary-700 bg-opacity-50 rounded-lg border border-primary-600">
+                            <div className="flex items-start justify-between mb-2">
+                              <h5 className="font-medium text-white">{medication.name || 'Unnamed medication'}</h5>
+                              <span className="text-xs text-primary-300 bg-primary-800 px-2 py-1 rounded">#{index + 1}</span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                              <div>
+                                <span className="text-primary-400">Dosage:</span>
+                                <span className="ml-2 text-white">{medication.dosage || 'Not specified'}</span>
+                              </div>
+                              <div>
+                                <span className="text-primary-400">Frequency:</span>
+                                <span className="ml-2 text-white">
+                                  {medication.frequency === 'custom' && medication.customFrequency 
+                                    ? `Custom: ${medication.customFrequency}`
+                                    : medication.frequency || 'Not specified'}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-primary-400">Duration:</span>
+                                <span className="ml-2 text-white">{medication.duration || 'Not specified'}</span>
+                              </div>
+                            </div>
+                            {medication.instructions && (
+                              <div className="mt-2 pt-2 border-t border-primary-600">
+                                <span className="text-primary-400 text-sm">Instructions:</span>
+                                <p className="text-sm text-white mt-1">{medication.instructions}</p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     </div>
+                  )}
+
+                  {/* Investigations */}
+                  {prescription.recommendedTests && prescription.recommendedTests.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="font-medium text-white mb-3">Recommended Tests ({prescription.recommendedTests.length})</h4>
+                      <div className="space-y-2">
+                        {prescription.recommendedTests.map((test, index) => (
+                          <div key={index} className="p-3 bg-green-900/30 border border-green-700 rounded-lg">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <h5 className="font-medium text-white">{test.testName || 'Unnamed test'}</h5>
+                                {test.instructions && (
+                                  <p className="text-sm text-green-200 mt-1">{test.instructions}</p>
+                                )}
+                              </div>
+                              {test.urgency && (
+                                <span className={`text-xs px-2 py-1 rounded ${
+                                  test.urgency === 'urgent' ? 'bg-red-600 text-white' :
+                                  test.urgency === 'routine' ? 'bg-blue-600 text-white' :
+                                  'bg-gray-600 text-white'
+                                }`}>
+                                  {test.urgency}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* General Instructions */}
+                  {prescription.generalInstructions && (
+                    <div className="mb-4 p-3 bg-yellow-900/30 border border-yellow-700 rounded-lg">
+                      <h4 className="font-medium text-white mb-2">General Instructions</h4>
+                      <p className="text-sm text-yellow-200">{prescription.generalInstructions}</p>
+                    </div>
+                  )}
+
+                  {/* Prescription Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div className="space-y-2">
                       <div className="flex items-center text-primary-300">
                         <span className="font-medium text-white">Status:</span>
                         <span className="ml-2 capitalize">{prescription.status || 'active'}</span>
                       </div>
+                      <div className="flex items-center text-primary-300">
+                        <span className="font-medium text-white">Created:</span>
+                        <span className="ml-2">{new Date(prescription.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {prescription.followUpDate && (
+                        <div className="flex items-center text-primary-300">
+                          <span className="font-medium text-white">Follow-up:</span>
+                          <span className="ml-2">{new Date(prescription.followUpDate).toLocaleDateString()}</span>
+                        </div>
+                      )}
                       {prescription.validUntil && (
                         <div className="flex items-center text-primary-300">
                           <span className="font-medium text-white">Valid Until:</span>
@@ -452,22 +817,6 @@ Notes: ${prescription.generalInstructions || prescription.notes || 'No additiona
                         </div>
                       )}
                     </div>
-                  </div>
-
-                  <div className="mt-4 p-3 bg-primary-700 bg-opacity-50 rounded-lg">
-                    <p className="text-sm text-primary-300">
-                      <span className="font-medium text-white">Instructions:</span> {prescription.medications?.[0]?.instructions || 'No specific instructions'}
-                    </p>
-                    {prescription.notes && (
-                      <p className="text-sm text-primary-300 mt-2">
-                        <span className="font-medium text-white">Notes:</span> {prescription.generalInstructions || prescription.notes}
-                      </p>
-                    )}
-                    {prescription.diagnosis && (
-                      <p className="text-sm text-primary-300 mt-2">
-                        <span className="font-medium text-white">Diagnosis:</span> {prescription.diagnosis}
-                      </p>
-                    )}
                   </div>
                 </div>
 
