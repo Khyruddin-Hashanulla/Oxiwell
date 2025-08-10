@@ -26,6 +26,8 @@ import ContactPage from './pages/public/ContactPage'
 import PatientDashboard from './pages/patient/PatientDashboard'
 import DoctorDashboard from './pages/doctor/DoctorDashboard'
 import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminProfile from './pages/admin/AdminProfile'
+import AdminUsers from './pages/admin/AdminUsers'
 
 // Patient pages
 import AppointmentBooking from './pages/patient/AppointmentBooking'
@@ -43,7 +45,6 @@ import DoctorPrescriptionsList from './pages/doctor/DoctorPrescriptionsList'
 import DoctorNotes from './pages/doctor/DoctorNotes'
 
 // Admin pages
-import AdminProfile from './pages/admin/AdminProfile'
 
 function App() {
   const { isLoading } = useAuth()
@@ -139,6 +140,7 @@ function App() {
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/profile" element={<AdminProfile />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
           </Route>
         </Route>
 

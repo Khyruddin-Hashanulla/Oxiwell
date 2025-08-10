@@ -218,7 +218,7 @@ const DashboardLayout = () => {
                       <hr className="my-1" />
                       <button
                         onClick={handleLogout}
-                        className="flex items-center w-full px-4 py-2 text-sm text-red-500 hover:bg-red-600"
+                        className="flex items-center w-full px-4 py-2 text-sm text-red-500 hover:bg-red-600 hover:text-white transition-colors duration-200"
                       >
                         <LogOut className="h-4 w-4 mr-3" />
                         Sign out

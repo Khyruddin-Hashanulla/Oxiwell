@@ -45,32 +45,49 @@ const AdminDashboard = () => {
     try {
       setLoading(true)
       
-      // Fetch pending doctors
-      const pendingResponse = await adminAPI.getPendingDoctors()
-      setPendingDoctors(pendingResponse.data.data.doctors || [])
+      // Fetch real dashboard statistics from backend
+      const [statsResponse, pendingResponse] = await Promise.all([
+        adminAPI.getDashboardStats(),
+        adminAPI.getPendingDoctors()
+      ])
       
-      // Update stats with real pending count
-      setStats(prevStats => ({
-        ...prevStats,
-        pendingApprovals: pendingResponse.data.data.doctors?.length || 0,
-        // Mock data for other stats - replace with real API calls later
-        totalUsers: 1247,
-        totalDoctors: 45,
-        totalPatients: 1156,
-        totalAppointments: 2847,
-        monthlyRevenue: 125000,
-        systemAlerts: 3,
+      const statsData = statsResponse.data.data
+      const pendingDoctors = pendingResponse.data.data.doctors || []
+      
+      setPendingDoctors(pendingDoctors)
+      
+      // Set real statistics from backend
+      setStats({
+        totalUsers: statsData.users.total || 0,
+        totalDoctors: statsData.users.totalDoctors || 0,
+        totalPatients: statsData.users.totalPatients || 0,
+        totalAppointments: statsData.appointments.total || 0,
+        monthlyRevenue: statsData.revenue.monthly || 0,
+        pendingApprovals: pendingDoctors.length,
+        systemAlerts: statsData.reports.critical || 0,
         recentActivities: [
-          { id: 1, type: 'user_registered', message: 'New patient registered: Sarah Wilson', time: '5 min ago' },
-          { id: 2, type: 'appointment_booked', message: 'Appointment booked with Dr. Smith', time: '12 min ago' },
-          { id: 3, type: 'payment_received', message: 'Payment received: ₹150', time: '25 min ago' },
-          { id: 4, type: 'doctor_joined', message: 'New doctor joined: Dr. Emily Johnson', time: '1 hour ago' }
+          { id: 1, type: 'user_registered', message: `New users this month: ${statsData.users.newThisMonth || 0}`, time: 'This month' },
+          { id: 2, type: 'appointment_booked', message: `Appointments this month: ${statsData.appointments.thisMonth || 0}`, time: 'This month' },
+          { id: 3, type: 'payment_received', message: `Monthly revenue: ₹${(statsData.revenue.monthly || 0).toLocaleString()}`, time: 'This month' },
+          { id: 4, type: 'doctor_joined', message: `Pending approvals: ${pendingDoctors.length}`, time: 'Current' }
         ]
-      }))
+      })
       
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
       toast.error('Failed to load dashboard data')
+      
+      // Fallback to empty stats on error
+      setStats({
+        totalUsers: 0,
+        totalDoctors: 0,
+        totalPatients: 0,
+        totalAppointments: 0,
+        monthlyRevenue: 0,
+        pendingApprovals: 0,
+        systemAlerts: 0,
+        recentActivities: []
+      })
     } finally {
       setLoading(false)
     }
