@@ -56,11 +56,19 @@ const PublicLayout = () => {
     }
   }
 
-  const navigationItems = [
-    { name: 'Home', href: '/' },
-    { name: 'About', href: '/about' },
-    { name: 'Contact', href: '/contact' }
-  ]
+  const getProfileLink = () => {
+    if (!user) return '/profile'
+    switch (user.role) {
+      case 'patient':
+        return '/patient/profile'
+      case 'doctor':
+        return '/doctor/profile'
+      case 'admin':
+        return '/admin/profile'
+      default:
+        return '/profile'
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900">
@@ -132,7 +140,7 @@ const PublicLayout = () => {
                         />
                         <div className="absolute right-0 mt-2 w-48 bg-primary-800 rounded-md shadow-xl border border-primary-600 py-1 z-50">
                           <Link
-                            to="/profile"
+                            to={getProfileLink()}
                             className="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-primary-700 hover:text-white"
                             onClick={() => setIsUserMenuOpen(false)}
                           >
@@ -223,7 +231,7 @@ const PublicLayout = () => {
                 {isAuthenticated && (
                   <div className="space-y-2">
                     <Link
-                      to="/profile"
+                      to={getProfileLink()}
                       className="block px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-primary-700"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
@@ -343,5 +351,11 @@ const PublicLayout = () => {
     </div>
   )
 }
+
+const navigationItems = [
+  { name: 'Home', href: '/' },
+  { name: 'About', href: '/about' },
+  { name: 'Contact', href: '/contact' }
+]
 
 export default PublicLayout

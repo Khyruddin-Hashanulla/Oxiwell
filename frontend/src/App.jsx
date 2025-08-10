@@ -144,6 +144,7 @@ function App() {
 
         {/* Fallback Routes */}
         <Route path="/dashboard" element={<DashboardRedirect />} />
+        <Route path="/profile" element={<ProfileRedirect />} />
         <Route path="*" element={
           <div className="min-h-screen flex items-center justify-center bg-gray-50">
             <div className="text-center">
@@ -181,6 +182,26 @@ const DashboardRedirect = () => {
       )
     case 'admin':
       return <Navigate to="/admin/dashboard" replace />
+    default:
+      return <Navigate to="/" replace />
+  }
+}
+
+// Component to redirect users to their role-based profile
+const ProfileRedirect = () => {
+  const { user } = useAuth()
+  
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+  
+  switch (user.role) {
+    case 'patient':
+      return <Navigate to="/patient/profile" replace />
+    case 'doctor':
+      return <Navigate to="/doctor/profile" replace />
+    case 'admin':
+      return <Navigate to="/admin/profile" replace />
     default:
       return <Navigate to="/" replace />
   }
