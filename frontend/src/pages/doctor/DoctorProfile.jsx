@@ -119,6 +119,33 @@ const DoctorProfile = () => {
         console.log('✅ Doctor servicesProvided:', doctor.servicesProvided)
         console.log('✅ Doctor professionalBio:', doctor.professionalBio)
         console.log('✅ Doctor medicalRegistrationNumber:', doctor.medicalRegistrationNumber)
+        console.log('✅ Doctor experience:', doctor.experience)
+        
+        // Debug missing fields specifically
+        console.log('🔍 MISSING FIELDS DEBUG:', {
+          medicalRegistrationNumber: {
+            exists: !!doctor.medicalRegistrationNumber,
+            value: doctor.medicalRegistrationNumber
+          },
+          experience: {
+            exists: !!doctor.experience,
+            value: doctor.experience
+          },
+          professionalBio: {
+            exists: !!doctor.professionalBio,
+            value: doctor.professionalBio
+          },
+          servicesProvided: {
+            exists: doctor.servicesProvided?.length > 0,
+            count: doctor.servicesProvided?.length,
+            values: doctor.servicesProvided
+          },
+          workplaces: {
+            exists: doctor.workplaces?.length > 0,
+            count: doctor.workplaces?.length,
+            hospitalNames: doctor.workplaces?.map(w => w.hospital?.name || w.hospital)
+          }
+        })
         
         setProfileData(doctor)
         
@@ -133,7 +160,7 @@ const DoctorProfile = () => {
           specialization: doctor.specialization || '',
           licenseNumber: doctor.licenseNumber || '',
           medicalRegistrationNumber: doctor.medicalRegistrationNumber || '',
-          experience: doctor.experience?.toString() || '',
+          experience: doctor.experience || '',
           professionalBio: doctor.professionalBio || doctor.bio || '',
           profileImage: doctor.profileImage || '',
           profileImageFile: null,
@@ -173,9 +200,18 @@ const DoctorProfile = () => {
         
         console.log(' Form data after loading:', {
           medicalRegistrationNumber: doctor.medicalRegistrationNumber || '',
+          experience: doctor.experience || '',
           professionalBio: doctor.professionalBio || doctor.bio || '',
           servicesProvided: doctor.servicesProvided || [],
-          workplaces: doctor.workplaces || []
+          workplaces: doctor.workplaces || [],
+          // Verify all critical fields are loaded
+          allFieldsLoaded: {
+            medicalRegistrationNumber: !!doctor.medicalRegistrationNumber,
+            experience: !!doctor.experience,
+            professionalBio: !!(doctor.professionalBio || doctor.bio),
+            servicesProvided: (doctor.servicesProvided || []).length > 0,
+            workplaces: (doctor.workplaces || []).length > 0
+          }
         })
       } else {
         console.error('Failed to load profile data:', response.data.message)
@@ -241,6 +277,32 @@ const DoctorProfile = () => {
     }
   }
 
+  // Toggle service selection
+  const toggleService = (service) => {
+    console.log('🔄 Toggling service:', service)
+    setFormData(prev => {
+      const currentServices = prev.servicesProvided || []
+      const isSelected = currentServices.includes(service)
+      
+      let newServices
+      if (isSelected) {
+        // Remove service
+        newServices = currentServices.filter(s => s !== service)
+        console.log('➖ Removed service:', service)
+      } else {
+        // Add service
+        newServices = [...currentServices, service]
+        console.log('➕ Added service:', service)
+      }
+      
+      console.log('📋 Updated services list:', newServices)
+      return {
+        ...prev,
+        servicesProvided: newServices
+      }
+    })
+  }
+
   const validateForm = () => {
     const newErrors = {}
     
@@ -248,9 +310,16 @@ const DoctorProfile = () => {
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required'
     if (!formData.phone.trim()) newErrors.phone = 'Phone is required'
     if (!formData.specialization) newErrors.specialization = 'Specialization is required'
-    if (!formData.licenseNumber.trim() && !profileData?.profileSetupCompleted) newErrors.licenseNumber = 'License number is required'
-    if (!formData.medicalRegistrationNumber.trim() && !profileData?.profileSetupCompleted) newErrors.medicalRegistrationNumber = 'Medical registration number is required'
+    // Only require license number during initial setup
+    if (!formData.licenseNumber.trim() && !profileData?.profileSetupCompleted) {
+      newErrors.licenseNumber = 'License number is required'
+    }
+    // Only require medical registration number during initial setup
+    if (!formData.medicalRegistrationNumber.trim() && !profileData?.profileSetupCompleted) {
+      newErrors.medicalRegistrationNumber = 'Medical registration number is required'
+    }
     if (!formData.professionalBio.trim()) newErrors.professionalBio = 'Professional bio is required'
+    if (!formData.experience.trim()) newErrors.experience = 'Experience is required'
     
     if (formData.qualifications.length === 0) {
       newErrors.qualifications = 'At least one qualification is required'
@@ -271,9 +340,26 @@ const DoctorProfile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     
+    console.log('🔄 Form submission started')
+    console.log('📋 Current form data:', {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      experience: formData.experience,
+      professionalBio: formData.professionalBio,
+      servicesProvided: formData.servicesProvided,
+      workplacesCount: formData.workplaces.length
+    })
+    
     // Prevent duplicate submissions
     if (loading) {
       console.log('⚠️ Profile update already in progress, ignoring duplicate submission')
+      return
+    }
+    
+    // Validate form
+    if (!validateForm()) {
+      console.log('❌ Form validation failed:', errors)
+      toast.error('Please fix the validation errors before submitting')
       return
     }
     
@@ -281,12 +367,6 @@ const DoctorProfile = () => {
     setErrors({})
     
     try {
-      // Validate required fields
-      if (!formData.firstName || !formData.lastName || !formData.email) {
-        toast.error('Please fill in all required fields')
-        return
-      }
-
       // Convert form data to FormData for multipart/form-data submission
       const submitData = new FormData()
       
@@ -318,39 +398,13 @@ const DoctorProfile = () => {
         submitData.append('profileImage', formData.profileImageFile)
       }
 
-      console.log('🔍 Submitting profile update with FormData')
-      console.log('🔍 FormData entries:')
-      for (let pair of submitData.entries()) {
-        console.log(`  ${pair[0]}:`, pair[1])
-      }
-      
-      // Debug workplace availability slots
-      console.log('🕒 WORKPLACE AVAILABILITY DEBUG:')
-      formData.workplaces.forEach((workplace, index) => {
-        console.log(`Workplace ${index + 1}:`, {
-          hospital: workplace.hospital,
-          consultationFee: workplace.consultationFee,
-          availableSlots: workplace.availableSlots,
-          availableSlotsCount: workplace.availableSlots?.length || 0,
-          availableDays: workplace.availableSlots?.filter(slot => slot.isAvailable).map(slot => `${slot.day}: ${slot.startTime}-${slot.endTime}`) || []
-        })
-        
-        // Show each day's availability in detail
-        console.log(`🕒 Workplace ${index + 1} - Day by day availability:`)
-        if (workplace.availableSlots && workplace.availableSlots.length > 0) {
-          workplace.availableSlots.forEach(slot => {
-            console.log(`  ${slot.day}: ${slot.isAvailable ? 'Available' : 'Not Available'} ${slot.isAvailable ? `(${slot.startTime}-${slot.endTime})` : ''}`)
-          })
-        } else {
-          console.log(`  ❌ NO AVAILABILITY SLOTS FOUND!`)
-        }
+      console.log('� Submitting profile update...')
+      console.log('🔍 Key fields being submitted:', {
+        experience: formData.experience,
+        professionalBio: formData.professionalBio?.substring(0, 50) + '...',
+        servicesProvided: formData.servicesProvided,
+        workplacesCount: formData.workplaces.length
       })
-      
-      // Check if any workplace has empty availability
-      const emptyWorkplaces = formData.workplaces.filter(w => !w.availableSlots || w.availableSlots.length === 0)
-      if (emptyWorkplaces.length > 0) {
-        console.error('🚨 WARNING: Found workplaces with empty availability slots:', emptyWorkplaces.map((w, i) => `Workplace ${formData.workplaces.indexOf(w) + 1}: ${w.hospital}`))
-      }
       
       // Make the API call
       console.log('📡 Making profile update API call...')
@@ -423,7 +477,7 @@ const DoctorProfile = () => {
         specialization: profileData.specialization || '',
         licenseNumber: profileData.licenseNumber || '',
         medicalRegistrationNumber: profileData.medicalRegistrationNumber || '',
-        experience: profileData.experience?.toString() || '',
+        experience: profileData.experience || '',
         professionalBio: profileData.professionalBio || profileData.bio || '',
         profileImage: profileData.profileImage || '',
         profileImageFile: null,
@@ -544,11 +598,12 @@ const DoctorProfile = () => {
                   Cancel
                 </button>
                 <button
-                  type="submit"
-                  disabled={isLoading}
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={loading}
                   className="flex items-center px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors disabled:opacity-50"
                 >
-                  {isLoading ? (
+                  {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                       Saving...
@@ -780,16 +835,23 @@ const DoctorProfile = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Experience (Years)</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Experience (Years) *</label>
                 {isEditing ? (
-                  <input
-                    type="number"
-                    value={formData.experience}
-                    onChange={(e) => handleInputChange('experience', e.target.value)}
-                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400"
-                    placeholder="Enter years of experience"
-                    min="0"
-                  />
+                  <div>
+                    <input
+                      type="number"
+                      value={formData.experience}
+                      onChange={(e) => handleInputChange('experience', e.target.value)}
+                      className={`w-full px-4 py-3 bg-white/10 border rounded-lg text-white placeholder-gray-400 ${
+                        errors.experience ? 'border-red-400' : 'border-gray-600'
+                      }`}
+                      placeholder="e.g., 5"
+                      min="0"
+                      max="50"
+                      required
+                    />
+                    {errors.experience && <p className="text-red-400 text-sm mt-1">{errors.experience}</p>}
+                  </div>
                 ) : (
                   <p className="text-white">{profileData?.experience ? `${profileData.experience} years` : 'Not provided'}</p>
                 )}

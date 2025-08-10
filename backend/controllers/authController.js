@@ -57,12 +57,18 @@ const register = asyncHandler(async (req, res, next) => {
     });
   }
 
-  const { firstName, lastName, email, password, phone, dateOfBirth, gender, bloodGroup, role } = req.body;
+  const { firstName, lastName, email, password, phone, dateOfBirth, gender, bloodGroup, role, licenseNumber, specialization, experience, qualification } = req.body;
 
   // Check if user already exists
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    if (existingUser.isVerified) {
+    // Allow re-registration for rejected doctors or unverified users
+    if (existingUser.isVerified && existingUser.role === 'doctor' && existingUser.status === 'rejected') {
+      // Delete rejected doctor account to allow re-registration with updated credentials
+      await User.findByIdAndDelete(existingUser._id);
+      await OTP.deleteMany({ email });
+      console.log('🚮  Deleted existing rejected doctor account to allow re-registration');
+    } else if (existingUser.isVerified) {
       return res.status(400).json({
         status: 'error',
         message: 'User already exists with this email'
@@ -71,7 +77,7 @@ const register = asyncHandler(async (req, res, next) => {
       // Delete existing unverified user and their OTPs to allow re-registration
       await User.findByIdAndDelete(existingUser._id);
       await OTP.deleteMany({ email });
-      console.log('�️  Deleted existing unverified user');
+      console.log('🚮  Deleted existing unverified user');
     }
   }
 
@@ -110,7 +116,14 @@ const register = asyncHandler(async (req, res, next) => {
       dateOfBirth,
       gender,
       bloodGroup,
-      role: role || 'patient' // Use provided role or default to patient
+      role: role || 'patient', // Use provided role or default to patient
+      // Doctor-specific fields (only included if role is doctor)
+      ...(role === 'doctor' && {
+        licenseNumber,
+        specialization,
+        experience,
+        qualification
+      })
     };
 
     // Store in session or cache (for now, we'll use a simple approach)
@@ -218,6 +231,17 @@ const verifyOTP = asyncHandler(async (req, res, next) => {
       status: tempUserData.role === 'doctor' ? 'pending' : 'active',
       emailVerifiedAt: new Date()
     };
+
+    // Convert qualification string to qualifications array for doctors
+    if (tempUserData.role === 'doctor' && tempUserData.qualification) {
+      userData.qualifications = [{
+        degree: tempUserData.qualification,
+        institution: 'Not specified', // Will be updated during profile setup
+        year: new Date().getFullYear() // Current year as placeholder
+      }];
+      // Remove the old qualification field
+      delete userData.qualification;
+    }
 
     // Check if user already exists (in case of race condition)
     let user = await User.findOne({ email });
@@ -409,6 +433,19 @@ const login = asyncHandler(async (req, res, next) => {
       status: 'error',
       message: message,
       code: 'PENDING_APPROVAL'
+    });
+  }
+
+  if (user.status === 'rejected') {
+    console.log('❌ User application rejected');
+    const message = user.role === 'doctor' 
+      ? 'Your doctor application has been rejected by the administrator. Please contact support for more information or submit a new application with updated credentials.'
+      : 'Your account application has been rejected. Please contact administrator for more information.';
+    
+    return res.status(403).json({
+      status: 'error',
+      message: message,
+      code: 'APPLICATION_REJECTED'
     });
   }
 

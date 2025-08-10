@@ -268,36 +268,176 @@ const AdminDashboard = () => {
             </div>
             <div className="space-y-4">
               {pendingDoctors.map((doctor) => (
-                <div key={doctor.id} className="flex items-center justify-between p-4 bg-primary-700 bg-opacity-50 rounded-lg hover:bg-opacity-70 transition-all">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center">
-                      <Users className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-white">
-                        {doctor.name}
-                      </p>
-                      <p className="text-sm text-gray-300">
-                        {doctor.specialty}
-                      </p>
+                <div key={doctor._id} className="bg-primary-700 bg-opacity-50 rounded-lg hover:bg-opacity-70 transition-all border border-primary-600">
+                  {/* Doctor Header */}
+                  <div className="p-4 border-b border-primary-600">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center">
+                          <Users className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-white text-lg">
+                            Dr. {doctor.firstName} {doctor.lastName}
+                          </h3>
+                          <p className="text-accent-400 font-medium">
+                            {doctor.specialization || 'Specialization not specified'}
+                          </p>
+                          <p className="text-sm text-gray-300">
+                            Registered: {new Date(doctor.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button 
+                          className={`bg-success-600 hover:bg-success-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors ${actionLoading[doctor._id] === 'approving' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          onClick={() => handleApproveDoctor(doctor._id)}
+                          disabled={actionLoading[doctor._id]}
+                        >
+                          {actionLoading[doctor._id] === 'approving' ? 'Approving...' : 'Approve'}
+                        </button>
+                        <button 
+                          className={`bg-error-600 hover:bg-error-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors ${actionLoading[doctor._id] === 'rejecting' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          onClick={() => handleRejectDoctor(doctor._id)}
+                          disabled={actionLoading[doctor._id]}
+                        >
+                          {actionLoading[doctor._id] === 'rejecting' ? 'Rejecting...' : 'Reject'}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <button 
-                      className={`bg-success-600 hover:bg-success-700 text-white text-sm font-medium px-3 py-1 rounded-lg transition-colors ${actionLoading[doctor.id] === 'approving' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      onClick={() => handleApproveDoctor(doctor.id)}
-                    >
-                      Approve
-                    </button>
-                    <button 
-                      className={`bg-error-600 hover:bg-error-700 text-white text-sm font-medium px-3 py-1 rounded-lg transition-colors ${actionLoading[doctor.id] === 'rejecting' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      onClick={() => handleRejectDoctor(doctor.id)}
-                    >
-                      Reject
-                    </button>
+
+                  {/* Doctor Details */}
+                  <div className="p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {/* Professional Information */}
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-semibold text-accent-400 uppercase tracking-wide">Professional Info</h4>
+                        <div className="space-y-2">
+                          <div>
+                            <span className="text-xs text-gray-400 block">License Number</span>
+                            <span className="text-white font-medium">
+                              {doctor.licenseNumber || 'Not provided'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-400 block">Experience</span>
+                            <span className="text-white font-medium">
+                              {doctor.experience ? `${doctor.experience} years` : 'Not specified'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-400 block">Qualification</span>
+                            <span className="text-white font-medium">
+                              {doctor.qualifications && doctor.qualifications.length > 0 
+                                ? doctor.qualifications.map(q => q.degree).join(', ')
+                                : 'Not provided'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Contact Information */}
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-semibold text-accent-400 uppercase tracking-wide">Contact Info</h4>
+                        <div className="space-y-2">
+                          <div>
+                            <span className="text-xs text-gray-400 block">Email</span>
+                            <span className="text-white font-medium break-all">
+                              {doctor.email}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-400 block">Phone</span>
+                            <span className="text-white font-medium">
+                              {doctor.phone}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-400 block">Status</span>
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-warning-100 text-warning-800">
+                              Pending Approval
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Additional Details */}
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-semibold text-accent-400 uppercase tracking-wide">Additional Info</h4>
+                        <div className="space-y-2">
+                          <div>
+                            <span className="text-xs text-gray-400 block">Gender</span>
+                            <span className="text-white font-medium capitalize">
+                              {doctor.gender || 'Not specified'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-400 block">Date of Birth</span>
+                            <span className="text-white font-medium">
+                              {doctor.dateOfBirth ? new Date(doctor.dateOfBirth).toLocaleDateString() : 'Not provided'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-400 block">Verification</span>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${doctor.isVerified ? 'bg-success-100 text-success-800' : 'bg-error-100 text-error-800'}`}>
+                              {doctor.isVerified ? 'Verified' : 'Not Verified'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Professional Bio (if available) */}
+                    {doctor.professionalBio && (
+                      <div className="mt-4 pt-4 border-t border-primary-600">
+                        <h4 className="text-sm font-semibold text-accent-400 uppercase tracking-wide mb-2">Professional Bio</h4>
+                        <p className="text-gray-300 text-sm leading-relaxed">
+                          {doctor.professionalBio}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Qualifications (if available) */}
+                    {doctor.qualifications && doctor.qualifications.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-primary-600">
+                        <h4 className="text-sm font-semibold text-accent-400 uppercase tracking-wide mb-2">Qualifications</h4>
+                        <div className="space-y-2">
+                          {doctor.qualifications.map((qual, index) => (
+                            <div key={index} className="bg-primary-600 bg-opacity-30 rounded-lg p-3">
+                              <div className="flex flex-col">
+                                <span className="text-white font-medium">{qual.degree}</span>
+                                {qual.institution && qual.institution !== 'Not specified' && (
+                                  <span className="text-gray-300 text-sm">{qual.institution}</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
+              
+              {/* Empty State */}
+              {pendingDoctors.length === 0 && !loading && (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-primary-600 bg-opacity-30 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <UserCheck className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-gray-400 text-lg font-medium">No pending doctor approvals</p>
+                  <p className="text-gray-500 text-sm">All doctor applications have been processed</p>
+                </div>
+              )}
+              
+              {/* Loading State */}
+              {loading && (
+                <div className="text-center py-8">
+                  <div className="w-8 h-8 border-2 border-accent-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-gray-400">Loading pending approvals...</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

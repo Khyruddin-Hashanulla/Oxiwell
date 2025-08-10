@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['active', 'inactive', 'blocked', 'pending'],
+    enum: ['active', 'inactive', 'blocked', 'pending', 'rejected'],
     default: 'pending'
   },
   isVerified: {
@@ -109,7 +109,7 @@ const userSchema = new mongoose.Schema({
     sparse: true
   },
   experience: {
-    type: Number,
+    type: String,
     required: function() {
       return this.role === 'doctor' && this.isVerified && this.status === 'active';
     }
