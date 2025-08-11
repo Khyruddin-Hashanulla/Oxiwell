@@ -28,12 +28,15 @@ import DoctorDashboard from './pages/doctor/DoctorDashboard'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminProfile from './pages/admin/AdminProfile'
 import AdminUsers from './pages/admin/AdminUsers'
+import AdminAnalytics from './pages/admin/AdminAnalytics'
+import AdminSettings from './pages/admin/AdminSettings'
 
 // Patient pages
 import AppointmentBooking from './pages/patient/AppointmentBooking'
 import Appointments from './pages/patient/Appointments'
 import Prescriptions from './pages/patient/Prescriptions'
 import PatientProfile from './pages/patient/PatientProfile'
+import PatientSettings from './pages/patient/PatientSettings'
 
 // Doctor pages
 import DoctorAppointments from './pages/doctor/DoctorAppointments'
@@ -43,6 +46,7 @@ import DoctorProfileSetup from './pages/doctor/DoctorProfileSetup'
 import DoctorPrescriptions from './pages/doctor/DoctorPrescriptions'
 import DoctorPrescriptionsList from './pages/doctor/DoctorPrescriptionsList'
 import DoctorNotes from './pages/doctor/DoctorNotes'
+import DoctorSettings from './pages/doctor/DoctorSettings'
 
 // Admin pages
 
@@ -91,6 +95,7 @@ function App() {
             <Route path="/patient/appointments/book" element={<AppointmentBooking />} />
             <Route path="/patient/prescriptions" element={<Prescriptions />} />
             <Route path="/patient/profile" element={<PatientProfile />} />
+            <Route path="/patient/settings" element={<PatientSettings />} />
             
             {/* Doctor Routes */}
             <Route path="/doctor" element={<Navigate to="/doctor/dashboard" replace />} />
@@ -135,12 +140,19 @@ function App() {
                 <DoctorNotes />
               </DoctorProfileSetupGuard>
             } />
+            <Route path="/doctor/settings" element={
+              <DoctorProfileSetupGuard>
+                <DoctorSettings />
+              </DoctorProfileSetupGuard>
+            } />
             
             {/* Admin Routes */}
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/profile" element={<AdminProfile />} />
             <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/analytics" element={<AdminAnalytics />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
           </Route>
         </Route>
 

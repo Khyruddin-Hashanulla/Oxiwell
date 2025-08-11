@@ -18,7 +18,8 @@ const AdminProfile = () => {
     handleSubmit,
     formState: { errors },
     reset,
-    setValue
+    setValue,
+    watch
   } = useForm()
 
   // Load admin profile data
@@ -44,11 +45,15 @@ const AdminProfile = () => {
             phone: admin.phone || '',
             dateOfBirth: admin.dateOfBirth ? new Date(admin.dateOfBirth).toISOString().split('T')[0] : '',
             gender: admin.gender || '',
-            address: admin.address || '',
+            address: admin.address 
+              ? typeof admin.address === 'string' 
+                ? admin.address 
+                : `${admin.address.street || ''} ${admin.address.city || ''} ${admin.address.state || ''} ${admin.address.country || ''}`.trim()
+              : '',
             department: admin.department || '',
             position: admin.position || '',
             employeeId: admin.employeeId || '',
-            permissions: admin.permissions?.join(', ') || '',
+            permissions: admin.permissions || [],
             bio: admin.bio || ''
           })
         }
@@ -72,7 +77,7 @@ const AdminProfile = () => {
       // Format data for backend
       const updateData = {
         ...data,
-        permissions: data.permissions ? data.permissions.split(',').map(item => item.trim()).filter(item => item) : []
+        permissions: data.permissions || []
       }
 
       const response = await adminsAPI.updateAdminProfile(updateData)
@@ -345,14 +350,51 @@ const AdminProfile = () => {
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-300 mb-2">Permissions</label>
                 {isEditing ? (
-                  <input
-                    {...register('permissions')}
-                    className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-                    placeholder="Enter permissions (comma separated)"
-                  />
+                  <div className="w-full p-4 bg-primary-700 border border-primary-600 rounded-lg">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {[
+                        { value: 'user_management', label: 'User Management' },
+                        { value: 'doctor_approval', label: 'Doctor Approval' },
+                        { value: 'system_settings', label: 'System Settings' },
+                        { value: 'reports_access', label: 'Reports Access' },
+                        { value: 'audit_logs', label: 'Audit Logs' },
+                        { value: 'data_export', label: 'Data Export' },
+                        { value: 'backup_restore', label: 'Backup & Restore' },
+                        { value: 'security_management', label: 'Security Management' }
+                      ].map((permission) => (
+                        <label key={permission.value} className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={watch('permissions')?.includes(permission.value) || false}
+                            onChange={(e) => {
+                              const currentPermissions = watch('permissions') || []
+                              const newPermissions = e.target.checked
+                                ? [...currentPermissions, permission.value]
+                                : currentPermissions.filter(p => p !== permission.value)
+                              setValue('permissions', newPermissions)
+                            }}
+                            className="w-4 h-4 text-accent-600 bg-primary-600 border-primary-500 rounded focus:ring-accent-500 focus:ring-2"
+                          />
+                          <span className="text-gray-300 text-sm">{permission.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 ) : (
                   <div className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white">
-                    {profileData?.permissions?.join(', ') || 'Not provided'}
+                    {profileData?.permissions?.map(perm => {
+                      const permissionLabels = {
+                        'user_management': 'User Management',
+                        'doctor_approval': 'Doctor Approval',
+                        'system_settings': 'System Settings',
+                        'reports_access': 'Reports Access',
+                        'audit_logs': 'Audit Logs',
+                        'data_export': 'Data Export',
+                        'backup_restore': 'Backup & Restore',
+                        'security_management': 'Security Management'
+                      }
+                      return permissionLabels[perm] || perm
+                    }).join(', ') || 'Not provided'}
                   </div>
                 )}
               </div>

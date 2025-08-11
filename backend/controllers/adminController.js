@@ -690,11 +690,76 @@ const getPendingDoctors = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc    Update admin profile
+// @route   PUT /api/admin/profile
+// @access  Private (Admin only)
+const updateAdminProfile = asyncHandler(async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Validation failed',
+      errors: errors.array()
+    });
+  }
+
+  const {
+    firstName,
+    lastName,
+    email,
+    phone,
+    dateOfBirth,
+    gender,
+    address,
+    department,
+    position,
+    employeeId,
+    permissions,
+    bio
+  } = req.body;
+
+  // Build update object with only provided fields
+  const updateData = {};
+  if (firstName) updateData.firstName = firstName;
+  if (lastName) updateData.lastName = lastName;
+  if (email) updateData.email = email;
+  if (phone) updateData.phone = phone;
+  if (dateOfBirth) updateData.dateOfBirth = dateOfBirth;
+  if (gender) updateData.gender = gender;
+  if (address) updateData.address = address;
+  if (department) updateData.department = department;
+  if (position) updateData.position = position;
+  if (employeeId) updateData.employeeId = employeeId;
+  if (permissions) updateData.permissions = permissions;
+  if (bio) updateData.bio = bio;
+
+  const admin = await User.findByIdAndUpdate(
+    req.user._id, // Update current admin's profile
+    updateData,
+    { new: true, runValidators: true }
+  ).select('-password -resetPasswordToken -resetPasswordExpire');
+
+  if (!admin) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Admin not found'
+    });
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      admin
+    }
+  });
+});
+
 module.exports = {
   getDashboardStats,
   getUsers,
   getUser,
   updateUserStatus,
+  updateAdminProfile,
   deleteUser,
   getActivityLogs,
   generateSystemReports,

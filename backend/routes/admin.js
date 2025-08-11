@@ -5,6 +5,7 @@ const {
   getUsers,
   getUser,
   updateUserStatus,
+  updateAdminProfile,
   deleteUser,
   getActivityLogs,
   generateSystemReports,
@@ -113,7 +114,7 @@ router.get('/profile/:id',
 router.put('/profile', 
   updateUserValidation,
   auditLog('UPDATE_ADMIN_PROFILE'),
-  updateUserStatus
+  updateAdminProfile
 );
 
 // Dashboard and Analytics

@@ -70,6 +70,20 @@ const PublicLayout = () => {
     }
   }
 
+  const getSettingsLink = () => {
+    if (!user) return '/settings'
+    switch (user.role) {
+      case 'patient':
+        return '/patient/settings'
+      case 'doctor':
+        return '/doctor/settings'
+      case 'admin':
+        return '/admin/settings'
+      default:
+        return '/settings'
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900">
       {/* Header */}
@@ -148,7 +162,7 @@ const PublicLayout = () => {
                             Profile
                           </Link>
                           <Link
-                            to="/settings"
+                            to={getSettingsLink()}
                             className="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-primary-700 hover:text-white"
                             onClick={() => setIsUserMenuOpen(false)}
                           >
@@ -238,7 +252,7 @@ const PublicLayout = () => {
                       Profile
                     </Link>
                     <Link
-                      to="/settings"
+                      to={getSettingsLink()}
                       className="block px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-primary-700"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >

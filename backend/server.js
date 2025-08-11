@@ -14,6 +14,7 @@ const patientRoutes = require('./routes/patients');
 const prescriptionRoutes = require('./routes/prescriptions');
 const reportRoutes = require('./routes/reports');
 const adminRoutes = require('./routes/admin');
+const settingsRoutes = require('./routes/settings');
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorHandler');
@@ -102,6 +103,7 @@ app.use('/api/patients', patientRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

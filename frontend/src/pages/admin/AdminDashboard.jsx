@@ -140,14 +140,14 @@ const AdminDashboard = () => {
       title: 'Manage Doctors',
       description: 'View and approve doctors',
       icon: Users,
-      link: '/admin/doctors',
+      link: '/admin/users',
       color: 'bg-primary-600 hover:bg-primary-700'
     },
     {
       title: 'System Reports',
       description: 'View analytics and reports',
       icon: BarChart3,
-      link: '/admin/reports',
+      link: '/admin/analytics',
       color: 'bg-success-600 hover:bg-success-700'
     },
     {

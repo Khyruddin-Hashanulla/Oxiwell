@@ -88,6 +88,48 @@ const userSchema = new mongoose.Schema({
     default: null
   },
   
+  // Admin-specific fields
+  department: {
+    type: String,
+    required: function() {
+      return this.role === 'admin';
+    },
+    maxlength: [100, 'Department cannot exceed 100 characters']
+  },
+  position: {
+    type: String,
+    required: function() {
+      return this.role === 'admin';
+    },
+    maxlength: [100, 'Position cannot exceed 100 characters']
+  },
+  employeeId: {
+    type: String,
+    required: function() {
+      return this.role === 'admin';
+    },
+    maxlength: [50, 'Employee ID cannot exceed 50 characters'],
+    unique: true,
+    sparse: true // Allows null values while maintaining uniqueness for non-null values
+  },
+  permissions: [{
+    type: String,
+    enum: [
+      'user_management',
+      'doctor_approval',
+      'system_settings',
+      'reports_access',
+      'audit_logs',
+      'data_export',
+      'backup_restore',
+      'security_management'
+    ]
+  }],
+  bio: {
+    type: String,
+    maxlength: [500, 'Bio cannot exceed 500 characters']
+  },
+  
   // Doctor-specific fields
   specialization: {
     type: String,
@@ -255,6 +297,93 @@ const userSchema = new mongoose.Schema({
     }
   }],
   allergies: [String],
+  
+  // User Settings and Preferences
+  settings: {
+    // Notification preferences
+    notifications: {
+      email: { type: Boolean, default: true },
+      sms: { type: Boolean, default: true },
+      appointments: { type: Boolean, default: true },
+      reminders: { type: Boolean, default: true },
+      healthTips: { type: Boolean, default: false },
+      promotional: { type: Boolean, default: false },
+      systemAlerts: { type: Boolean, default: true }
+    },
+    
+    // Privacy settings
+    privacy: {
+      profileVisibility: { 
+        type: String, 
+        enum: ['public', 'doctors-only', 'healthcare-staff', 'patients-only', 'private'], 
+        default: 'doctors-only' 
+      },
+      shareHealthData: { type: Boolean, default: false },
+      allowDataAnalytics: { type: Boolean, default: true },
+      showInDirectory: { type: Boolean, default: false },
+      showContactInfo: { type: Boolean, default: true }
+    },
+    
+    // Communication preferences
+    communication: {
+      preferredMethod: { 
+        type: String, 
+        enum: ['email', 'sms', 'phone', 'app'], 
+        default: 'email' 
+      },
+      allowTelehealth: { type: Boolean, default: true },
+      shareAppointmentHistory: { type: Boolean, default: true },
+      emergencyContactAccess: { type: Boolean, default: true }
+    },
+    
+    // Professional settings (for doctors)
+    professional: {
+      autoConfirmAppointments: { type: Boolean, default: false },
+      allowOnlineConsultations: { type: Boolean, default: true },
+      consultationDuration: { type: Number, default: 30 },
+      maxDailyAppointments: { type: Number, default: 20 },
+      allowPatientReviews: { type: Boolean, default: true },
+      shareAvailability: { type: Boolean, default: true }
+    },
+    
+    // Schedule preferences (for doctors)
+    schedule: {
+      workingDays: [{ 
+        type: String, 
+        enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] 
+      }],
+      defaultStartTime: { type: String, default: '09:00' },
+      defaultEndTime: { type: String, default: '17:00' },
+      breakDuration: { type: Number, default: 60 }
+    },
+    
+    // Health preferences (for patients)
+    health: {
+      reminderFrequency: { 
+        type: String, 
+        enum: ['daily', 'weekly', 'monthly', 'never'], 
+        default: 'daily' 
+      },
+      goalTracking: { type: Boolean, default: true },
+      shareProgressWithDoctor: { type: Boolean, default: true },
+      anonymousDataSharing: { type: Boolean, default: false }
+    },
+    
+    // System settings (for admins)
+    system: {
+      maintenanceMode: { type: Boolean, default: false },
+      allowRegistrations: { type: Boolean, default: true },
+      requireEmailVerification: { type: Boolean, default: true },
+      sessionTimeout: { type: Number, default: 30 },
+      maxLoginAttempts: { type: Number, default: 5 },
+      autoBackupEnabled: { type: Boolean, default: true },
+      backupFrequency: { 
+        type: String, 
+        enum: ['daily', 'weekly', 'monthly'], 
+        default: 'daily' 
+      }
+    }
+  },
   
   // Timestamps and Metadata
   lastLogin: Date,

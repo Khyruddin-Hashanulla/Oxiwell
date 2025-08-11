@@ -364,8 +364,15 @@ export const adminAPI = {
 
 // Admins API endpoints  
 export const adminsAPI = {
-  getAdmin: (id) => api.get(`/admin/profile/${id}`),
+  getAdmin: (id) => api.get(`/admin/users/${id}`),
   updateAdminProfile: (data) => api.put('/admin/profile', data)
+}
+
+// Settings API
+export const settingsAPI = {
+  getUserSettings: () => api.get('/settings'),
+  updateUserSettings: (settings) => api.put('/settings', { settings }),
+  resetUserSettings: () => api.post('/settings/reset')
 }
 
 // Export the main api instance
