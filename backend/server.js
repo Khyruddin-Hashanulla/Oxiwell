@@ -24,6 +24,8 @@ const app = express();
 // CORS configuration - MUST come before helmet()
 const allowedOrigins = [
   process.env.FRONTEND_URL,
+  'https://oxiwell.onrender.com',
+  'https://oxiwell-frontend.onrender.com',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:3000',
