@@ -78,7 +78,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/oxiwell', {
+mongoose.connect(process.env.MONGODB_URL || 'mongodb://localhost:27017/oxiwell', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
