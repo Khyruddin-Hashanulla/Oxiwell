@@ -5,7 +5,7 @@ require('dotenv').config();
 // Connect to MongoDB
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/oxiwell', {
+    const conn = await mongoose.connect(process.env.MONGODB_URL || 'mongodb://localhost:27017/oxiwell', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
@@ -26,7 +26,7 @@ const createAdmin = async () => {
     if (existingAdmin) {
       console.log('⚠️  Admin user already exists!');
       console.log('📧 Email: khyruddin.official@gmail.com');
-      console.log('🔑 Password: K.h@2025');
+      console.log('🔑 Password: K.h@19122002');
       process.exit(0);
     }
 
@@ -35,7 +35,7 @@ const createAdmin = async () => {
       firstName: 'Admin',
       lastName: 'User',
       email: 'khyruddin.official@gmail.com',
-      password: 'K.h@2025', // Will be hashed by User model pre-save middleware
+      password: 'K.h@19122002', // Will be hashed by User model pre-save middleware
       role: 'admin',
       phone: '+917557874889',
       dateOfBirth: new Date('2002-12-19'),
@@ -47,6 +47,10 @@ const createAdmin = async () => {
         zipCode: '700017',
         country: 'INDIA'
       },
+      // Admin-specific required fields
+      employeeId: 'ADM001',
+      position: 'System Administrator',
+      department: 'IT Administration',
       status: 'active',
       isVerified: true
     });
@@ -55,7 +59,7 @@ const createAdmin = async () => {
     
     console.log('✅ Admin user created successfully!');
     console.log('📧 Email: khyruddin.official@gmail.com');
-    console.log('🔑 Password: K.h@2025');
+    console.log('🔑 Password: K.h@19122002');
     console.log('🎯 Role: admin');
     console.log('');
     console.log('You can now login with these credentials and access the admin dashboard.');
