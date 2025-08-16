@@ -250,7 +250,7 @@ const Reports = () => {
           </div>
 
           {/* Filter Buttons */}
-          <div className="flex space-x-2">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             {[
               { key: 'all', label: 'All', count: reports.length },
               { key: 'lab', label: 'Lab Reports', count: reports.filter(r => ['lab-report','blood-test','urine-test','pathology'].includes(r.reportType)).length },
@@ -260,14 +260,14 @@ const Reports = () => {
               <button
                 key={filterOption.key}
                 onClick={() => setFilter(filterOption.key)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                className={`px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base flex-shrink-0 ${
                   filter === filterOption.key
                     ? 'bg-accent-600 text-white shadow-lg'
                     : 'bg-primary-600 text-primary-300 hover:bg-primary-500 hover:text-white'
                 }`}
               >
-                {filterOption.label}
-                <span className="ml-2 text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">
+                <span className="truncate">{filterOption.label}</span>
+                <span className="ml-1 sm:ml-2 text-xs bg-white bg-opacity-20 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full flex-shrink-0">
                   {filterOption.count}
                 </span>
               </button>

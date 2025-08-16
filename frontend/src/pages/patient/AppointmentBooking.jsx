@@ -456,23 +456,25 @@ const AppointmentBooking = () => {
   }
 
   const renderStepIndicator = () => (
-    <div className="flex items-center justify-center mb-8">
-      {[1, 2, 3, 4, 5].map((step) => (
-        <div key={step} className="flex items-center">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold ${
-            step <= currentStep 
-              ? 'bg-primary-500 text-white' 
-              : 'bg-gray-600 text-gray-300'
-          }`}>
-            {step < currentStep ? <CheckCircle className="w-5 h-5" /> : step}
+    <div className="flex items-center justify-center mb-6 sm:mb-8 px-4 overflow-x-auto">
+      <div className="flex items-center min-w-max">
+        {[1, 2, 3, 4, 5].map((step) => (
+          <div key={step} className="flex items-center">
+            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-semibold ${
+              step <= currentStep 
+                ? 'bg-primary-500 text-white' 
+                : 'bg-gray-600 text-gray-300'
+            }`}>
+              {step < currentStep ? <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" /> : step}
+            </div>
+            {step < 5 && (
+              <div className={`w-8 sm:w-12 h-0.5 sm:h-1 mx-1 sm:mx-2 ${
+                step < currentStep ? 'bg-primary-500' : 'bg-gray-200'
+              }`} />
+            )}
           </div>
-          {step < 5 && (
-            <div className={`w-12 h-1 mx-2 ${
-              step < currentStep ? 'bg-primary-500' : 'bg-gray-200'
-            }`} />
-          )}
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   )
 
@@ -485,7 +487,7 @@ const AppointmentBooking = () => {
 
       {/* Filters */}
       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Search</label>
             <div className="relative">
@@ -543,7 +545,7 @@ const AppointmentBooking = () => {
       </div>
 
       {/* Doctors List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
         {isLoading ? (
           <div className="col-span-full text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
@@ -559,34 +561,34 @@ const AppointmentBooking = () => {
             <div
               key={doctor._id}
               onClick={() => handleDoctorSelect(doctor)}
-              className="bg-white/10 backdrop-blur-sm rounded-xl p-6 cursor-pointer hover:bg-white/20 transition-all duration-200 border border-gray-600 hover:border-primary-500"
+              className="bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 cursor-pointer hover:bg-white/20 transition-all duration-200 border border-gray-600 hover:border-primary-500"
             >
-              <div className="flex items-start space-x-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <User className="w-8 h-8 text-white" />
+              <div className="flex items-start space-x-3 sm:space-x-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-primary-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-white">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base sm:text-lg font-semibold text-white truncate">
                     Dr. {doctor.firstName} {doctor.lastName}
                   </h3>
-                  <p className="text-primary-300 text-sm mb-2">{doctor.specialization}</p>
+                  <p className="text-primary-300 text-xs sm:text-sm mb-2 truncate">{doctor.specialization}</p>
                   
-                  <div className="flex items-center space-x-4 text-sm text-gray-300">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0 text-xs sm:text-sm text-gray-300">
                     <div className="flex items-center space-x-1 text-warning-400">
-                      <Star className="w-4 h-4 fill-current" />
+                      <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-current" />
                       <span>{doctor.displayRating?.average?.toFixed(1) || doctor.rating?.average?.toFixed(1) || '4.2'}</span>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <Stethoscope className="w-4 h-4" />
+                      <Stethoscope className="w-3 h-3 sm:w-4 sm:h-4" />
                       <span>{doctor.experience} years</span>
                     </div>
                   </div>
                   
-                  <div className="mt-3">
-                    <p className="text-sm text-gray-300">
+                  <div className="mt-2 sm:mt-3">
+                    <p className="text-xs sm:text-sm text-gray-300">
                       {doctor.workplaces?.length || 0} workplace(s)
                     </p>
-                    <p className="text-sm text-green-400 font-semibold">
+                    <p className="text-xs sm:text-sm text-green-400 font-semibold">
                       From ₹{Math.min(...(doctor.workplaces?.map(wp => wp.consultationFee) || [0]))}
                     </p>
                   </div>
@@ -606,26 +608,26 @@ const AppointmentBooking = () => {
         <p className="text-gray-300">Choose where you'd like to meet Dr. {selectedDoctor?.firstName} {selectedDoctor?.lastName}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {selectedDoctor?.workplaces?.length > 0 ? (
           selectedDoctor.workplaces.map((workplace, index) => (
             <div
               key={index}
               onClick={() => handleHospitalSelect(workplace.hospital)}
-              className="bg-white/10 backdrop-blur-sm rounded-xl p-6 cursor-pointer hover:bg-white/20 transition-all duration-200 border border-gray-600 hover:border-primary-500"
+              className="bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 cursor-pointer hover:bg-white/20 transition-all duration-200 border border-gray-600 hover:border-primary-500"
             >
-              <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center">
-                  <Building2 className="w-6 h-6 text-white" />
+              <div className="flex items-start space-x-3 sm:space-x-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-white mb-2">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base sm:text-lg font-semibold text-white mb-2 truncate">
                     {workplace.hospital?.name || 'Hospital Name Not Available'}
                   </h3>
-                  <div className="space-y-2 text-sm text-gray-300">
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="w-4 h-4" />
-                      <span>
+                  <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-300">
+                    <div className="flex items-start space-x-2">
+                      <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mt-0.5 flex-shrink-0" />
+                      <span className="break-words">
                         {workplace.hospital?.address?.street && workplace.hospital?.address?.city 
                           ? `${workplace.hospital.address.street}, ${workplace.hospital.address.city}`
                           : workplace.hospital?.address?.city || 'Address not available'
@@ -633,16 +635,16 @@ const AppointmentBooking = () => {
                       </span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Phone className="w-4 h-4" />
-                      <span>{workplace.hospital?.phone || 'Phone not available'}</span>
+                      <Phone className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="truncate">{workplace.hospital?.phone || 'Phone not available'}</span>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Star className="w-4 h-4 text-yellow-400" />
+                      <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 flex-shrink-0" />
                       <span>{workplace.hospital?.rating?.average?.toFixed(1) || 'N/A'} rating</span>
                     </div>
                   </div>
-                  <div className="mt-4 pt-4 border-t border-gray-600">
-                    <p className="text-green-400 font-semibold">
+                  <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-600">
+                    <p className="text-green-400 font-semibold text-sm sm:text-base">
                       Consultation Fee: ₹{workplace.consultationFee || 'Not specified'}
                     </p>
                   </div>
@@ -679,7 +681,7 @@ const AppointmentBooking = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-3 sm:gap-4">
         {isLoading ? (
           <div className="col-span-full text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
@@ -708,15 +710,15 @@ const AppointmentBooking = () => {
               <div
                 key={dateInfo.date}
                 onClick={() => handleDateSelect(dateInfo.date)}
-                className={`bg-white/10 backdrop-blur-sm rounded-xl p-4 cursor-pointer hover:bg-white/20 transition-all duration-200 border border-gray-600 hover:border-primary-500 text-center group ${
+                className={`bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 cursor-pointer hover:bg-white/20 transition-all duration-200 border border-gray-600 hover:border-primary-500 text-center group ${
                   selectedDate === dateInfo.date ? 'bg-primary-500/20 border-primary-500' : ''
                 }`}
               >
-                <div className="space-y-2">
-                  <div className="text-2xl font-bold text-white group-hover:text-primary-300 transition-colors">
+                <div className="space-y-1 sm:space-y-2">
+                  <div className="text-xl sm:text-2xl font-bold text-white group-hover:text-primary-300 transition-colors">
                     {date.getDate()}
                   </div>
-                  <div className="text-sm font-medium text-gray-300 capitalize">
+                  <div className="text-xs sm:text-sm font-medium text-gray-300 capitalize">
                     {dateInfo.dayOfWeek}
                   </div>
                   <div className="text-xs text-gray-400">
@@ -756,7 +758,7 @@ const AppointmentBooking = () => {
         <p className="text-gray-300">Choose an available time slot</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6">
         {isLoading ? (
           <div className="col-span-full text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto"></div>
@@ -772,9 +774,9 @@ const AppointmentBooking = () => {
             <div
               key={slot.time}
               onClick={() => handleTimeSelect(slot.time)}
-              className="bg-white/10 backdrop-blur-sm rounded-xl p-4 cursor-pointer hover:bg-white/20 transition-all duration-200 border border-gray-600 hover:border-primary-500 text-center"
+              className="bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 cursor-pointer hover:bg-white/20 transition-all duration-200 border border-gray-600 hover:border-primary-500 text-center"
             >
-              <div className="text-white font-semibold">
+              <div className="text-white font-semibold text-sm sm:text-base">
                 {formatTime(slot.time)}
               </div>
               <div className="text-xs text-success-400 mt-1">
@@ -800,28 +802,28 @@ const AppointmentBooking = () => {
         </div>
 
         {/* Appointment Summary */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-gray-600">
-          <h3 className="text-lg font-semibold text-white mb-4">Appointment Summary</h3>
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-gray-600">
+          <h3 className="text-base sm:text-lg font-semibold text-white mb-4">Appointment Summary</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <div className="space-y-3">
-              <div className="flex items-center space-x-3">
-                <User className="w-5 h-5 text-primary-400" />
-                <div>
-                  <p className="text-gray-300 text-sm">Doctor</p>
-                  <p className="text-white font-semibold">
+              <div className="flex items-start space-x-3">
+                <User className="w-4 h-4 sm:w-5 sm:h-5 text-primary-400 mt-1 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-gray-300 text-xs sm:text-sm">Doctor</p>
+                  <p className="text-white font-semibold text-sm sm:text-base truncate">
                     Dr. {selectedDoctor.firstName} {selectedDoctor.lastName}
                   </p>
-                  <p className="text-primary-300 text-sm">{selectedDoctor.specialization}</p>
+                  <p className="text-primary-300 text-xs sm:text-sm truncate">{selectedDoctor.specialization}</p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3">
-                <MapPin className="w-5 h-5 text-primary-400" />
-                <div>
-                  <p className="text-gray-300 text-sm">Hospital</p>
-                  <p className="text-white font-semibold">{selectedHospital.name}</p>
-                  <p className="text-gray-300 text-sm">
+              <div className="flex items-start space-x-3">
+                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-primary-400 mt-1 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-gray-300 text-xs sm:text-sm">Hospital</p>
+                  <p className="text-white font-semibold text-sm sm:text-base truncate">{selectedHospital.name}</p>
+                  <p className="text-gray-300 text-xs sm:text-sm break-words">
                     {selectedHospital.address?.street}, {selectedHospital.address?.city}
                   </p>
                 </div>
@@ -829,11 +831,11 @@ const AppointmentBooking = () => {
             </div>
 
             <div className="space-y-3">
-              <div className="flex items-center space-x-3">
-                <Calendar className="w-5 h-5 text-primary-400" />
-                <div>
-                  <p className="text-gray-300 text-sm">Date & Time</p>
-                  <p className="text-white font-semibold">
+              <div className="flex items-start space-x-3">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-primary-400 mt-1 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-gray-300 text-xs sm:text-sm">Date & Time</p>
+                  <p className="text-white font-semibold text-sm sm:text-base">
                     {new Date(selectedDate).toLocaleDateString('en-US', {
                       weekday: 'long',
                       year: 'numeric',
@@ -841,17 +843,17 @@ const AppointmentBooking = () => {
                       day: 'numeric'
                     })}
                   </p>
-                  <p className="text-primary-300 text-sm">
+                  <p className="text-primary-300 text-xs sm:text-sm">
                     {formatTime(selectedTime)}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3">
-                <CreditCard className="w-5 h-5 text-primary-400" />
-                <div>
-                  <p className="text-gray-300 text-sm">Consultation Fee</p>
-                  <p className="text-success-400 font-semibold text-lg">₹{consultationFee}</p>
+              <div className="flex items-start space-x-3">
+                <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary-400 mt-1 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-gray-300 text-xs sm:text-sm">Consultation Fee</p>
+                  <p className="text-success-400 font-semibold text-base sm:text-lg">₹{consultationFee}</p>
                 </div>
               </div>
             </div>
@@ -859,19 +861,19 @@ const AppointmentBooking = () => {
         </div>
 
         {/* Booking Form */}
-        <form onSubmit={handleBookingSubmit} className="space-y-6">
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-gray-600">
-            <h3 className="text-lg font-semibold text-white mb-4">Additional Information</h3>
+        <form onSubmit={handleBookingSubmit} className="space-y-4 sm:space-y-6">
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-gray-600">
+            <h3 className="text-base sm:text-lg font-semibold text-white mb-4">Additional Information</h3>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">
                   Reason for Visit *
                 </label>
                 <select
                   value={bookingData.reason}
                   onChange={(e) => setBookingData(prev => ({ ...prev, reason: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/10 border border-gray-600 rounded-lg text-white text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-primary-500"
                   required
                 >
                   <option value="" className="bg-gray-800 text-gray-300">Select reason for visit</option>
@@ -893,14 +895,14 @@ const AppointmentBooking = () => {
                     placeholder="Please specify your reason"
                     value={bookingData.customReason || ''}
                     onChange={(e) => setBookingData(prev => ({ ...prev, customReason: e.target.value }))}
-                    className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 mt-2"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-primary-500 mt-2"
                     required
                   />
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">
                   Symptoms (Optional)
                 </label>
                 <input
@@ -910,20 +912,20 @@ const AppointmentBooking = () => {
                     ...prev, 
                     symptoms: e.target.value.split(',').map(s => s.trim()).filter(s => s)
                   }))}
-                  className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="Fever, headache, cough (separate with commas)"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">
                   Additional Notes (Optional)
                 </label>
                 <textarea
                   value={bookingData.notes}
                   onChange={(e) => setBookingData(prev => ({ ...prev, notes: e.target.value }))}
                   rows={3}
-                  className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/10 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
                   placeholder="Any additional information you'd like to share with the doctor"
                 />
               </div>
@@ -931,11 +933,11 @@ const AppointmentBooking = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-between">
+          <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0">
             <button
               type="button"
               onClick={goBack}
-              className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors duration-200 flex items-center space-x-2"
+              className="px-4 sm:px-6 py-2 sm:py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors duration-200 flex items-center justify-center space-x-2 text-sm sm:text-base"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back</span>
@@ -944,7 +946,7 @@ const AppointmentBooking = () => {
             <button
               type="submit"
               disabled={isLoading || !bookingData.reason.trim() || (bookingData.reason === 'Other' && !bookingData.customReason.trim())}
-              className="px-8 py-3 bg-gradient-to-r from-success-500 to-primary-600 text-white rounded-lg hover:from-success-600 hover:to-primary-700 transition-all duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 sm:px-8 py-2 sm:py-3 bg-gradient-to-r from-success-500 to-primary-600 text-white rounded-lg hover:from-success-600 hover:to-primary-700 transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             >
               {isLoading ? (
                 <>
@@ -999,25 +1001,25 @@ const AppointmentBooking = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900 p-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4 sm:gap-0">
           <button
             onClick={goBack}
-            className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors duration-200"
+            className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors duration-200 text-sm sm:text-base"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>Back</span>
           </button>
           
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-white">Book Appointment</h1>
+          <div className="text-center flex-1 sm:flex-none">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">Book Appointment</h1>
             {rescheduleId && (
-              <p className="text-primary-300 text-sm mt-1">Rescheduling appointment</p>
+              <p className="text-primary-300 text-xs sm:text-sm mt-1">Rescheduling appointment</p>
             )}
           </div>
           
           <button
             onClick={resetBooking}
-            className="text-gray-300 hover:text-white transition-colors duration-200 text-sm"
+            className="text-gray-300 hover:text-white transition-colors duration-200 text-xs sm:text-sm"
           >
             Start Over
           </button>
@@ -1027,7 +1029,7 @@ const AppointmentBooking = () => {
         {renderStepIndicator()}
 
         {/* Step Content */}
-        <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-gray-700">
+        <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 sm:p-6 lg:p-8 border border-gray-700">
           {currentStep === 1 && renderStep1()}
           {currentStep === 2 && renderStep2()}
           {currentStep === 3 && renderStep3()}

@@ -631,7 +631,7 @@ Notes: ${prescription.generalInstructions || prescription.notes || 'No additiona
           </div>
 
           {/* Filter Buttons */}
-          <div className="flex space-x-2">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             {[
               { key: 'all', label: 'All', count: prescriptions.length },
               { key: 'active', label: 'Active', count: prescriptions.filter(p => p.status === 'active').length },
@@ -641,14 +641,14 @@ Notes: ${prescription.generalInstructions || prescription.notes || 'No additiona
               <button
                 key={filterOption.key}
                 onClick={() => setFilter(filterOption.key)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                className={`px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base flex-shrink-0 ${
                   filter === filterOption.key
                     ? 'bg-accent-600 text-white shadow-lg'
                     : 'bg-primary-600 text-primary-300 hover:bg-primary-500 hover:text-white'
                 }`}
               >
-                {filterOption.label}
-                <span className="ml-2 text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">
+                <span className="truncate">{filterOption.label}</span>
+                <span className="ml-1 sm:ml-2 text-xs bg-white bg-opacity-20 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full flex-shrink-0">
                   {filterOption.count}
                 </span>
               </button>
@@ -658,54 +658,54 @@ Notes: ${prescription.generalInstructions || prescription.notes || 'No additiona
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-4 md:p-6 border border-primary-600 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-primary-300 text-sm font-medium">Total Medications</p>
-              <p className="text-3xl font-bold text-white mt-2">
+              <p className="text-primary-300 text-xs md:text-sm font-medium">Total Medications</p>
+              <p className="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">
                 {prescriptions.reduce((sum, p) => sum + (p.medications?.length || 0), 0)}
               </p>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <Clock className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <Clock className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg">
+        <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-4 md:p-6 border border-primary-600 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-primary-300 text-sm font-medium">Active Medications</p>
-              <p className="text-3xl font-bold text-white mt-2">
+              <p className="text-primary-300 text-xs md:text-sm font-medium">Active Medications</p>
+              <p className="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">
                 {prescriptions.filter(p => p.status === 'active').length}
               </p>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg">
+        <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-4 md:p-6 border border-primary-600 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-primary-300 text-sm font-medium">Refills Available</p>
-              <p className="text-3xl font-bold text-white mt-2">
+              <p className="text-primary-300 text-xs md:text-sm font-medium">Refills Available</p>
+              <p className="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">
                 {prescriptions.reduce((sum, p) => sum + (p.refillsRemaining || 0), 0)}
               </p>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <Clock className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <Clock className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg">
+        <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-4 md:p-6 border border-primary-600 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-primary-300 text-sm font-medium">Expiring Soon</p>
-              <p className="text-3xl font-bold text-white mt-2">
+              <p className="text-primary-300 text-xs md:text-sm font-medium">Expiring Soon</p>
+              <p className="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">
                 {prescriptions.filter(p => {
                   if (!p.validUntil) return false;
                   const validUntil = new Date(p.validUntil);
@@ -716,8 +716,8 @@ Notes: ${prescription.generalInstructions || prescription.notes || 'No additiona
                 }).length}
               </p>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-              <AlertTriangle className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
           </div>
         </div>
@@ -888,18 +888,18 @@ Notes: ${prescription.generalInstructions || prescription.notes || 'No additiona
                 </div>
 
                 {/* Action Buttons */}
-                <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-col space-y-2 lg:w-32">
+                <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-row lg:flex-col gap-2 lg:w-40">
                   {prescription.status === 'active' && prescription.refillsRemaining > 0 && (
-                    <button className="px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors text-sm font-medium">
+                    <button className="flex-1 lg:flex-none px-3 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors text-sm font-medium">
                       Request Refill
                     </button>
                   )}
-                  <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium" onClick={() => handleDownloadPrescription(prescription)}>
+                  <button className="flex-1 lg:flex-none px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium" onClick={() => handleDownloadPrescription(prescription)}>
                     Download
                   </button>
                   {prescription.status === 'active' && (
                     <button 
-                      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-colors text-sm font-medium"
+                      className="flex-1 lg:flex-none px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-colors text-sm font-medium"
                       onClick={() => handleSetReminder(prescription)}
                     >
                       Set Reminder

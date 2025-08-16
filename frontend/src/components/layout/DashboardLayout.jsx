@@ -234,7 +234,7 @@ const DashboardLayout = () => {
 
           {/* Mobile Navigation */}
           {isMobileMenuOpen && (
-            <div className="md:hidden border-t border-gray-700 py-4">
+            <div className="md:hidden border-t border-gray-700 py-4 relative z-50">
               <nav className="space-y-2">
                 {navigationItems.map((item) => {
                   const IconComponent = item.icon
@@ -242,7 +242,7 @@ const DashboardLayout = () => {
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`${getMobileLinkClasses(item.href)} flex items-center space-x-3`}
+                      className={`${getMobileLinkClasses(item.href)} flex items-center space-x-3 cursor-pointer`}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       {IconComponent && <IconComponent className="h-4 w-4" />}

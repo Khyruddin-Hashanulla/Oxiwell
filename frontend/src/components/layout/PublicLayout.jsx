@@ -3,6 +3,12 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Heart, Menu, X, LayoutDashboard, User, Settings, LogOut, ChevronDown } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
+const navigationItems = [
+  { name: 'Home', href: '/' },
+  { name: 'About', href: '/about' },
+  { name: 'Contact', href: '/contact' }
+]
+
 const PublicLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
@@ -202,7 +208,7 @@ const PublicLayout = () => {
 
           {/* Mobile Navigation */}
           {isMobileMenuOpen && (
-            <div className="md:hidden border-t border-primary-600 py-4">
+            <div className="md:hidden border-t border-primary-600 py-4 relative z-50">
               <nav className="space-y-2">
                 {navigationItems.map((item) => (
                   <Link
@@ -259,8 +265,11 @@ const PublicLayout = () => {
                       Settings
                     </Link>
                     <button
-                      onClick={handleLogout}
-                      className="block px-3 py-2 rounded-md text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-900"
+                      onClick={() => {
+                        handleLogout()
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className="block w-full text-left px-3 py-2 rounded-md text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-900"
                     >
                       Logout
                     </button>
@@ -365,11 +374,5 @@ const PublicLayout = () => {
     </div>
   )
 }
-
-const navigationItems = [
-  { name: 'Home', href: '/' },
-  { name: 'About', href: '/about' },
-  { name: 'Contact', href: '/contact' }
-]
 
 export default PublicLayout

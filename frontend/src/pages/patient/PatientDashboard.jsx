@@ -248,39 +248,39 @@ const PatientDashboard = () => {
           )}
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg hover:shadow-xl transition-all duration-300">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-4 md:p-6 border border-primary-600 shadow-lg hover:shadow-xl transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-300 text-sm font-medium">Upcoming Appointments</p>
-                  <p className="text-3xl font-bold text-white mt-2">{stats.upcomingAppointments}</p>
+                  <p className="text-gray-300 text-xs md:text-sm font-medium">Upcoming Appointments</p>
+                  <p className="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">{stats.upcomingAppointments}</p>
                 </div>
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <Calendar className="w-5 h-5 md:w-6 md:h-6 text-white" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-4 md:p-6 border border-primary-600 shadow-lg hover:shadow-xl transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-300 text-sm font-medium">Active Prescriptions</p>
-                  <p className="text-3xl font-bold text-white mt-2">{stats.activePrescriptions}</p>
+                  <p className="text-gray-300 text-xs md:text-sm font-medium">Active Prescriptions</p>
+                  <p className="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">{stats.activePrescriptions}</p>
                 </div>
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-                  <Pill className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                  <Pill className="w-5 h-5 md:w-6 md:h-6 text-white" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-4 md:p-6 border border-primary-600 shadow-lg hover:shadow-xl transition-all duration-300 sm:col-span-2 md:col-span-1">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-300 text-sm font-medium">Recent Reports</p>
-                  <p className="text-3xl font-bold text-white mt-2">{stats.recentReports}</p>
+                  <p className="text-gray-300 text-xs md:text-sm font-medium">Recent Reports</p>
+                  <p className="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">{stats.recentReports}</p>
                 </div>
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <FileText className="w-5 h-5 md:w-6 md:h-6 text-white" />
                 </div>
               </div>
             </div>
@@ -289,22 +289,22 @@ const PatientDashboard = () => {
           {/* Quick Actions */}
           <div>
             <h2 className="text-2xl font-bold text-white mb-6">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
               {quickActions.map((action, index) => {
                 const IconComponent = action.icon
                 return (
                   <Link
                     key={index}
                     to={action.link}
-                    className={`${action.color} rounded-xl p-6 text-white hover:shadow-xl transition-all duration-300 transform hover:scale-105 group`}
+                    className={`${action.color} rounded-xl p-4 md:p-6 text-white hover:shadow-xl transition-all duration-300 transform hover:scale-105 group`}
                   >
-                    <div className="flex flex-col items-center text-center space-y-4">
-                      <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center group-hover:bg-opacity-30 transition-all">
-                        <IconComponent className="w-6 h-6" />
+                    <div className="flex flex-col items-center text-center space-y-3 md:space-y-4">
+                      <div className="w-10 h-10 md:w-12 md:h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center group-hover:bg-opacity-30 transition-all">
+                        <IconComponent className="w-5 h-5 md:w-6 md:h-6" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-lg mb-2">{action.title}</h3>
-                        <p className="text-sm opacity-90">{action.description}</p>
+                        <h3 className="font-semibold text-sm md:text-lg mb-1 md:mb-2">{action.title}</h3>
+                        <p className="text-xs md:text-sm opacity-90">{action.description}</p>
                       </div>
                     </div>
                   </Link>

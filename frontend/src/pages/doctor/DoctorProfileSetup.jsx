@@ -1163,12 +1163,12 @@ const DoctorProfileSetup = () => {
                             }
                             
                             return (
-                              <div key={day} className={`flex items-center space-x-4 p-4 rounded-lg border transition-all duration-300 ${
+                              <div key={day} className={`flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 p-4 rounded-lg border transition-all duration-300 ${
                                 daySlot.isAvailable 
                                   ? 'bg-accent-500/10 border-accent-500/30' 
                                   : 'bg-white/5 border-primary-500/30'
                               }`}>
-                                <div className="flex items-center min-w-[140px]">
+                                <div className="flex items-center min-w-[140px] sm:min-w-[140px]">
                                   <label className="relative inline-flex items-center cursor-pointer">
                                     <input
                                       type="checkbox"
@@ -1208,7 +1208,7 @@ const DoctorProfileSetup = () => {
                                 </div>
                                 
                                 {daySlot.isAvailable && (
-                                  <div className="flex items-center space-x-3 flex-1 animate-fadeIn">
+                                  <div className="flex items-center space-x-2 w-full sm:flex-1 animate-fadeIn">
                                     <input
                                       type="time"
                                       value={daySlot.startTime}
@@ -1224,9 +1224,9 @@ const DoctorProfileSetup = () => {
                                         
                                         handleArrayNestedInputChange('workplaces', index, 'availableSlots', newSlots)
                                       }}
-                                      className="px-3 py-2 border border-accent-500/50 rounded-lg bg-white/10 text-white text-sm focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
+                                      className="flex-1 px-2 py-2 border border-accent-500/50 rounded-lg bg-white/10 text-white text-sm focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
                                     />
-                                    <span className="text-accent-300 text-sm">to</span>
+                                    <span className="text-accent-300 text-sm flex-shrink-0 px-1">to</span>
                                     <input
                                       type="time"
                                       value={daySlot.endTime}
@@ -1242,7 +1242,7 @@ const DoctorProfileSetup = () => {
                                         
                                         handleArrayNestedInputChange('workplaces', index, 'availableSlots', newSlots)
                                       }}
-                                      className="px-3 py-2 border border-accent-500/50 rounded-lg bg-white/10 text-white text-sm focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
+                                      className="flex-1 px-2 py-2 border border-accent-500/50 rounded-lg bg-white/10 text-white text-sm focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-colors"
                                     />
                                   </div>
                                 )}

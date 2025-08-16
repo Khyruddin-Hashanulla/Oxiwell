@@ -19,12 +19,7 @@ const Login = () => {
     register,
     handleSubmit,
     formState: { errors, isSubmitting }
-  } = useForm({
-    defaultValues: {
-      email: 'patient@oxiwell.com',
-      password: 'password123'
-    }
-  })
+  } = useForm()
 
   const onSubmit = async (data) => {
     console.log('Attempting login with:', data);
@@ -103,8 +98,8 @@ const Login = () => {
                 Email Address
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                  <Mail className="h-5 w-5 text-white/70" />
                 </div>
                 <input
                   id="email"
@@ -143,8 +138,8 @@ const Login = () => {
                 Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
+                  <Lock className="h-5 w-5 text-white/70" />
                 </div>
                 <input
                   id="password"
@@ -164,7 +159,7 @@ const Login = () => {
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-300 transition-colors"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-300 transition-colors z-10"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
