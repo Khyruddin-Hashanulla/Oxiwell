@@ -1,0 +1,14 @@
+{
+  "name": "oxiwell",
+  "version": "1.0.0",
+  "description": "Oxiwell Health Center Management System",
+  "scripts": {
+    "install": "cd backend && npm install",
+    "build": "cd backend && npm run build",
+    "start": "cd backend && npm start",
+    "dev": "cd backend && npm run dev"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
