@@ -14,7 +14,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: process.env.VITE_API_URL || 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
       },
@@ -22,6 +22,22 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    sourcemap: false, // Disable sourcemaps in production for smaller bundle
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          ui: ['lucide-react', 'framer-motion'],
+          forms: ['react-hook-form', 'react-select'],
+          utils: ['axios', 'date-fns', 'js-cookie']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000
   },
+  preview: {
+    port: 4173,
+    host: true
+  }
 })
