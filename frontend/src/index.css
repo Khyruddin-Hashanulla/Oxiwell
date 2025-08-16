@@ -74,7 +74,7 @@
   }
   
   .card {
-    @apply bg-white rounded-xl shadow-soft border border-gray-200 overflow-hidden;
+    @apply bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden;
   }
   
   .card-header {

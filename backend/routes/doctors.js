@@ -7,6 +7,8 @@ const {
   getDoctorStats,
   updateDoctorProfile,
   getDoctorPatients,
+  getPatientDetails,
+  getPatientPrescriptions,
   getPatientHistory,
   getDoctorSchedule,
   completeProfileSetup,
@@ -94,6 +96,8 @@ router.get('/profile-setup/required', requireDoctor, checkProfileSetupRequired);
 router.post('/profile-setup', requireDoctor, upload.single('profileImage'), completeProfileSetup);
 router.put('/profile', requireDoctor, upload.single('profileImage'), updateProfileValidation, updateDoctorProfile);
 router.get('/patients', requireDoctor, getDoctorPatients);
+router.get('/patients/:patientId', requireDoctor, getPatientDetails);
+router.get('/patients/:patientId/prescriptions', requireDoctor, getPatientPrescriptions);
 router.get('/patients/:patientId/history', requireDoctor, getPatientHistory);
 router.get('/schedule', requireDoctor, getDoctorSchedule);
 

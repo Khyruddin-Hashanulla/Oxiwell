@@ -104,7 +104,7 @@ const getDoctor = asyncHandler(async (req, res, next) => {
           availableSlots: (workplace.availableSlots || []).map((slot, slotIndex) => {
             const originalAvailable = slot.isAvailable;
             const normalizedAvailable = Boolean(slot.isAvailable);
-            console.log(`🔧 Slot ${slotIndex + 1} (${slot.day}): ${originalAvailable} -> ${normalizedAvailable}`);
+            console.log(`🔧 Slot ${slotIndex + 1}: ${slot.day} - Available: ${originalAvailable} -> ${normalizedAvailable}`);
             
             return {
               ...slot.toObject(),
@@ -414,8 +414,6 @@ const updateDoctorProfile = asyncHandler(async (req, res, next) => {
     gender,
     dateOfBirth,
     specialization,
-    // Fix: Convert empty licenseNumber to null to prevent duplicate key errors on unique sparse index
-    licenseNumber: licenseNumber?.trim() || null,
     medicalRegistrationNumber: medicalRegistrationNumber?.trim(),
     // Fix: Keep experience as string to preserve ranges like "0-2"
     experience: experience?.trim(),
@@ -429,6 +427,11 @@ const updateDoctorProfile = asyncHandler(async (req, res, next) => {
     address: parsedAddress,
     qualifications: parsedQualifications,
     workplaces: []
+  }
+
+  // Only add licenseNumber if it has a value to avoid duplicate key errors on sparse unique index
+  if (licenseNumber?.trim()) {
+    updateData.licenseNumber = licenseNumber.trim();
   }
 
   // Ensure critical fields have default values if missing (but don't override real data)
@@ -702,8 +705,21 @@ const getDoctorPatients = asyncHandler(async (req, res, next) => {
         doctor: req.user._id
       }).sort({ appointmentDate: -1 });
 
+      // Get appointment and prescription counts for this patient
+      const appointmentCount = await Appointment.countDocuments({
+        patient: patient._id,
+        doctor: req.user._id
+      });
+
+      const prescriptionCount = await Prescription.countDocuments({
+        patient: patient._id,
+        doctor: req.user._id
+      });
+
       return {
         ...patient.toObject(),
+        appointmentCount,
+        prescriptionCount,
         lastAppointment: lastAppointment ? {
           date: lastAppointment.appointmentDate,
           reason: lastAppointment.reason,
@@ -734,51 +750,129 @@ const getDoctorPatients = asyncHandler(async (req, res, next) => {
 const getPatientHistory = asyncHandler(async (req, res, next) => {
   const { patientId } = req.params;
 
-  // Verify that the doctor has treated this patient
-  const hasAppointment = await Appointment.findOne({
-    patient: patientId,
-    doctor: req.user._id,
-    status: { $in: ['completed', 'confirmed'] }
-  });
+  console.log('🔍 Getting patient history for:', { patientId, doctorId: req.user._id });
 
-  if (!hasAppointment) {
-    return res.status(403).json({
-      status: 'error',
-      message: 'You are not authorized to view this patient\'s history'
-    });
-  }
-
-  // Get patient details
-  const patient = await User.findById(patientId)
-    .select('firstName lastName email phone dateOfBirth bloodGroup allergies medicalHistory emergencyContact');
-
-  if (!patient) {
-    return res.status(404).json({
-      status: 'error',
-      message: 'Patient not found'
-    });
-  }
-
-  // Get appointments history
-  const appointments = await Appointment.find({
-    patient: patientId,
-    doctor: req.user._id
-  }).sort({ appointmentDate: -1 });
-
-  // Get prescriptions
-  const prescriptions = await Prescription.find({
-    patient: patientId,
-    doctor: req.user._id
-  }).sort({ createdAt: -1 });
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      patient,
-      appointments,
-      prescriptions
+  try {
+    // Validate patientId
+    if (!mongoose.Types.ObjectId.isValid(patientId)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid patient ID'
+      });
     }
-  });
+
+    // Verify that the doctor has treated this patient
+    const hasAppointment = await Appointment.findOne({
+      patient: patientId,
+      doctor: req.user._id,
+      status: { $in: ['completed', 'confirmed'] }
+    });
+
+    if (!hasAppointment) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'You are not authorized to view this patient\'s history'
+      });
+    }
+
+    // Get patient details
+    const patient = await User.findById(patientId)
+      .select('firstName lastName email phone dateOfBirth bloodGroup allergies medicalHistory emergencyContact');
+
+    if (!patient) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Patient not found'
+      });
+    }
+
+    // Get appointments history
+    const appointments = await Appointment.find({
+      patient: patientId,
+      doctor: req.user._id
+    }).sort({ appointmentDate: -1 });
+
+    // Get prescriptions
+    const prescriptions = await Prescription.find({
+      patient: patientId,
+      doctor: req.user._id
+    }).sort({ createdAt: -1 });
+
+    console.log('✅ Patient history fetched:', { 
+      patientId, 
+      appointmentsCount: appointments.length, 
+      prescriptionsCount: prescriptions.length 
+    });
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        patient,
+        appointments,
+        prescriptions
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error in getPatientHistory:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch patient history'
+    });
+  }
+});
+
+// @desc    Get patient prescriptions for doctor
+// @route   GET /api/doctors/patients/:patientId/prescriptions
+// @access  Private (Doctor only)
+const getPatientPrescriptions = asyncHandler(async (req, res, next) => {
+  const { patientId } = req.params;
+  const doctorId = req.user._id;
+
+  // Validate patientId
+  if (!mongoose.Types.ObjectId.isValid(patientId)) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Invalid patient ID'
+    });
+  }
+
+  try {
+    // Check if doctor has treated this patient (has appointments)
+    const hasAppointments = await Appointment.exists({
+      patient: patientId,
+      doctor: doctorId
+    });
+
+    if (!hasAppointments) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Access denied. No treatment history with this patient.'
+      });
+    }
+
+    // Get prescriptions for this patient from this doctor
+    const prescriptions = await Prescription.find({
+      patient: patientId,
+      doctor: doctorId
+    })
+    .populate('patient', 'firstName lastName email phone')
+    .populate('doctor', 'firstName lastName specialization')
+    .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      status: 'success',
+      count: prescriptions.length,
+      data: {
+        prescriptions
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error fetching patient prescriptions:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch patient prescriptions'
+    });
+  }
 });
 
 // @desc    Get doctor's schedule
@@ -886,12 +980,117 @@ const checkProfileSetupRequired = asyncHandler(async (req, res, next) => {
   });
 });
 
+// @desc    Get patient details for doctor
+// @route   GET /api/doctors/patients/:patientId
+// @access  Private (Doctor only)
+const getPatientDetails = asyncHandler(async (req, res, next) => {
+  const { patientId } = req.params;
+  const doctorId = req.user._id;
+
+  // Validate patientId
+  if (!mongoose.Types.ObjectId.isValid(patientId)) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Invalid patient ID'
+    });
+  }
+
+  try {
+    // Find the patient and ensure they have appointments with this doctor
+    const patient = await User.findOne({
+      _id: patientId,
+      role: 'patient'
+    }).select('-password -refreshToken');
+
+    if (!patient) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Patient not found'
+      });
+    }
+
+    // Check if doctor has treated this patient (has appointments)
+    const hasAppointments = await Appointment.exists({
+      patient: patientId,
+      doctor: doctorId
+    });
+
+    if (!hasAppointments) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'Access denied. No treatment history with this patient.'
+      });
+    }
+
+    console.log('🔍 Querying appointments for:', { patient: patientId, doctor: doctorId });
+    const appointmentCount = await Appointment.countDocuments({
+      patient: patientId,
+      doctor: doctorId
+    });
+    console.log('📊 Appointment count:', appointmentCount);
+
+    console.log('🔍 Querying prescriptions for:', { patient: patientId, doctor: doctorId });
+    const prescriptionCount = await Prescription.countDocuments({
+      patient: patientId,
+      doctor: doctorId
+    });
+    console.log('📊 Prescription count:', prescriptionCount);
+
+    // Debug: Let's also check what appointments exist for this patient
+    const allPatientAppointments = await Appointment.find({ patient: patientId }).select('doctor patient status appointmentDate');
+    console.log('🔍 All appointments for patient:', allPatientAppointments);
+
+    // Debug: Let's also check what prescriptions exist for this patient
+    const allPatientPrescriptions = await Prescription.find({ patient: patientId }).select('doctor patient status createdAt');
+    console.log('🔍 All prescriptions for patient:', allPatientPrescriptions);
+
+    // Get patient's appointment count with this doctor
+    // const appointmentCount = await Appointment.countDocuments({
+    //   patient: patientId,
+    //   doctor: doctorId
+    // });
+
+    // Get patient's prescription count with this doctor
+    // const prescriptionCount = await Prescription.countDocuments({
+    //   patient: patientId,
+    //   doctor: doctorId
+    // });
+
+    // Add computed fields
+    const patientData = {
+      ...patient.toObject(),
+      appointmentCount,
+      prescriptionCount,
+      lastVisit: await Appointment.findOne({
+        patient: patientId,
+        doctor: doctorId,
+        status: 'completed'
+      }).sort({ appointmentDate: -1 }).select('appointmentDate')
+    };
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        patient: patientData
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error fetching patient details:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch patient details'
+    });
+  }
+});
+
 module.exports = {
   getDoctors,
   getDoctor,
   getDoctorStats,
   updateDoctorProfile,
   getDoctorPatients,
+  getPatientDetails,
+  getPatientPrescriptions,
   getPatientHistory,
   getDoctorSchedule,
   completeProfileSetup,

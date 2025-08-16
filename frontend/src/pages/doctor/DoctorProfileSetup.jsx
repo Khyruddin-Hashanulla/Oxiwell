@@ -97,7 +97,16 @@ const DoctorProfileSetup = () => {
 
   // Load existing doctor data on component mount
   useEffect(() => {
+    let isMounted = true
+    let hasLoadedData = false
+
     const loadDoctorData = async () => {
+      // Prevent duplicate calls
+      if (hasLoadedData || !isMounted) {
+        console.log('⏭️ Skipping duplicate data load call')
+        return
+      }
+
       try {
         setDataLoading(true)
         
@@ -114,24 +123,30 @@ const DoctorProfileSetup = () => {
           return
         }
 
+        // Mark as loading to prevent duplicate calls
+        hasLoadedData = true
+
         // Add a small delay to ensure token is properly set
         await new Promise(resolve => setTimeout(resolve, 500))
 
         console.log('Loading doctor data for user:', user._id)
         const response = await doctorsAPI.getDoctor(user._id)
         
-        console.log(' Full API response:', response)
-        console.log(' Response status:', response?.status)
-        console.log(' Response data:', response?.data)
-        console.log(' Doctor data:', response?.data?.data?.doctor)
-        console.log(' Response data keys:', response?.data ? Object.keys(response.data) : 'No data')
-        console.log(' Response data structure:', JSON.stringify(response?.data, null, 2))
+        // Check if component is still mounted before updating state
+        if (!isMounted) return
+
+        console.log('🔍 Full API response:', response)
+        console.log('📊 Response status:', response?.status)
+        console.log('📋 Response data:', response?.data)
+        console.log('👨‍⚕️ Doctor data:', response?.data?.data?.doctor)
+        console.log('🔑 Response data keys:', response?.data ? Object.keys(response.data) : 'No data')
+        console.log('🏗️ Response data structure:', JSON.stringify(response?.data, null, 2))
         
         // Check if response and data exist
         const doctorData = response?.data?.data?.doctor
         if (!doctorData) {
-          console.error(' No doctor data received from API')
-          console.error(' Response structure:', {
+          console.error('❌ No doctor data received from API')
+          console.error('🔍 Response structure:', {
             hasResponse: !!response,
             hasData: !!response?.data,
             hasNestedData: !!response?.data?.data,
@@ -141,8 +156,8 @@ const DoctorProfileSetup = () => {
           })
           
           // Try to use fallback data from auth context
-          if (user) {
-            console.log(' Using fallback data from auth context:', user)
+          if (user && isMounted) {
+            console.log('🔄 Using fallback data from auth context:', user)
             const fallbackData = {
               firstName: user.firstName || '',
               lastName: user.lastName || '',
@@ -166,83 +181,47 @@ const DoctorProfileSetup = () => {
               address: user.address || {}
             }
             
-            setFormData(fallbackData)
-            toast.success('Profile data loaded from session')
-          } else {
-            toast.error('Failed to load profile data - no data available')
+            setFormData(prev => ({ ...prev, ...fallbackData }))
+            console.log('✅ Form data updated with fallback information')
+          }
+        } else {
+          // Update form with doctor data
+          const updatedFormData = {
+            firstName: doctorData.firstName || '',
+            lastName: doctorData.lastName || '',
+            email: doctorData.email || '',
+            phone: doctorData.phone || '',
+            gender: doctorData.gender || '',
+            dateOfBirth: doctorData.dateOfBirth || '',
+            specialization: doctorData.specialization || '',
+            licenseNumber: doctorData.licenseNumber || '',
+            medicalRegistrationNumber: doctorData.medicalRegistrationNumber || '',
+            experience: doctorData.experience || '',
+            qualifications: doctorData.qualifications || [{ degree: '', institution: '', year: '' }],
+            professionalBio: doctorData.professionalBio || '',
+            profileImage: doctorData.profileImage || '',
+            languages: doctorData.languages || [],
+            servicesProvided: doctorData.servicesProvided || [],
+            onlineConsultationAvailable: doctorData.onlineConsultationAvailable || false,
+            offlineConsultationAvailable: doctorData.offlineConsultationAvailable !== false,
+            workplaces: doctorData.workplaces || [],
+            emergencyContact: doctorData.emergencyContact || {},
+            address: doctorData.address || {}
           }
           
-          setDataLoading(false)
-          return
-        }
-
-        console.log('✅ Doctor data loaded successfully:', doctorData)
-        
-        // Debug: Log specific field values to identify the issue
-        console.log('🔍 Field mapping debug:')
-        console.log('licenseNumber from backend:', doctorData.licenseNumber)
-        console.log('medicalRegistrationNumber from backend:', doctorData.medicalRegistrationNumber)
-        console.log('experience from backend:', doctorData.experience)
-        
-        // Safely prefill form with existing data using optional chaining
-        setFormData(prevData => ({
-          ...prevData,
-          firstName: doctorData.firstName || '',
-          lastName: doctorData.lastName || '',
-          email: doctorData.email || '',
-          phone: doctorData.phone || '',
-          gender: doctorData.gender || '',
-          dateOfBirth: doctorData.dateOfBirth ? doctorData.dateOfBirth.split('T')[0] : '',
-          specialization: doctorData.specialization || '',
-          licenseNumber: doctorData.licenseNumber || '',
-          medicalRegistrationNumber: doctorData.medicalRegistrationNumber || '',
-          experience: doctorData.experience || '',
-          qualifications: Array.isArray(doctorData.qualifications) && doctorData.qualifications.length > 0 
-            ? doctorData.qualifications.map(qual => ({
-                degree: qual.degree || '',
-                institution: (qual.institution && qual.institution !== 'Not specified') ? qual.institution : '',
-                year: (qual.year && qual.year !== 2025 && qual.year !== '2025') ? qual.year : ''
-              }))
-            : [{ degree: '', institution: '', year: '' }],
-          professionalBio: doctorData.professionalBio || '',
-          profileImage: doctorData.profileImage || '',
-          languages: Array.isArray(doctorData.languages) ? doctorData.languages : [],
-          servicesProvided: Array.isArray(doctorData.servicesProvided) && 
-                           doctorData.servicesProvided.length > 0 &&
-                           !(doctorData.servicesProvided.length === 2 && 
-                             doctorData.servicesProvided.includes('General Consultation') && 
-                             doctorData.servicesProvided.includes('Health Checkup'))
-                           ? doctorData.servicesProvided : [],
-          onlineConsultationAvailable: doctorData.onlineConsultationAvailable || false,
-          offlineConsultationAvailable: doctorData.offlineConsultationAvailable !== false,
-          workplaces: Array.isArray(doctorData.workplaces) ? doctorData.workplaces : [],
-          emergencyContact: doctorData.emergencyContact || {
-            name: '',
-            relationship: '',
-            phone: ''
-          },
-          address: doctorData.address || {
-            street: '',
-            city: '',
-            state: '',
-            zipCode: '',
-            country: 'India'
+          if (isMounted) {
+            setFormData(prev => ({ ...prev, ...updatedFormData }))
+            console.log('✅ Form data updated with doctor information')
           }
-        }))
-
-        // Debug: Log the form data after setting it
-        console.log('📝 Form data after setting:', {
-          licenseNumber: (doctorData.licenseNumber || ''),
-          medicalRegistrationNumber: (doctorData.medicalRegistrationNumber || ''),
-          experience: (doctorData.experience || '')
-        })
-
-        console.log('✅ Form data updated with doctor information')
+        }
       } catch (error) {
         console.error('❌ Error loading doctor data:', error)
         
+        // Reset the flag on error to allow retry
+        hasLoadedData = false
+        
         // On error, try to use fallback data from auth context
-        if (user) {
+        if (user && isMounted) {
           console.log('🔄 Using fallback data from auth context due to error')
           const fallbackData = {
             firstName: user.firstName || '',
@@ -263,38 +242,33 @@ const DoctorProfileSetup = () => {
             onlineConsultationAvailable: user.onlineConsultationAvailable || false,
             offlineConsultationAvailable: user.offlineConsultationAvailable !== false,
             workplaces: user.workplaces || [],
-            emergencyContact: user.emergencyContact || {
-              name: '',
-              relationship: '',
-              phone: ''
-            },
-            address: user.address || {
-              street: '',
-              city: '',
-              state: '',
-              zipCode: '',
-              country: 'India'
-            }
+            emergencyContact: user.emergencyContact || {},
+            address: user.address || {}
           }
           
-          setFormData(prevData => ({
-            ...prevData,
-            ...fallbackData
-          }))
+          setFormData(prev => ({ ...prev, ...fallbackData }))
+          console.log('✅ Form data updated with fallback information')
         }
       } finally {
-        setDataLoading(false)
+        if (isMounted) {
+          setDataLoading(false)
+        }
       }
     }
 
-    // Only load data if we have a user and auth is not loading
-    if (user?._id && !authLoading) {
+    // Only load data if we have user and auth is not loading
+    if (!authLoading && user?._id) {
       loadDoctorData()
-    } else if (!authLoading && !user?._id) {
+    } else if (!authLoading && !user) {
       console.log('No user available after auth completion, skipping data load')
       setDataLoading(false)
     }
-  }, [user, authLoading])
+
+    // Cleanup function
+    return () => {
+      isMounted = false
+    }
+  }, [user?._id, authLoading]) // Only depend on user ID and auth loading state
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
@@ -1110,7 +1084,7 @@ const DoctorProfileSetup = () => {
                           <div className="p-6 rounded-xl bg-success-500/10 border border-success-500/30">
                             <div className="flex items-center space-x-2 mb-4">
                               <svg className="w-5 h-5 text-success-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                               </svg>
                               <h5 className="text-md font-semibold text-white">Consultation Fee</h5>
                             </div>

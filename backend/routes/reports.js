@@ -1,6 +1,6 @@
 const express = require('express');
 const { body } = require('express-validator');
-const multer = require('multer');
+const { upload } = require('../config/cloudinary');
 const {
   getReports,
   getReport,
@@ -26,22 +26,8 @@ const {
 
 const router = express.Router();
 
-// Configure multer for file uploads
-const upload = multer({
-  dest: 'uploads/reports/',
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    // Allow only specific file types
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only PDF, JPEG, PNG files are allowed.'), false);
-    }
-  }
-});
+// Apply authentication and active status to all routes
+router.use(protect, requireActive);
 
 // Validation rules
 const uploadReportValidation = [
@@ -50,7 +36,7 @@ const uploadReportValidation = [
     .isLength({ min: 3, max: 200 })
     .withMessage('Report title must be between 3 and 200 characters'),
   body('reportType')
-    .isIn(['lab-test', 'x-ray', 'mri', 'ct-scan', 'ultrasound', 'blood-test', 'urine-test', 'ecg', 'other'])
+    .isIn(['blood-test', 'urine-test', 'x-ray', 'mri', 'ct-scan', 'ultrasound', 'ecg', 'echo', 'biopsy', 'pathology', 'radiology', 'lab-report', 'prescription', 'discharge-summary', 'other'])
     .withMessage('Invalid report type'),
   body('description')
     .optional()
@@ -85,7 +71,7 @@ const updateReportValidation = [
     .withMessage('Report title must be between 3 and 200 characters'),
   body('reportType')
     .optional()
-    .isIn(['lab-test', 'x-ray', 'mri', 'ct-scan', 'ultrasound', 'blood-test', 'urine-test', 'ecg', 'other'])
+    .isIn(['blood-test', 'urine-test', 'x-ray', 'mri', 'ct-scan', 'ultrasound', 'ecg', 'echo', 'biopsy', 'pathology', 'radiology', 'lab-report', 'prescription', 'discharge-summary', 'other'])
     .withMessage('Invalid report type'),
   body('description')
     .optional()
@@ -106,9 +92,6 @@ const updateReportValidation = [
     .isBoolean()
     .withMessage('isPrivate must be a boolean value')
 ];
-
-// Apply authentication and active status to all routes
-router.use(protect, requireActive);
 
 // GET /api/reports - Get all reports (with role-based filtering)
 // Patient: own reports only, Doctor: assigned patients only, Admin: all

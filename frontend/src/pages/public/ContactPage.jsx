@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, Phone, Mail, Clock, Send, MessageCircle } from 'lucide-react'
+import DeveloperCredit from '../../components/common/DeveloperCredit'
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -366,6 +367,7 @@ const ContactPage = () => {
           </div>
         </div>
       </section>
+      <DeveloperCredit />
     </>
   )
 }

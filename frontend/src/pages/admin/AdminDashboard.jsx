@@ -1,24 +1,30 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { 
+  Users, 
+  UserCheck, 
+  Calendar, 
+  FileText, 
+  TrendingUp, 
+  Activity,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Plus,
+  ArrowRight
+} from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { adminAPI } from '../../services/api'
 import { toast } from 'react-hot-toast'
 import { 
-  Users, 
-  Calendar, 
   DollarSign, 
-  Activity, 
-  TrendingUp, 
-  AlertTriangle,
-  Settings,
-  FileText,
-  BarChart3,
   Shield,
-  UserCheck,
-  UserX,
-  Clock,
-  CheckCircle
+  Settings,
+  BarChart3,
+  AlertTriangle,
+  UserX
 } from 'lucide-react'
+import DeveloperCredit from '../../components/common/DeveloperCredit'
 
 const AdminDashboard = () => {
   const { user } = useAuth()
@@ -556,6 +562,7 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+      <DeveloperCredit />
     </div>
   )
 }

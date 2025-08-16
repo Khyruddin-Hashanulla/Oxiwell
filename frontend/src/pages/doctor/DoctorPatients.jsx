@@ -256,13 +256,13 @@ const DoctorPatients = () => {
                     <div className="grid grid-cols-2 gap-3 mb-4">
                       <div className="bg-primary-600 bg-opacity-50 rounded-lg p-3 text-center">
                         <div className="text-lg font-semibold text-white">
-                          {patient.appointments?.length || 0}
+                          {patient.appointmentCount || 0}
                         </div>
                         <div className="text-xs text-gray-300">Appointments</div>
                       </div>
                       <div className="bg-primary-600 bg-opacity-50 rounded-lg p-3 text-center">
                         <div className="text-lg font-semibold text-white">
-                          {patient.prescriptions?.length || 0}
+                          {patient.prescriptionCount || 0}
                         </div>
                         <div className="text-xs text-gray-300">Prescriptions</div>
                       </div>

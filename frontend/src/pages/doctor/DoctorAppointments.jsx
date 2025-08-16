@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { appointmentsAPI } from '../../services/api'
 import { toast } from 'react-hot-toast'
+import jsPDF from 'jspdf'
 import { 
   Calendar, 
   Clock, 
@@ -39,6 +40,9 @@ const DoctorAppointments = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null)
   const [showNotesModal, setShowNotesModal] = useState(false)
   const [doctorNotes, setDoctorNotes] = useState('')
+  const [showHistoryModal, setShowHistoryModal] = useState(false)
+  const [patientHistory, setPatientHistory] = useState([])
+  const [historyLoading, setHistoryLoading] = useState(false)
   const appointmentsPerPage = 10
 
   useEffect(() => {
@@ -113,6 +117,182 @@ const DoctorAppointments = () => {
     }
   }
 
+  const handleViewHistory = async (appointment) => {
+    try {
+      setHistoryLoading(true)
+      setSelectedAppointment(appointment)
+      // Get all appointments and filter by patient ID on frontend
+      const response = await appointmentsAPI.getAppointments()
+      const allAppointments = response.data.data.appointments || []
+      const patientAppointments = allAppointments.filter(apt => 
+        apt.patient._id === appointment.patient._id
+      ).sort((a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate)) // Sort by date descending
+      
+      setPatientHistory(patientAppointments)
+      setShowHistoryModal(true)
+    } catch (error) {
+      console.error('❌ Error fetching patient history:', error)
+      toast.error('Failed to load patient history')
+    } finally {
+      setHistoryLoading(false)
+    }
+  }
+
+  const handleDownloadReport = (appointment) => {
+    try {
+      // Debug: Log the appointment object to see actual field names
+      console.log('🔍 Appointment object for download:', appointment)
+      console.log('🔍 Appointment date field:', appointment.appointmentDate)
+      console.log('🔍 Appointment time field:', appointment.appointmentTime)
+      console.log('🔍 Alternative date field:', appointment.date)
+      console.log('🔍 Alternative time field:', appointment.time)
+      
+      // Generate and download appointment report
+      const reportData = {
+        appointmentId: appointment._id,
+        patientName: `${appointment.patient?.firstName} ${appointment.patient?.lastName}`,
+        doctorName: `${appointment.doctor?.firstName} ${appointment.doctor?.lastName}`,
+        date: appointment.appointmentDate ? 
+          new Date(appointment.appointmentDate).toLocaleDateString() : 
+          (appointment.date ? new Date(appointment.date).toLocaleDateString() : 'Date not available'),
+        time: appointment.appointmentTime || appointment.time || 'Time not available',
+        reason: appointment.reason,
+        status: appointment.status,
+        notes: appointment.doctorNotes || 'No notes available'
+      }
+
+      console.log('🔍 Report data:', reportData)
+      
+      // Create professional PDF report
+      const doc = new jsPDF()
+      
+      // Set page margins
+      const pageWidth = doc.internal.pageSize.width
+      const pageHeight = doc.internal.pageSize.height
+      const margin = 20
+      
+      // Header with background color
+      doc.setFillColor(41, 128, 185) // Blue background
+      doc.rect(0, 0, pageWidth, 50, 'F')
+      
+      // White text for header
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(24)
+      doc.setFont(undefined, 'bold')
+      doc.text('OXIWELL HEALTH CENTER', margin, 25)
+      
+      doc.setFontSize(14)
+      doc.setFont(undefined, 'normal')
+      doc.text('Medical Appointment Report', margin, 40)
+      
+      // Reset text color for body
+      doc.setTextColor(40, 40, 40)
+      let yPos = 70
+      
+      // Report title
+      doc.setFontSize(18)
+      doc.setFont(undefined, 'bold')
+      doc.text('APPOINTMENT REPORT', margin, yPos)
+      yPos += 20
+      
+      // Patient Information Box
+      doc.setFillColor(245, 245, 245)
+      doc.rect(margin, yPos - 5, pageWidth - 2 * margin, 35, 'F')
+      doc.setDrawColor(200, 200, 200)
+      doc.rect(margin, yPos - 5, pageWidth - 2 * margin, 35)
+      
+      doc.setFontSize(14)
+      doc.setFont(undefined, 'bold')
+      doc.setTextColor(41, 128, 185)
+      doc.text('PATIENT INFORMATION', margin + 5, yPos + 5)
+      
+      doc.setFontSize(11)
+      doc.setFont(undefined, 'normal')
+      doc.setTextColor(40, 40, 40)
+      doc.text(`Name: ${reportData.patientName}`, margin + 5, yPos + 15)
+      
+      if (appointment.patient?.email) {
+        doc.text(`Email: ${appointment.patient.email}`, margin + 5, yPos + 25)
+      }
+      
+      yPos += 50
+      
+      // Doctor Information Box
+      doc.setFillColor(245, 245, 245)
+      doc.rect(margin, yPos - 5, pageWidth - 2 * margin, 35, 'F')
+      doc.setDrawColor(200, 200, 200)
+      doc.rect(margin, yPos - 5, pageWidth - 2 * margin, 35)
+      
+      doc.setFontSize(14)
+      doc.setFont(undefined, 'bold')
+      doc.setTextColor(41, 128, 185)
+      doc.text('DOCTOR INFORMATION', margin + 5, yPos + 5)
+      
+      doc.setFontSize(11)
+      doc.setFont(undefined, 'normal')
+      doc.setTextColor(40, 40, 40)
+      doc.text(`Name: Dr. ${reportData.doctorName}`, margin + 5, yPos + 15)
+      
+      if (appointment.doctor?.specialization) {
+        doc.text(`Specialization: ${appointment.doctor.specialization}`, margin + 5, yPos + 25)
+      }
+      
+      yPos += 50
+      
+      // Appointment Details
+      doc.setFontSize(14)
+      doc.setFont(undefined, 'bold')
+      doc.text('APPOINTMENT DETAILS', margin, yPos)
+      yPos += 15
+      
+      doc.setFontSize(11)
+      doc.setFont(undefined, 'normal')
+      doc.text(`Date: ${reportData.date}`, margin, yPos)
+      yPos += 10
+      doc.text(`Time: ${reportData.time}`, margin, yPos)
+      yPos += 10
+      doc.text(`Reason: ${reportData.reason}`, margin, yPos)
+      yPos += 10
+      doc.text(`Status: ${reportData.status}`, margin, yPos)
+      
+      // Doctor's Notes Section
+      if (reportData.notes && reportData.notes !== 'No notes available') {
+        doc.setFillColor(252, 248, 227) // Light yellow background
+        doc.rect(margin, yPos - 5, pageWidth - 2 * margin, 40, 'F')
+        doc.setDrawColor(243, 156, 18)
+        doc.rect(margin, yPos - 5, pageWidth - 2 * margin, 40)
+        
+        doc.setFontSize(12)
+        doc.setFont(undefined, 'bold')
+        doc.setTextColor(243, 156, 18)
+        doc.text('DOCTOR\'S NOTES', margin + 5, yPos + 5)
+        
+        doc.setFontSize(10)
+        doc.setFont(undefined, 'normal')
+        doc.setTextColor(40, 40, 40)
+        const noteLines = doc.splitTextToSize(reportData.notes, pageWidth - 2 * margin - 10)
+        doc.text(noteLines, margin + 5, yPos + 18)
+        
+        yPos += 50
+      }
+      
+      // Footer
+      doc.setFillColor(240, 240, 240)
+      doc.rect(0, pageHeight - 30, pageWidth, 30, 'F')
+      
+      doc.setFontSize(9)
+      doc.setTextColor(100, 100, 100)
+      doc.text(`Generated on: ${new Date().toLocaleString()}`, margin, pageHeight - 15)
+      doc.text(`Oxiwell Health Center Management System`, pageWidth - margin - 80, pageHeight - 15)
+      
+      // Save the PDF
+      doc.save(`oxiwell-appointment-report-${appointment._id}.pdf`)
+    } catch (error) {
+      console.error('❌ Error downloading report:', error)
+      toast.error('Failed to download report')
+    }
+  }
+
   const getPatientAge = (dateOfBirth) => {
     if (!dateOfBirth) return 'N/A'
     try {
@@ -170,17 +350,15 @@ const DoctorAppointments = () => {
   }
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'Date not set'
+    if (!dateString) return 'N/A'
     try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('en-US', {
-        weekday: 'short',
+      return new Date(dateString).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric'
       })
     } catch {
-      return 'Invalid date'
+      return 'Invalid Date'
     }
   }
 
@@ -462,12 +640,18 @@ const DoctorAppointments = () => {
                             <span>Add Notes</span>
                           </button>
                           
-                          <button className="flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                          <button
+                            onClick={() => handleViewHistory(appointment)}
+                            className="flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                          >
                             <Eye className="w-4 h-4" />
                             <span>View History</span>
                           </button>
                           
-                          <button className="flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                          <button
+                            onClick={() => handleDownloadReport(appointment)}
+                            className="flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                          >
                             <Download className="w-4 h-4" />
                             <span>Download Report</span>
                           </button>
@@ -518,37 +702,109 @@ const DoctorAppointments = () => {
           )}
         </div>
       </div>
-    </div>
-  )
 
-  if (showNotesModal) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div className="bg-primary-700 rounded-lg p-6 w-full max-w-lg">
-          <h3 className="text-lg font-semibold text-white mb-2">Add Notes</h3>
-          <textarea
-            value={doctorNotes}
-            onChange={(e) => setDoctorNotes(e.target.value)}
-            className="w-full p-4 bg-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
-          />
-          <div className="flex justify-end space-x-2 mt-4">
-            <button
-              onClick={() => setShowNotesModal(false)}
-              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSaveNotes}
-              className="bg-accent-500 hover:bg-accent-600 text-white px-3 py-1 rounded text-sm transition-colors"
-            >
-              Save Notes
-            </button>
+      {/* History Modal */}
+      {showHistoryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-primary-700 rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-white">
+                Patient History - {selectedAppointment?.patient?.firstName} {selectedAppointment?.patient?.lastName}
+              </h3>
+              <button
+                onClick={() => setShowHistoryModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {historyLoading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-400"></div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {patientHistory.length > 0 ? (
+                  patientHistory.map((apt) => (
+                    <div key={apt._id} className="bg-primary-600 rounded-lg p-4 border border-primary-500">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-white font-medium">{formatDate(apt.appointmentDate)}</h4>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          apt.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                          apt.status === 'confirmed' ? 'bg-blue-500/20 text-blue-400' :
+                          apt.status === 'cancelled' ? 'bg-red-500/20 text-red-400' :
+                          'bg-yellow-500/20 text-yellow-400'
+                        }`}>
+                          {apt.status}
+                        </span>
+                      </div>
+                      <p className="text-gray-300 text-sm mb-2">
+                        <strong>Time:</strong> {apt.appointmentTime}
+                      </p>
+                      <p className="text-gray-300 text-sm mb-2">
+                        <strong>Reason:</strong> {apt.reason}
+                      </p>
+                      {apt.doctorNotes && (
+                        <div className="mt-3 p-3 bg-primary-500/30 rounded border-l-4 border-accent-500">
+                          <p className="text-gray-300 text-sm">
+                            <strong>Notes:</strong> {apt.doctorNotes}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-300">No appointment history found for this patient</p>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => setShowHistoryModal(false)}
+                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    )
-  }
+      )}
+
+      {/* Notes Modal */}
+      {showNotesModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-primary-700 rounded-lg p-6 w-full max-w-lg mx-4">
+            <h3 className="text-lg font-semibold text-white mb-4">Add Notes</h3>
+            <textarea
+              value={doctorNotes}
+              onChange={(e) => setDoctorNotes(e.target.value)}
+              placeholder="Enter your notes for this appointment..."
+              rows={6}
+              className="w-full p-4 bg-primary-600 border border-primary-500 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent resize-none"
+            />
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setShowNotesModal(false)}
+                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveNotes}
+                className="bg-accent-600 hover:bg-accent-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                Save Notes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default DoctorAppointments

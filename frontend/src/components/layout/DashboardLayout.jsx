@@ -9,7 +9,8 @@ import {
   Settings, 
   ChevronDown,
   Menu,
-  X
+  X,
+  FileText
 } from 'lucide-react'
 
 const DashboardLayout = () => {
@@ -84,7 +85,8 @@ const DashboardLayout = () => {
           { name: 'Dashboard', href: '/doctor/dashboard' },
           { name: 'Appointments', href: '/doctor/appointments' },
           { name: 'Patients', href: '/doctor/patients' },
-          { name: 'Prescriptions', href: '/doctor/prescriptions' }
+          { name: 'Prescriptions', href: '/doctor/prescriptions' },
+          { name: 'Reports', href: '/doctor/reports', icon: FileText }
         ]
       case 'admin':
         return [

@@ -472,6 +472,73 @@ const Prescriptions = () => {
     }
   }
 
+  // Set medication reminder
+  const handleSetReminder = (prescription) => {
+    try {
+      // For now, we'll create a simple browser notification reminder
+      // In a full implementation, this would integrate with a notification service
+      
+      if (!('Notification' in window)) {
+        toast.error('This browser does not support notifications')
+        return
+      }
+
+      if (Notification.permission === 'denied') {
+        toast.error('Notifications are blocked. Please enable them in browser settings.')
+        return
+      }
+
+      if (Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            setupReminder(prescription)
+          } else {
+            toast.error('Notification permission denied')
+          }
+        })
+      } else {
+        setupReminder(prescription)
+      }
+    } catch (error) {
+      console.error('Error setting reminder:', error)
+      toast.error('Failed to set reminder')
+    }
+  }
+
+  const setupReminder = (prescription) => {
+    // Get the first medication for the reminder
+    const firstMedication = prescription.medications?.[0]
+    if (!firstMedication) {
+      toast.error('No medications found in this prescription')
+      return
+    }
+
+    // Create a simple reminder notification
+    const reminderText = `Time to take your medication: ${firstMedication.name}`
+    
+    // Show immediate confirmation
+    new Notification('Reminder Set!', {
+      body: `Reminder set for ${firstMedication.name}. You'll be notified about your medication schedule.`,
+      icon: '/favicon.ico'
+    })
+
+    // Store reminder in localStorage for persistence (in a real app, this would be stored in backend)
+    const reminders = JSON.parse(localStorage.getItem('medicationReminders') || '[]')
+    const newReminder = {
+      id: Date.now(),
+      prescriptionId: prescription._id,
+      medicationName: firstMedication.name,
+      frequency: firstMedication.frequency,
+      dosage: firstMedication.dosage,
+      createdAt: new Date().toISOString()
+    }
+    
+    reminders.push(newReminder)
+    localStorage.setItem('medicationReminders', JSON.stringify(reminders))
+    
+    toast.success(`Reminder set for ${firstMedication.name}!`)
+  }
+
   // Export all prescriptions
   const handleExportAll = () => {
     if (prescriptions.length === 0) {
@@ -831,7 +898,10 @@ Notes: ${prescription.generalInstructions || prescription.notes || 'No additiona
                     Download
                   </button>
                   {prescription.status === 'active' && (
-                    <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-colors text-sm font-medium">
+                    <button 
+                      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-500 transition-colors text-sm font-medium"
+                      onClick={() => handleSetReminder(prescription)}
+                    >
                       Set Reminder
                     </button>
                   )}

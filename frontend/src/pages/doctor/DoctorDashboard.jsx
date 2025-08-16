@@ -1,23 +1,27 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../../contexts/AuthContext'
-import { doctorsAPI, appointmentsAPI } from '../../services/api'
-import { toast } from 'react-hot-toast'
 import { 
   Calendar, 
   Users, 
-  Pill, 
   FileText, 
   Clock, 
-  AlertCircle, 
-  Plus,
-  Stethoscope,
+  TrendingUp, 
   Activity,
-  TrendingUp,
+  Plus,
+  ArrowRight,
+  Stethoscope,
+  Heart,
+  UserCheck,
+  AlertCircle,
+  Pill, 
   CheckCircle,
   XCircle,
   User
 } from 'lucide-react'
+import { useAuth } from '../../contexts/AuthContext'
+import { doctorsAPI, appointmentsAPI } from '../../services/api'
+import { toast } from 'react-hot-toast'
+import DeveloperCredit from '../../components/common/DeveloperCredit'
 
 const DoctorDashboard = () => {
   const { user } = useAuth()
@@ -600,10 +604,10 @@ const DoctorDashboard = () => {
                     {appointment.status !== 'pending' && (
                       <div className="flex justify-end pt-3 border-t border-primary-600">
                         <Link
-                          to={`/doctor/appointments/${appointment._id || appointment.id}`}
+                          to={`/doctor/patients/${appointment.patient?._id || appointment.patient?.id}`}
                           className="text-accent-400 hover:text-accent-300 text-sm font-medium transition-colors"
                         >
-                          View Details →
+                          View Patient Details →
                         </Link>
                       </div>
                     )}
@@ -676,6 +680,7 @@ const DoctorDashboard = () => {
           </div>
         </div>
       </div>
+      <DeveloperCredit />
     </div>
   )
 }

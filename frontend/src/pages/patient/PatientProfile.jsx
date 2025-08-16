@@ -159,28 +159,12 @@ const PatientProfile = () => {
           ) : (
             <div className="flex space-x-2">
               <button
+                type="button"
                 onClick={handleCancel}
                 className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               >
                 <X className="w-4 h-4 mr-2" />
                 Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="flex items-center px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors disabled:opacity-50"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Updating...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    Update Profile
-                  </>
-                )}
               </button>
             </div>
           )}
@@ -445,6 +429,35 @@ const PatientProfile = () => {
             </div>
           </div>
         </div>
+        {isEditing && (
+          <div className="flex space-x-2 mt-6">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              <X className="w-4 h-4 mr-2" />
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="flex items-center px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors disabled:opacity-50"
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Update Profile
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </form>
     </div>
   )

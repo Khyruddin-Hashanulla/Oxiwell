@@ -179,7 +179,7 @@ export const authAPI = {
   updateProfile: (data) => api.put('/auth/profile', data),
   updatePassword: (data) => api.put('/auth/password', data),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
-  resetPassword: (data) => api.post('/auth/reset-password', data),
+  resetPassword: (data) => api.post(`/auth/reset-password/${data.token}`, { password: data.password }),
   verifyEmail: (token) => api.post('/auth/verify-email', { token }),
   resendVerification: () => api.post('/auth/resend-verification'),
 }
@@ -248,6 +248,9 @@ export const doctorsAPI = {
       'Pragma': 'no-cache'
     }
   }),
+  getPatients: (params) => api.get('/doctors/patients', { params }),
+  getPatientDetails: (patientId) => api.get(`/doctors/patients/${patientId}`),
+  getPatientPrescriptions: (patientId) => api.get(`/doctors/patients/${patientId}/prescriptions`),
   getDoctorStats: () => api.get('/doctors/dashboard/stats'),
   updateProfile: (data) => {
     // Handle FormData for file uploads with timeout configuration
@@ -261,7 +264,6 @@ export const doctorsAPI = {
     }
     return api.put('/doctors/profile', data, config)
   },
-  getPatients: (params) => api.get('/doctors/patients', { params }),
   getPatientHistory: (patientId) => api.get(`/doctors/patients/${patientId}/history`),
   getSchedule: () => api.get('/doctors/schedule'),
   
@@ -310,26 +312,30 @@ export const reportsAPI = {
   getReport: (id) => api.get(`/reports/${id}`),
   uploadReport: (data) => {
     const formData = new FormData()
-    
-    // Append files
-    if (data.files && data.files.length > 0) {
-      data.files.forEach((file) => {
-        formData.append('files', file)
-      })
+
+    // Accept various input shapes: file | reportFile | files[]
+    if (data.file) {
+      formData.append('reportFile', data.file)
+    } else if (data.reportFile) {
+      formData.append('reportFile', data.reportFile)
+    } else if (data.files && data.files.length > 0) {
+      // If multiple provided, send the first as primary (backend expects single)
+      formData.append('reportFile', data.files[0])
     }
-    
-    // Append other data
+
+    // Append other data (avoid duplicating file fields)
     Object.keys(data).forEach((key) => {
-      if (key !== 'files') {
-        if (typeof data[key] === 'object') {
-          formData.append(key, JSON.stringify(data[key]))
-        } else {
-          formData.append(key, data[key])
-        }
+      if (['file', 'files', 'reportFile'].includes(key)) return
+      const value = data[key]
+      if (value === undefined || value === null) return
+      if (typeof value === 'object') {
+        formData.append(key, JSON.stringify(value))
+      } else {
+        formData.append(key, value)
       }
     })
-    
-    return api.post('/reports', formData, {
+
+    return api.post('/reports/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

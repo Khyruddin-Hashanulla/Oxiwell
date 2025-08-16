@@ -14,6 +14,21 @@ const getReports = asyncHandler(async (req, res, next) => {
 
   let query = {};
 
+  // Role-based filtering
+  if (req.user.role === 'patient') {
+    // Patients can only see their own reports
+    query.patient = req.user._id;
+  } else if (req.user.role === 'doctor') {
+    // Doctors can see reports shared with them or from their patients
+    // For now, let's show all reports (admin-like access for doctors)
+    // In a real system, you'd filter by sharedWith or assigned patients
+    // query.$or = [
+    //   { 'sharedWith.doctor': req.user._id },
+    //   { patient: { $in: assignedPatientIds } }
+    // ];
+  }
+  // Admins can see all reports (no additional filtering)
+
   // Filter by status
   if (req.query.status) {
     query.status = req.query.status;
@@ -53,9 +68,7 @@ const getReports = asyncHandler(async (req, res, next) => {
       total,
       pages: Math.ceil(total / limit)
     },
-    data: {
-      reports
-    }
+    data: reports
   });
 });
 
@@ -112,7 +125,12 @@ const uploadReport = asyncHandler(async (req, res, next) => {
     });
   }
 
-  if (!req.files || req.files.length === 0) {
+  // Normalize files: support both multer.single('reportFile') and .array('files')
+  const incomingFiles = req.files && Array.isArray(req.files)
+    ? req.files
+    : (req.file ? [req.file] : []);
+
+  if (!incomingFiles || incomingFiles.length === 0) {
     return res.status(400).json({
       status: 'error',
       message: 'At least one file is required'
@@ -150,15 +168,19 @@ const uploadReport = asyncHandler(async (req, res, next) => {
   }
 
   // Process uploaded files
-  const files = req.files.map(file => ({
-    filename: file.filename,
+  console.log(' File object structure:', JSON.stringify(incomingFiles[0], null, 2));
+  
+  const files = incomingFiles.map(file => ({
+    filename: file.filename || file.originalname || 'unknown',
     originalName: file.originalname,
     mimeType: file.mimetype,
     size: file.size,
-    cloudinaryUrl: file.path,
-    cloudinaryPublicId: file.public_id
+    cloudinaryUrl: file.path || file.secure_url || file.url,
+    cloudinaryPublicId: file.public_id || file.filename || `${Date.now()}_${file.originalname}`
   }));
 
+  console.log(' Processed files:', JSON.stringify(files, null, 2));
+  
   const report = await MedicalReport.create({
     patient: patientId,
     uploadedBy: req.user._id,

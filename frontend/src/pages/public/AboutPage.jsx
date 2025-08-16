@@ -1,6 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Heart, Users, Award, Shield, Clock, Globe } from 'lucide-react'
+import { Heart, Users, Shield, Award, Target, Eye } from 'lucide-react'
+import DeveloperCredit from '../../components/common/DeveloperCredit'
 
 const AboutPage = () => {
   const stats = [
@@ -27,7 +28,7 @@ const AboutPage = () => {
       description: 'We strive for excellence in every interaction, continuously improving our services and technology.'
     },
     {
-      icon: Globe,
+      icon: Eye,
       title: 'Accessible Healthcare',
       description: 'Making quality healthcare accessible to everyone, anywhere, through innovative digital solutions.'
     }
@@ -201,7 +202,7 @@ const AboutPage = () => {
               viewport={{ once: true }}
             >
               <div className="text-center text-white">
-                <Clock className="w-16 h-16 mx-auto mb-6" />
+                <Target className="w-16 h-16 mx-auto mb-6" />
                 <h3 className="text-2xl font-bold mb-4">Available 24/7</h3>
                 <p className="text-lg opacity-90">
                   Our platform is always available when you need it most. 
@@ -286,6 +287,7 @@ const AboutPage = () => {
           </div>
         </div>
       </section>
+      <DeveloperCredit />
     </>
   )
 }

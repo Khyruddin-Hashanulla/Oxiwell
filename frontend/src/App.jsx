@@ -16,6 +16,7 @@ import AuthLayout from './components/layout/AuthLayout'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import ForgotPassword from './pages/auth/ForgotPassword'
+import ResetPassword from './pages/auth/ResetPassword'
 
 // Public pages
 import LandingPage from './pages/public/LandingPage'
@@ -37,16 +38,21 @@ import Appointments from './pages/patient/Appointments'
 import Prescriptions from './pages/patient/Prescriptions'
 import PatientProfile from './pages/patient/PatientProfile'
 import PatientSettings from './pages/patient/PatientSettings'
+import Reports from './pages/patient/Reports'
+import UploadReport from './pages/patient/UploadReport'
 
 // Doctor pages
 import DoctorAppointments from './pages/doctor/DoctorAppointments'
 import DoctorPatients from './pages/doctor/DoctorPatients'
+import PatientDetails from './pages/doctor/PatientDetails'
+import PatientHistory from './pages/doctor/PatientHistory'
 import DoctorProfile from './pages/doctor/DoctorProfile'
 import DoctorProfileSetup from './pages/doctor/DoctorProfileSetup'
 import DoctorPrescriptions from './pages/doctor/DoctorPrescriptions'
 import DoctorPrescriptionsList from './pages/doctor/DoctorPrescriptionsList'
 import DoctorNotes from './pages/doctor/DoctorNotes'
 import DoctorSettings from './pages/doctor/DoctorSettings'
+import DoctorReports from './pages/doctor/DoctorReports'
 
 // Admin pages
 
@@ -82,6 +88,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
           </Route>
         </Route>
 
@@ -94,6 +101,8 @@ function App() {
             <Route path="/patient/appointments" element={<Appointments />} />
             <Route path="/patient/appointments/book" element={<AppointmentBooking />} />
             <Route path="/patient/prescriptions" element={<Prescriptions />} />
+            <Route path="/patient/reports" element={<Reports />} />
+            <Route path="/patient/reports/upload" element={<UploadReport />} />
             <Route path="/patient/profile" element={<PatientProfile />} />
             <Route path="/patient/settings" element={<PatientSettings />} />
             
@@ -113,6 +122,16 @@ function App() {
             <Route path="/doctor/patients" element={
               <DoctorProfileSetupGuard>
                 <DoctorPatients />
+              </DoctorProfileSetupGuard>
+            } />
+            <Route path="/doctor/patients/:patientId" element={
+              <DoctorProfileSetupGuard>
+                <PatientDetails />
+              </DoctorProfileSetupGuard>
+            } />
+            <Route path="/doctor/patients/:patientId/history" element={
+              <DoctorProfileSetupGuard>
+                <PatientHistory />
               </DoctorProfileSetupGuard>
             } />
             <Route path="/doctor/profile" element={
@@ -143,6 +162,11 @@ function App() {
             <Route path="/doctor/settings" element={
               <DoctorProfileSetupGuard>
                 <DoctorSettings />
+              </DoctorProfileSetupGuard>
+            } />
+            <Route path="/doctor/reports" element={
+              <DoctorProfileSetupGuard>
+                <DoctorReports />
               </DoctorProfileSetupGuard>
             } />
             

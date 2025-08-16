@@ -192,8 +192,98 @@ const sendWelcomeEmail = async (email, firstName) => {
   }
 };
 
+// Send password reset email
+const sendPasswordResetEmail = async (email, resetUrl, firstName = 'User') => {
+  try {
+    // For development: if no email credentials, just log the reset URL
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.log('📧 DEVELOPMENT MODE - Email credentials not configured');
+      console.log('🔗 Password reset URL for', email, ':', resetUrl);
+      console.log('📝 Copy this URL to reset password:', resetUrl);
+      return { success: true, messageId: 'dev-mode-' + Date.now() };
+    }
+
+    const transporter = createTransporter();
+    
+    const mailOptions = {
+      from: {
+        name: 'Oxiwell Health Center',
+        address: process.env.EMAIL_USER
+      },
+      to: email,
+      subject: 'Reset Your Password - Oxiwell Health Center',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Password Reset</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
+            .reset-button { background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; margin: 20px 0; font-weight: bold; }
+            .reset-button:hover { background: #5a67d8; }
+            .footer { text-align: center; margin-top: 20px; color: #666; font-size: 14px; }
+            .warning { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
+            .url-box { background: #e2e8f0; padding: 15px; border-radius: 5px; margin: 15px 0; word-break: break-all; font-family: monospace; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🔒 Oxiwell Health Center</h1>
+              <p>Password Reset Request</p>
+            </div>
+            <div class="content">
+              <h2>Hello ${firstName}!</h2>
+              <p>You have requested to reset your password for your Oxiwell Health Center account. Click the button below to create a new password:</p>
+              
+              <div style="text-align: center;">
+                <a href="${resetUrl}" class="reset-button">Reset My Password</a>
+              </div>
+              
+              <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+              <div class="url-box">${resetUrl}</div>
+              
+              <div class="warning">
+                <strong>⚠️ Important Security Information:</strong>
+                <ul>
+                  <li><strong>This link expires in 1 hour</strong> for your security</li>
+                  <li>If you didn't request this reset, please ignore this email</li>
+                  <li>Never share this link with anyone</li>
+                  <li>Contact support if you have any concerns</li>
+                </ul>
+              </div>
+              
+              <p>If you continue to have problems, please contact our support team.</p>
+              
+              <p>Best regards,<br>The Oxiwell Health Center Team</p>
+            </div>
+            <div class="footer">
+              <p>© 2025 Oxiwell Health Center. All rights reserved.</p>
+              <p>This is an automated email. Please do not reply to this message.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log('✅ Password reset email sent successfully:', result.messageId);
+    return { success: true, messageId: result.messageId };
+  } catch (error) {
+    console.error('❌ Error sending password reset email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 module.exports = {
   generateOTP,
   sendOTPEmail,
-  sendWelcomeEmail
+  sendWelcomeEmail,
+  sendPasswordResetEmail
 };

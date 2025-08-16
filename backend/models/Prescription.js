@@ -161,7 +161,7 @@ prescriptionSchema.virtual('daysUntilExpiry').get(function() {
 
 // Virtual for total medications count
 prescriptionSchema.virtual('medicationCount').get(function() {
-  return this.medications.length;
+  return this.medications ? this.medications.length : 0;
 });
 
 // Indexes for better query performance

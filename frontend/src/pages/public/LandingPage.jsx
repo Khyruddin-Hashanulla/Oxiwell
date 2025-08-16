@@ -2,6 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Heart, Calendar, FileText, Users, Shield, Clock, ArrowRight } from 'lucide-react'
+import DeveloperCredit from '../../components/common/DeveloperCredit'
 
 const LandingPage = () => {
   const features = [
@@ -165,6 +166,7 @@ const LandingPage = () => {
           </Link>
         </div>
       </section>
+      <DeveloperCredit />
     </>
   )
 }
