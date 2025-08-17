@@ -31,6 +31,8 @@ import AdminProfile from './pages/admin/AdminProfile'
 import AdminUsers from './pages/admin/AdminUsers'
 import AdminAnalytics from './pages/admin/AdminAnalytics'
 import AdminSettings from './pages/admin/AdminSettings'
+import AdminApprovals from './pages/admin/AdminApprovals'
+import AdminActivity from './pages/admin/AdminActivity'
 
 // Patient pages
 import AppointmentBooking from './pages/patient/AppointmentBooking'
@@ -177,6 +179,8 @@ function App() {
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/analytics" element={<AdminAnalytics />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
+            <Route path="/admin/approvals" element={<AdminApprovals />} />
+            <Route path="/admin/activity" element={<AdminActivity />} />
           </Route>
         </Route>
 

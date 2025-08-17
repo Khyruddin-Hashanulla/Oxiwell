@@ -60,30 +60,30 @@ const AdminAnalytics = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+        <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
           <button
             onClick={() => navigate('/admin/dashboard')}
-            className="p-2 bg-primary-700 hover:bg-primary-600 rounded-lg transition-colors"
+            className="p-2 bg-primary-700 hover:bg-primary-600 rounded-lg transition-colors self-start"
           >
-            <ArrowLeft className="w-5 h-5 text-white" />
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </button>
-          <div>
-            <h1 className="text-3xl font-bold text-white flex items-center">
-              <BarChart3 className="w-8 h-8 mr-3 text-accent-400" />
-              System Analytics
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white flex flex-col sm:flex-row sm:items-center">
+              <BarChart3 className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 mr-0 sm:mr-3 mb-2 sm:mb-0 text-accent-400" />
+              <span>System Analytics</span>
             </h1>
-            <p className="text-gray-400 mt-1">
+            <p className="text-gray-400 mt-1 text-sm sm:text-base">
               Comprehensive system performance and usage analytics
             </p>
           </div>
         </div>
         
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
-            className="px-4 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-500"
+            className="px-3 sm:px-4 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-500 text-sm sm:text-base"
           >
             <option value="week">Last Week</option>
             <option value="month">Last Month</option>
@@ -93,7 +93,7 @@ const AdminAnalytics = () => {
           
           <button
             onClick={handleRefresh}
-            className="px-4 py-2 bg-primary-700 hover:bg-primary-600 border border-primary-600 rounded-lg text-white transition-colors flex items-center"
+            className="px-3 sm:px-4 py-2 bg-primary-700 hover:bg-primary-600 border border-primary-600 rounded-lg text-white transition-colors flex items-center justify-center text-sm sm:text-base"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
@@ -101,7 +101,7 @@ const AdminAnalytics = () => {
           
           <button
             onClick={handleExport}
-            className="px-4 py-2 bg-accent-600 hover:bg-accent-700 rounded-lg text-white transition-colors flex items-center"
+            className="px-3 sm:px-4 py-2 bg-accent-600 hover:bg-accent-700 rounded-lg text-white transition-colors flex items-center justify-center text-sm sm:text-base"
           >
             <Download className="w-4 h-4 mr-2" />
             Export

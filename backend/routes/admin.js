@@ -200,6 +200,12 @@ router.put('/users/:id/reactivate',
 );
 
 // System Management
+// GET /api/admin/activities - Get recent activities
+router.get('/activities', 
+  auditLog('VIEW_SYSTEM_ACTIVITIES'),
+  getActivityLogs
+);
+
 // GET /api/admin/logs - Get system logs
 router.get('/logs', 
   auditLog('VIEW_SYSTEM_LOGS'),

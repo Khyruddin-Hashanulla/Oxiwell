@@ -278,13 +278,13 @@ const AdminDashboard = () => {
         {/* Pending Approvals */}
         <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl border border-primary-600 shadow-lg">
           <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-3 sm:space-y-0">
+              <h2 className="text-xl sm:text-2xl font-bold text-white">
                 Pending Approvals
               </h2>
               <Link 
                 to="/admin/approvals" 
-                className="text-accent-400 hover:text-accent-300 font-medium transition-colors"
+                className="text-accent-400 hover:text-accent-300 font-medium transition-colors text-sm sm:text-base self-start sm:self-auto"
               >
                 View all →
               </Link>
@@ -294,33 +294,33 @@ const AdminDashboard = () => {
                 <div key={doctor._id} className="bg-primary-700 bg-opacity-50 rounded-lg hover:bg-opacity-70 transition-all border border-primary-600">
                   {/* Doctor Header */}
                   <div className="p-4 border-b border-primary-600">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center">
-                          <Users className="w-6 h-6 text-white" />
+                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between space-y-4 lg:space-y-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center self-start sm:self-auto">
+                          <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                         </div>
-                        <div>
-                          <h3 className="font-semibold text-white text-lg">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-white text-base sm:text-lg truncate">
                             Dr. {doctor.firstName} {doctor.lastName}
                           </h3>
-                          <p className="text-accent-400 font-medium">
+                          <p className="text-accent-400 font-medium text-sm sm:text-base truncate">
                             {doctor.specialization || 'Specialization not specified'}
                           </p>
-                          <p className="text-sm text-gray-300">
+                          <p className="text-xs sm:text-sm text-gray-300">
                             Registered: {new Date(doctor.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                         <button 
-                          className={`bg-success-600 hover:bg-success-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors ${actionLoading[doctor._id] === 'approving' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className={`bg-success-600 hover:bg-success-700 text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 rounded-lg transition-colors ${actionLoading[doctor._id] === 'approving' ? 'opacity-50 cursor-not-allowed' : ''}`}
                           onClick={() => handleApproveDoctor(doctor._id)}
                           disabled={actionLoading[doctor._id]}
                         >
                           {actionLoading[doctor._id] === 'approving' ? 'Approving...' : 'Approve'}
                         </button>
                         <button 
-                          className={`bg-error-600 hover:bg-error-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors ${actionLoading[doctor._id] === 'rejecting' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          className={`bg-error-600 hover:bg-error-700 text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 rounded-lg transition-colors ${actionLoading[doctor._id] === 'rejecting' ? 'opacity-50 cursor-not-allowed' : ''}`}
                           onClick={() => handleRejectDoctor(doctor._id)}
                           disabled={actionLoading[doctor._id]}
                         >
@@ -331,27 +331,27 @@ const AdminDashboard = () => {
                   </div>
 
                   {/* Doctor Details */}
-                  <div className="p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="p-3 sm:p-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                       {/* Professional Information */}
-                      <div className="space-y-3">
-                        <h4 className="text-sm font-semibold text-accent-400 uppercase tracking-wide">Professional Info</h4>
-                        <div className="space-y-2">
+                      <div className="space-y-2 sm:space-y-3">
+                        <h4 className="text-xs sm:text-sm font-semibold text-accent-400 uppercase tracking-wide">Professional Info</h4>
+                        <div className="space-y-1 sm:space-y-2">
                           <div>
-                            <span className="text-xs text-gray-400 block">License Number</span>
-                            <span className="text-white font-medium">
+                            <span className="text-xs text-gray-400 block">Registration Number</span>
+                            <span className="text-white font-medium text-sm sm:text-base break-all">
                               {doctor.licenseNumber || 'Not provided'}
                             </span>
                           </div>
                           <div>
                             <span className="text-xs text-gray-400 block">Experience</span>
-                            <span className="text-white font-medium">
+                            <span className="text-white font-medium text-sm sm:text-base">
                               {doctor.experience ? `${doctor.experience} years` : 'Not specified'}
                             </span>
                           </div>
                           <div>
                             <span className="text-xs text-gray-400 block">Qualification</span>
-                            <span className="text-white font-medium">
+                            <span className="text-white font-medium text-sm sm:text-base break-words">
                               {doctor.qualifications && doctor.qualifications.length > 0 
                                 ? doctor.qualifications.map(q => q.degree).join(', ')
                                 : 'Not provided'}
@@ -361,18 +361,18 @@ const AdminDashboard = () => {
                       </div>
 
                       {/* Contact Information */}
-                      <div className="space-y-3">
-                        <h4 className="text-sm font-semibold text-accent-400 uppercase tracking-wide">Contact Info</h4>
-                        <div className="space-y-2">
+                      <div className="space-y-2 sm:space-y-3">
+                        <h4 className="text-xs sm:text-sm font-semibold text-accent-400 uppercase tracking-wide">Contact Info</h4>
+                        <div className="space-y-1 sm:space-y-2">
                           <div>
                             <span className="text-xs text-gray-400 block">Email</span>
-                            <span className="text-white font-medium break-all">
+                            <span className="text-white font-medium break-all text-sm sm:text-base">
                               {doctor.email}
                             </span>
                           </div>
                           <div>
                             <span className="text-xs text-gray-400 block">Phone</span>
-                            <span className="text-white font-medium">
+                            <span className="text-white font-medium text-sm sm:text-base">
                               {doctor.phone}
                             </span>
                           </div>
@@ -386,18 +386,18 @@ const AdminDashboard = () => {
                       </div>
 
                       {/* Additional Details */}
-                      <div className="space-y-3">
-                        <h4 className="text-sm font-semibold text-accent-400 uppercase tracking-wide">Additional Info</h4>
-                        <div className="space-y-2">
+                      <div className="space-y-2 sm:space-y-3 sm:col-span-2 lg:col-span-1">
+                        <h4 className="text-xs sm:text-sm font-semibold text-accent-400 uppercase tracking-wide">Additional Info</h4>
+                        <div className="space-y-1 sm:space-y-2">
                           <div>
                             <span className="text-xs text-gray-400 block">Gender</span>
-                            <span className="text-white font-medium capitalize">
+                            <span className="text-white font-medium capitalize text-sm sm:text-base">
                               {doctor.gender || 'Not specified'}
                             </span>
                           </div>
                           <div>
                             <span className="text-xs text-gray-400 block">Date of Birth</span>
-                            <span className="text-white font-medium">
+                            <span className="text-white font-medium text-sm sm:text-base">
                               {doctor.dateOfBirth ? new Date(doctor.dateOfBirth).toLocaleDateString() : 'Not provided'}
                             </span>
                           </div>

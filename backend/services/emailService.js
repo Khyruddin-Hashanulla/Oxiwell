@@ -81,7 +81,7 @@ const sendOTPEmail = async (email, otp, firstName = 'User') => {
               
               <p>If you have any questions, please contact our support team.</p>
               
-              <p>Best regards,<br>The Oxiwell Health Center Team</p>
+              <p>Best regards,<br>Founder of Oxiwell <br>Khyruddin Hashanulla </p>
             </div>
             <div class="footer">
               <p>© 2025 Oxiwell Health Center. All rights reserved.</p>
@@ -175,7 +175,7 @@ const sendWelcomeEmail = async (email, firstName) => {
               
               <p>If you have any questions or need assistance, our support team is here to help.</p>
               
-              <p>Best regards,<br>The Oxiwell Health Center Team</p>
+              <p>Best regards,<br>Founder of Oxiwell <br>Khyruddin Hashanulla </p>
             </div>
           </div>
         </body>
@@ -260,7 +260,7 @@ const sendPasswordResetEmail = async (email, resetUrl, firstName = 'User') => {
               
               <p>If you continue to have problems, please contact our support team.</p>
               
-              <p>Best regards,<br>The Oxiwell Health Center Team</p>
+              <p>Best regards,<br>Founder of Oxiwell <br>Khyruddin Hashanulla </p>
             </div>
             <div class="footer">
               <p>© 2025 Oxiwell Health Center. All rights reserved.</p>

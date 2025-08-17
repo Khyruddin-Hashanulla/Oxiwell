@@ -187,21 +187,21 @@ const AdminUsers = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Enhanced Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
             <Link 
               to="/admin/dashboard"
-              className="group flex items-center space-x-2 text-gray-300 hover:text-white transition-all duration-200 hover:bg-primary-700/50 px-3 py-2 rounded-lg"
+              className="group flex items-center space-x-2 text-gray-300 hover:text-white transition-all duration-200 hover:bg-primary-700/50 px-3 py-2 rounded-lg self-start"
             >
-              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-200" />
-              <span className="font-medium">Back to Dashboard</span>
+              <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 group-hover:-translate-x-1 transition-transform duration-200" />
+              <span className="font-medium text-sm sm:text-base">Back to Dashboard</span>
             </Link>
           </div>
           <div className="flex items-center space-x-4">
-            <div className="bg-primary-800/50 backdrop-blur-sm border border-primary-600 rounded-lg px-4 py-2">
+            <div className="bg-primary-800/50 backdrop-blur-sm border border-primary-600 rounded-lg px-3 sm:px-4 py-2">
               <div className="flex items-center space-x-2 text-accent-400">
-                <TrendingUp className="w-5 h-5" />
-                <span className="font-semibold">{totalUsers} Total Users</span>
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="font-semibold text-sm sm:text-base">{totalUsers} Total Users</span>
               </div>
             </div>
           </div>
@@ -209,13 +209,13 @@ const AdminUsers = () => {
 
         {/* Enhanced Title Section */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-accent-500 to-accent-600 rounded-full mb-4 shadow-xl shadow-accent-500/25">
-            <Users className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-r from-accent-500 to-accent-600 rounded-full mb-4 shadow-xl shadow-accent-500/25">
+            <Users className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-white mb-2 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
             User Management
           </h1>
-          <p className="text-gray-300 text-lg">Manage all system users and their permissions with ease</p>
+          <p className="text-gray-300 text-base sm:text-lg">Manage all system users and their permissions with ease</p>
         </div>
 
         {/* Enhanced Stats Cards */}
@@ -492,10 +492,10 @@ const AdminUsers = () => {
                     {selectedUser.firstName} {selectedUser.lastName}
                   </h2>
                   <div className="flex items-center space-x-2 mt-1">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(selectedUser.role)}`}>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full shadow-lg ${getRoleColor(selectedUser.role)}`}>
                       {selectedUser.role?.charAt(0).toUpperCase() + selectedUser.role?.slice(1)}
                     </span>
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedUser.status)}`}>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full shadow-lg ${getStatusColor(selectedUser.status)}`}>
                       {selectedUser.status?.charAt(0).toUpperCase() + selectedUser.status?.slice(1)}
                     </span>
                   </div>

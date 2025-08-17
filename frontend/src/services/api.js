@@ -359,6 +359,9 @@ export const adminAPI = {
   approveDoctor: (id) => api.put(`/admin/doctors/${id}/approve`),
   rejectDoctor: (id, data) => api.put(`/admin/doctors/${id}/reject`, data),
   
+  // Activity endpoints
+  getRecentActivities: (params) => api.get('/admin/activities', { params }),
+  
   // Reports endpoints
   generateReports: (params) => api.get('/admin/reports', { params }),
   getReport: (id) => api.get(`/admin/reports/${id}`),
