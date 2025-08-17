@@ -38,9 +38,9 @@ const ContactPage = () => {
       icon: MapPin,
       title: 'Visit Us',
       details: [
-        '123 Healthcare Avenue',
-        'Medical District, MD 12345',
-        'United States'
+        'Kolkata',
+        'Park Circus, 700019',
+        'India'
       ]
     },
     {
@@ -246,7 +246,7 @@ const ContactPage = () => {
                   <MapPin className="w-5 h-5 text-accent-400 mt-1" />
                   <div>
                     <p className="text-white font-medium">Address</p>
-                    <p className="text-gray-300 text-sm">123 Healthcare Avenue<br />Medical District, MD 12345</p>
+                    <p className="text-gray-300 text-sm">41/A, Park Circus<br />Medical District, 700019</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
