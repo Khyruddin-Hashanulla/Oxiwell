@@ -467,16 +467,16 @@ const DoctorPrescriptions = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900 p-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 mb-8">
           <button
             onClick={() => navigate('/doctor/dashboard')}
-            className="flex items-center text-white hover:text-accent-400 transition-colors"
+            className="flex items-center text-white hover:text-accent-400 transition-colors text-sm sm:text-base"
           >
-            <ArrowLeft className="w-5 h-5 mr-2" />
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
             Back to Dashboard
           </button>
-          <h1 className="text-3xl font-bold text-white">Write Prescription</h1>
-          <div className="w-32"></div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white text-center sm:text-left">Write Prescription</h1>
+          <div className="hidden sm:block w-32"></div>
         </div>
 
         {/* Patient Selection */}
@@ -491,7 +491,7 @@ const DoctorPrescriptions = () => {
                 placeholder="Search patients by name or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                className="w-full pl-10 pr-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 text-sm sm:text-base"
               />
             </div>
 
@@ -518,23 +518,23 @@ const DoctorPrescriptions = () => {
             </div>
           </div>
         ) : selectedPatient && (
-          <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg mb-6">
-            <div className="flex items-center justify-between">
+          <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-4 sm:p-6 border border-primary-600 shadow-lg mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-accent-500 rounded-full flex items-center justify-center">
-                  <User className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg sm:text-xl font-bold text-white truncate">
                     {selectedPatient.firstName} {selectedPatient.lastName}
                   </h3>
-                  <p className="text-gray-300">{selectedPatient.email}</p>
+                  <p className="text-gray-300 text-sm sm:text-base truncate">{selectedPatient.email}</p>
                 </div>
               </div>
               {!appointmentId && (
                 <button
                   onClick={() => setShowPatientSearch(true)}
-                  className="text-accent-400 hover:text-accent-300 transition-colors"
+                  className="text-accent-400 hover:text-accent-300 transition-colors text-sm sm:text-base flex-shrink-0 self-start sm:self-center"
                 >
                   Change Patient
                 </button>
@@ -547,8 +547,8 @@ const DoctorPrescriptions = () => {
         {selectedPatient && (
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Case History */}
-            <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg">
-              <h2 className="text-xl font-bold text-white mb-4">Case History</h2>
+            <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-4 sm:p-6 border border-primary-600 shadow-lg mb-6">
+              <h2 className="text-lg sm:text-xl font-bold text-white mb-4">Case History</h2>
               
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -559,20 +559,20 @@ const DoctorPrescriptions = () => {
                   onChange={(e) => setPrescriptionData(prev => ({ ...prev, caseHistory: e.target.value }))}
                   rows={5}
                   required
-                  className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 text-sm sm:text-base"
                   placeholder="Enter detailed case history including diagnosis, symptoms, and relevant medical information..."
                 />
               </div>
             </div>
 
             {/* Medications */}
-            <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-white">Medications</h2>
+            <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-4 sm:p-6 border border-primary-600 shadow-lg mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0 mb-4">
+                <h2 className="text-lg sm:text-xl font-bold text-white">Medications</h2>
                 <button
                   type="button"
                   onClick={addMedication}
-                  className="flex items-center px-4 py-2 bg-accent-600 hover:bg-accent-700 text-white rounded-lg transition-colors"
+                  className="flex items-center px-3 sm:px-4 py-2 bg-accent-600 hover:bg-accent-700 text-white rounded-lg transition-colors text-sm sm:text-base"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Medication
@@ -581,23 +581,23 @@ const DoctorPrescriptions = () => {
 
               <div className="space-y-4">
                 {prescriptionData.medications.map((medication, index) => (
-                  <div key={index} className="bg-primary-600 bg-opacity-50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-lg font-medium text-white">Medication {index + 1}</h3>
+                  <div key={index} className="bg-primary-600 bg-opacity-50 rounded-lg p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 mb-3">
+                      <h3 className="text-base sm:text-lg font-medium text-white">Medication {index + 1}</h3>
                       {prescriptionData.medications.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeMedication(index)}
-                          className="text-error-400 hover:text-error-300 transition-colors"
+                          className="text-error-400 hover:text-error-300 transition-colors self-start sm:self-center"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                           Medicine Name *
                         </label>
                         <input
@@ -605,33 +605,33 @@ const DoctorPrescriptions = () => {
                           value={medication.name}
                           placeholder="Enter medicine name"
                           onChange={(e) => updateMedication(index, 'name', e.target.value)}
-                          className="w-full px-3 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                          className="w-full px-3 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 text-sm sm:text-base"
                           required
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                           Dosage *
                         </label>
                         <input
                           type="text"
                           value={medication.dosage}
                           onChange={(e) => updateMedication(index, 'dosage', e.target.value)}
-                          className="w-full px-3 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                          className="w-full px-3 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 text-sm sm:text-base"
                           placeholder="e.g., 500mg"
                           required
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                           Frequency *
                         </label>
                         <select
                           value={medication.frequency || ''}
                           onChange={(e) => updateMedication(index, 'frequency', e.target.value)}
-                          className="w-full px-3 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-500"
+                          className="w-full px-3 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-500 text-sm sm:text-base"
                           required
                         >
                           <option value="">Select frequency</option>
@@ -669,35 +669,35 @@ const DoctorPrescriptions = () => {
                             value={medication.customFrequency || ''}
                             onChange={(e) => updateMedication(index, 'customFrequency', e.target.value)}
                             placeholder="Enter custom frequency (e.g., Every other day, Twice monthly)"
-                            className="w-full px-3 py-2 mt-2 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                            className="w-full px-3 py-2 mt-2 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 text-sm sm:text-base"
                             required
                           />
                         )}
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                           Duration *
                         </label>
                         <input
                           type="text"
                           value={medication.duration}
                           onChange={(e) => updateMedication(index, 'duration', e.target.value)}
-                          className="w-full px-3 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                          className="w-full px-3 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 text-sm sm:text-base"
                           placeholder="e.g., 7 days"
                           required
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                           Instructions *
                         </label>
                         <input
                           type="text"
                           value={medication.instructions}
                           onChange={(e) => updateMedication(index, 'instructions', e.target.value)}
-                          className="w-full px-3 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                          className="w-full px-3 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 text-sm sm:text-base"
                           placeholder="e.g., Take after meals"
                           required
                         />
@@ -709,13 +709,13 @@ const DoctorPrescriptions = () => {
             </div>
 
             {/* Investigations */}
-            <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-white">Investigations</h2>
+            <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-4 sm:p-6 border border-primary-600 shadow-lg mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0 mb-4">
+                <h2 className="text-lg sm:text-xl font-bold text-white">Investigations</h2>
                 <button
                   type="button"
                   onClick={addInvestigation}
-                  className="flex items-center px-4 py-2 bg-accent-600 hover:bg-accent-700 text-white rounded-lg transition-colors"
+                  className="flex items-center px-3 sm:px-4 py-2 bg-accent-600 hover:bg-accent-700 text-white rounded-lg transition-colors text-sm sm:text-base"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Investigation
@@ -724,23 +724,23 @@ const DoctorPrescriptions = () => {
 
               <div className="space-y-4">
                 {prescriptionData.investigations.map((investigation, index) => (
-                  <div key={index} className="bg-primary-600 bg-opacity-50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-lg font-medium text-white">Investigation {index + 1}</h3>
+                  <div key={index} className="bg-primary-600 bg-opacity-50 rounded-lg p-3 sm:p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 mb-3">
+                      <h3 className="text-base sm:text-lg font-medium text-white">Investigation {index + 1}</h3>
                       {prescriptionData.investigations.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeInvestigation(index)}
-                          className="text-error-400 hover:text-error-300 transition-colors"
+                          className="text-error-400 hover:text-error-300 transition-colors self-start sm:self-center"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                           Investigation Name *
                         </label>
                         <input
@@ -765,7 +765,7 @@ const DoctorPrescriptions = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">
+                        <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                           Description
                         </label>
                         <input
@@ -794,50 +794,50 @@ const DoctorPrescriptions = () => {
             </div>
 
             {/* Additional Notes & Follow-up */}
-            <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg">
-              <h2 className="text-xl font-bold text-white mb-4">Additional Information</h2>
+            <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-4 sm:p-6 border border-primary-600 shadow-lg">
+              <h2 className="text-lg sm:text-xl font-bold text-white mb-4">Additional Information</h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">
                     Additional Notes
                   </label>
                   <textarea
                     value={prescriptionData.notes}
                     onChange={(e) => setPrescriptionData(prev => ({ ...prev, notes: e.target.value }))}
                     rows={4}
-                    className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-primary-700 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 text-sm sm:text-base"
                     placeholder="Any additional notes or instructions..."
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">
                     Follow-up Date
                   </label>
                   <input
                     type="date"
                     value={prescriptionData.followUpDate}
                     onChange={(e) => setPrescriptionData(prev => ({ ...prev, followUpDate: e.target.value }))}
-                    className="w-full px-4 py-3 bg-primary-700 border border-primary-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-500"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-primary-700 border border-primary-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-accent-500 text-sm sm:text-base"
                   />
                 </div>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-end space-x-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end space-y-3 sm:space-y-0 sm:space-x-4">
               <button
                 type="button"
                 onClick={() => navigate('/doctor/dashboard')}
-                className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+                className="w-full sm:w-auto px-4 sm:px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors text-sm sm:text-base"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex items-center px-6 py-3 bg-success-600 hover:bg-success-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                className="w-full sm:w-auto flex items-center justify-center px-4 sm:px-6 py-3 bg-success-600 hover:bg-success-700 text-white rounded-lg transition-colors disabled:opacity-50 text-sm sm:text-base"
               >
                 <Save className="w-4 h-4 mr-2" />
                 {isLoading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Prescription' : 'Create Prescription')}

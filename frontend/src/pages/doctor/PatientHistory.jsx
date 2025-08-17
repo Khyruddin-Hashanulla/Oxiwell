@@ -344,24 +344,24 @@ Instructions: ${prescription.generalInstructions || 'N/A'}
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
             <div className="flex items-center space-x-4">
               <Link
                 to={`/doctor/patients/${patientId}`}
-                className="bg-primary-700 hover:bg-primary-600 text-white p-2 rounded-lg transition-colors"
+                className="bg-primary-700 hover:bg-primary-600 text-white p-2 rounded-lg transition-colors flex-shrink-0"
               >
                 <ArrowLeft className="w-5 h-5" />
               </Link>
-              <div>
-                <h1 className="text-3xl font-bold text-white mb-2">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
                   Patient History
                 </h1>
-                <p className="text-gray-300">Complete medical history and timeline</p>
+                <p className="text-gray-300 text-sm sm:text-base">Complete medical history and timeline</p>
               </div>
             </div>
             <Link
               to={`/doctor/patients/${patientId}`}
-              className="bg-accent-600 hover:bg-accent-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+              className="bg-accent-600 hover:bg-accent-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 text-sm sm:text-base flex-shrink-0"
             >
               <User className="w-4 h-4" />
               <span>Patient Details</span>
@@ -370,35 +370,37 @@ Instructions: ${prescription.generalInstructions || 'N/A'}
         </div>
 
         {/* Patient Info Card */}
-        <div className="bg-primary-700 bg-opacity-50 rounded-lg p-6 mb-8 border border-primary-600">
-          <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center">
-              <User className="w-8 h-8 text-white" />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-white">
-                {patient.firstName} {patient.lastName}
-              </h2>
-              <div className="flex items-center space-x-6 mt-2 text-gray-300">
-                <span>Age: {calculateAge(patient.dateOfBirth)}</span>
-                {patient.bloodGroup && (
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${getBloodGroupColor(patient.bloodGroup)}`}>
-                    {patient.bloodGroup}
-                  </span>
-                )}
+        <div className="bg-primary-700 bg-opacity-50 rounded-lg p-4 sm:p-6 mb-8 border border-primary-600">
+          <div className="flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-4">
+            <div className="flex items-center space-x-4 flex-1">
+              <div className="w-16 h-16 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <User className="w-8 h-8 text-white" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-xl sm:text-2xl font-bold text-white truncate">
+                  {patient.firstName} {patient.lastName}
+                </h2>
+                <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-6 mt-2 text-gray-300 text-sm sm:text-base">
+                  <span>Age: {calculateAge(patient.dateOfBirth)}</span>
+                  {patient.bloodGroup && (
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${getBloodGroupColor(patient.bloodGroup)} flex-shrink-0`}>
+                      {patient.bloodGroup}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="bg-primary-600 bg-opacity-50 rounded-lg p-3">
-                <div className="text-lg font-semibold text-white">1</div>
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:flex-shrink-0">
+              <div className="bg-primary-600 bg-opacity-50 rounded-lg p-2 sm:p-3 text-center">
+                <div className="text-base sm:text-lg font-semibold text-white">1</div>
                 <div className="text-xs text-gray-300">Appointments</div>
               </div>
-              <div className="bg-primary-600 bg-opacity-50 rounded-lg p-3">
-                <div className="text-lg font-semibold text-white">1</div>
+              <div className="bg-primary-600 bg-opacity-50 rounded-lg p-2 sm:p-3 text-center">
+                <div className="text-base sm:text-lg font-semibold text-white">1</div>
                 <div className="text-xs text-gray-300">Prescriptions</div>
               </div>
-              <div className="bg-primary-600 bg-opacity-50 rounded-lg p-3">
-                <div className="text-lg font-semibold text-white">0</div>
+              <div className="bg-primary-600 bg-opacity-50 rounded-lg p-2 sm:p-3 text-center">
+                <div className="text-base sm:text-lg font-semibold text-white">0</div>
                 <div className="text-xs text-gray-300">Completed</div>
               </div>
             </div>
@@ -406,8 +408,8 @@ Instructions: ${prescription.generalInstructions || 'N/A'}
         </div>
 
         {/* Search and Filters */}
-        <div className="bg-primary-700 bg-opacity-50 rounded-lg p-6 mb-8 border border-primary-600">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+        <div className="bg-primary-700 bg-opacity-50 rounded-lg p-4 sm:p-6 mb-8 border border-primary-600">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
@@ -415,10 +417,10 @@ Instructions: ${prescription.generalInstructions || 'N/A'}
                 placeholder="Search history..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-primary-800 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500"
+                className="w-full pl-10 pr-4 py-2 bg-primary-800 border border-primary-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 text-sm sm:text-base"
               />
             </div>
-            <div className="flex space-x-2">
+            <div className="flex flex-wrap gap-2">
               {[
                 { id: 'all', label: 'All', icon: Filter },
                 { id: 'appointment', label: 'Appointments', icon: Calendar },
@@ -429,14 +431,14 @@ Instructions: ${prescription.generalInstructions || 'N/A'}
                   <button
                     key={filter.id}
                     onClick={() => setActiveFilter(filter.id)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2 ${
+                    className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2 flex-shrink-0 ${
                       activeFilter === filter.id
                         ? 'bg-accent-600 text-white'
                         : 'bg-primary-600 text-gray-300 hover:bg-primary-500'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
-                    <span>{filter.label}</span>
+                    <span className="truncate">{filter.label}</span>
                   </button>
                 )
               })}
@@ -446,29 +448,29 @@ Instructions: ${prescription.generalInstructions || 'N/A'}
 
         {/* Medical History Timeline */}
         <div className="bg-primary-700 bg-opacity-50 rounded-lg border border-primary-600">
-          <div className="p-6 border-b border-primary-600">
+          <div className="p-4 sm:p-6 border-b border-primary-600">
             <div className="flex items-center space-x-2">
-              <Clock className="w-5 h-5 text-accent-400" />
-              <h3 className="text-xl font-semibold text-white">Medical History Timeline</h3>
+              <Clock className="w-4 sm:w-5 h-4 sm:h-5 text-accent-400" />
+              <h3 className="text-lg sm:text-xl font-semibold text-white">Medical History Timeline</h3>
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {filteredHistory.length > 0 ? (
               <div className="space-y-6">
                 {filteredHistory.map((item, index) => (
                   <div key={index} className="flex space-x-4">
                     {/* Timeline indicator */}
-                    <div className="flex flex-col items-center">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    <div className="flex flex-col items-center flex-shrink-0">
+                      <div className={`w-8 sm:w-10 h-8 sm:h-10 rounded-full flex items-center justify-center ${
                         item.type === 'appointment' 
                           ? 'bg-blue-600' 
                           : 'bg-green-600'
                       }`}>
                         {item.type === 'appointment' ? (
-                          <Calendar className="w-6 h-6 text-white" />
+                          <Calendar className="w-4 sm:w-6 h-4 sm:h-6 text-white" />
                         ) : (
-                          <Pill className="w-6 h-6 text-white" />
+                          <Pill className="w-4 sm:w-6 h-4 sm:h-6 text-white" />
                         )}
                       </div>
                       {index < filteredHistory.length - 1 && (
@@ -477,23 +479,23 @@ Instructions: ${prescription.generalInstructions || 'N/A'}
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 bg-primary-700 bg-opacity-50 rounded-lg p-6 border border-primary-600">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h4 className="text-lg font-semibold text-white mb-1">
+                    <div className="flex-1 min-w-0 bg-primary-700 bg-opacity-50 rounded-lg p-4 sm:p-6 border border-primary-600">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-2 sm:space-y-0 mb-3">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-base sm:text-lg font-semibold text-white mb-1 break-words">
                             {item.title}
                           </h4>
                           {item.type === 'appointment' ? (
-                            <p className="text-gray-300 text-sm">
+                            <p className="text-gray-300 text-sm break-words">
                               {formatAppointmentDateTime(item.data.appointmentDate, item.data.appointmentTime)}
                             </p>
                           ) : (
-                            <p className="text-gray-300 text-sm">
+                            <p className="text-gray-300 text-sm break-words">
                               {formatDateTime(item.date)}
                             </p>
                           )}
                         </div>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(item.status)}`}>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(item.status)} flex-shrink-0`}>
                           {item.status}
                         </span>
                       </div>
@@ -502,18 +504,18 @@ Instructions: ${prescription.generalInstructions || 'N/A'}
                       {item.type === 'appointment' && (
                         <div className="space-y-2">
                           {item.data.hospital && (
-                            <div className="text-gray-300">
-                              <strong>Hospital:</strong> {item.data.hospital.name}
+                            <div className="text-gray-300 text-sm sm:text-base">
+                              <strong>Hospital:</strong> <span className="break-words">{item.data.hospital.name}</span>
                             </div>
                           )}
                           {item.data.reason && (
-                            <div className="text-gray-300">
-                              <strong>Reason:</strong> {item.data.reason}
+                            <div className="text-gray-300 text-sm sm:text-base">
+                              <strong>Reason:</strong> <span className="break-words">{item.data.reason}</span>
                             </div>
                           )}
                           {item.data.notes && (
-                            <div className="text-gray-300">
-                              <strong>Notes:</strong> {item.data.notes}
+                            <div className="text-gray-300 text-sm sm:text-base">
+                              <strong>Notes:</strong> <span className="break-words">{item.data.notes}</span>
                             </div>
                           )}
                         </div>
@@ -523,31 +525,31 @@ Instructions: ${prescription.generalInstructions || 'N/A'}
                       {item.type === 'prescription' && (
                         <div className="space-y-2">
                           {item.data.diagnosis && (
-                            <div className="text-gray-300">
-                              <strong>Diagnosis:</strong> {item.data.diagnosis}
+                            <div className="text-gray-300 text-sm sm:text-base">
+                              <strong>Diagnosis:</strong> <span className="break-words">{item.data.diagnosis}</span>
                             </div>
                           )}
                           {item.data.medications && item.data.medications.length > 0 && (
-                            <div className="text-gray-300">
+                            <div className="text-gray-300 text-sm sm:text-base">
                               <strong>Medications:</strong> {item.data.medications.length} prescribed
                             </div>
                           )}
                           {item.data.generalInstructions && (
-                            <div className="text-gray-300">
-                              <strong>Instructions:</strong> {item.data.generalInstructions}
+                            <div className="text-gray-300 text-sm sm:text-base">
+                              <strong>Instructions:</strong> <span className="break-words">{item.data.generalInstructions}</span>
                             </div>
                           )}
-                          <div className="flex space-x-2 mt-3">
+                          <div className="flex flex-col sm:flex-row gap-2 mt-3">
                             <button 
                               onClick={() => handleViewPrescriptionDetails(item.data)}
-                              className="bg-accent-600 hover:bg-accent-700 text-white px-3 py-1 rounded text-sm transition-colors flex items-center space-x-1"
+                              className="bg-accent-600 hover:bg-accent-700 text-white px-3 py-1 rounded text-sm transition-colors flex items-center justify-center space-x-1"
                             >
                               <FileText className="w-3 h-3" />
                               <span>View Details</span>
                             </button>
                             <button 
                               onClick={() => handleDownloadPrescription(item.data)}
-                              className="bg-primary-600 hover:bg-primary-500 text-white px-3 py-1 rounded text-sm transition-colors flex items-center space-x-1"
+                              className="bg-primary-600 hover:bg-primary-500 text-white px-3 py-1 rounded text-sm transition-colors flex items-center justify-center space-x-1"
                             >
                               <Download className="w-3 h-3" />
                               <span>Download</span>

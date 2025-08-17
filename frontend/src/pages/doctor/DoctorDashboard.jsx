@@ -350,13 +350,13 @@ const DoctorDashboard = () => {
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-primary-800 to-primary-700 rounded-2xl p-8 border border-primary-600 shadow-xl">
-        <div className="flex items-center justify-between">
+      <div className="bg-gradient-to-r from-primary-800 to-primary-700 rounded-2xl p-6 md:p-8 border border-primary-600 shadow-xl">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">
               Good morning, Dr. {user?.lastName}!
             </h1>
-            <p className="text-gray-300 text-lg">
+            <p className="text-gray-300 text-base md:text-lg">
               You have {stats.todayAppointments} appointments today
             </p>
           </div>
@@ -370,9 +370,9 @@ const DoctorDashboard = () => {
 
       {/* Next Appointment Alert */}
       {stats.nextAppointment && (
-        <div className="bg-gradient-to-r from-blue-800 to-blue-700 border border-blue-600 rounded-xl p-6 shadow-lg">
-          <div className="flex items-start space-x-4">
-            <Clock className="w-6 h-6 text-blue-300 mt-1" />
+        <div className="bg-gradient-to-r from-blue-800 to-blue-700 border border-blue-600 rounded-xl p-4 md:p-6 shadow-lg">
+          <div className="flex flex-col md:flex-row md:items-start space-y-4 md:space-y-0 md:space-x-4">
+            <Clock className="w-6 h-6 text-blue-300 mt-1 flex-shrink-0" />
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-white mb-2">
                 Next Appointment
@@ -392,7 +392,7 @@ const DoctorDashboard = () => {
             </div>
             <Link
               to="/doctor/appointments"
-              className="bg-white text-blue-800 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+              className="bg-white text-blue-800 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors text-sm md:text-base flex-shrink-0 text-center"
             >
               View Details
             </Link>
@@ -401,51 +401,51 @@ const DoctorDashboard = () => {
       )}
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-4 md:p-6 border border-primary-600 shadow-lg hover:shadow-xl transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-300 text-sm font-medium">Today's Appointments</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.todayAppointments}</p>
+              <p className="text-gray-300 text-xs md:text-sm font-medium">Today's Appointments</p>
+              <p className="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">{stats.todayAppointments}</p>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+              <Calendar className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg hover:shadow-xl transition-all duration-300">
+        <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-4 md:p-6 border border-primary-600 shadow-lg hover:shadow-xl transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-300 text-sm font-medium">Total Patients</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.totalPatients}</p>
+              <p className="text-gray-300 text-xs md:text-sm font-medium">Total Patients</p>
+              <p className="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">{stats.totalPatients}</p>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-              <Users className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+              <Users className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg hover:shadow-xl transition-all duration-300">
+        <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-4 md:p-6 border border-primary-600 shadow-lg hover:shadow-xl transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-300 text-sm font-medium">Completed Today</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.completedToday}</p>
+              <p className="text-gray-300 text-xs md:text-sm font-medium">Completed Today</p>
+              <p className="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">{stats.completedToday}</p>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg hover:shadow-xl transition-all duration-300">
+        <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-4 md:p-6 border border-primary-600 shadow-lg hover:shadow-xl transition-all duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-300 text-sm font-medium">Pending</p>
-              <p className="text-3xl font-bold text-white mt-2">{stats.pendingAppointments}</p>
+              <p className="text-gray-300 text-xs md:text-sm font-medium">Pending</p>
+              <p className="text-2xl md:text-3xl font-bold text-white mt-1 md:mt-2">{stats.pendingAppointments}</p>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-              <Clock className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+              <Clock className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
           </div>
         </div>
@@ -454,22 +454,22 @@ const DoctorDashboard = () => {
       {/* Quick Actions */}
       <div>
         <h2 className="text-2xl font-bold text-white mb-6">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {quickActions.map((action, index) => {
             const IconComponent = action.icon
             return (
               <Link
                 key={index}
                 to={action.link}
-                className={`${action.color} rounded-xl p-6 text-white hover:shadow-xl transition-all duration-300 transform hover:scale-105 group`}
+                className={`${action.color} rounded-xl p-4 md:p-6 text-white hover:shadow-xl transition-all duration-300 transform hover:scale-105 group`}
               >
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center group-hover:bg-opacity-30 transition-all">
-                    <IconComponent className="w-6 h-6" />
+                <div className="flex flex-col items-center text-center space-y-3 md:space-y-4">
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center group-hover:bg-opacity-30 transition-all">
+                    <IconComponent className="w-5 h-5 md:w-6 md:h-6" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg mb-2">{action.title}</h3>
-                    <p className="text-sm opacity-90">{action.description}</p>
+                    <h3 className="font-semibold text-sm md:text-lg mb-1 md:mb-2">{action.title}</h3>
+                    <p className="text-xs md:text-sm opacity-90">{action.description}</p>
                   </div>
                 </div>
               </Link>
@@ -499,13 +499,13 @@ const DoctorDashboard = () => {
                 todayAppointments.slice(0, showAllAppointments ? todayAppointments.length : 3).map((appointment) => (
                   <div key={appointment._id || appointment.id} className="bg-primary-700 bg-opacity-50 rounded-lg p-4 hover:bg-opacity-70 transition-all">
                     {/* Patient Info Header */}
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0 mb-3">
+                      <div className="flex items-center space-x-3 min-w-0 flex-1">
+                        <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center flex-shrink-0">
                           <User className="w-6 h-6 text-white" />
                         </div>
-                        <div>
-                          <h4 className="font-semibold text-white">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-semibold text-white truncate">
                             {typeof appointment.patient === 'object' 
                               ? (appointment.patient?.fullName || 
                                  `${appointment.patient?.firstName || ''} ${appointment.patient?.lastName || ''}`.trim() || 
@@ -513,31 +513,31 @@ const DoctorDashboard = () => {
                               : (appointment.patient || 'Unknown Patient')
                             }
                           </h4>
-                          <p className="text-sm text-gray-300">
+                          <p className="text-sm text-gray-300 truncate">
                             {appointment.patient?.email || 'No email'} • {appointment.patient?.phone || 'No phone'}
                           </p>
                         </div>
                       </div>
                       
                       {/* Status Badge */}
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center justify-start sm:justify-end flex-shrink-0">
                         {appointment.status === 'completed' && (
-                          <span className="bg-success-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+                          <span className="bg-success-600 text-white text-xs px-3 py-1 rounded-full font-medium whitespace-nowrap">
                             Completed
                           </span>
                         )}
                         {appointment.status === 'confirmed' && (
-                          <span className="bg-primary-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+                          <span className="bg-primary-600 text-white text-xs px-3 py-1 rounded-full font-medium whitespace-nowrap">
                             Confirmed
                           </span>
                         )}
                         {appointment.status === 'pending' && (
-                          <span className="bg-warning-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+                          <span className="bg-warning-600 text-white text-xs px-3 py-1 rounded-full font-medium whitespace-nowrap">
                             Pending Approval
                           </span>
                         )}
                         {appointment.status === 'cancelled' && (
-                          <span className="bg-error-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+                          <span className="bg-error-600 text-white text-xs px-3 py-1 rounded-full font-medium whitespace-nowrap">
                             Cancelled
                           </span>
                         )}
@@ -547,25 +547,25 @@ const DoctorDashboard = () => {
                     {/* Appointment Details */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 text-sm">
                       <div className="flex items-center space-x-2 text-gray-300">
-                        <Calendar className="w-4 h-4" />
-                        <span>
+                        <Calendar className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">
                           {new Date(appointment.appointmentDate).toLocaleDateString()} at {appointment.appointmentTime || 'Time not set'}
                         </span>
                       </div>
                       <div className="flex items-center space-x-2 text-gray-300">
-                        <Clock className="w-4 h-4" />
-                        <span>{appointment.appointmentType || 'General Consultation'}</span>
+                        <Clock className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{appointment.appointmentType || 'General Consultation'}</span>
                       </div>
                       {appointment.patient?.bloodGroup && (
                         <div className="flex items-center space-x-2 text-gray-300">
-                          <Activity className="w-4 h-4" />
-                          <span>Blood Group: {appointment.patient.bloodGroup}</span>
+                          <Activity className="w-4 h-4 flex-shrink-0" />
+                          <span className="truncate">Blood Group: {appointment.patient.bloodGroup}</span>
                         </div>
                       )}
                       {appointment.patient?.dateOfBirth && (
                         <div className="flex items-center space-x-2 text-gray-300">
-                          <User className="w-4 h-4" />
-                          <span>Age: {calculateAge(appointment.patient.dateOfBirth) || 'N/A'}</span>
+                          <User className="w-4 h-4 flex-shrink-0" />
+                          <span className="truncate">Age: {calculateAge(appointment.patient.dateOfBirth) || 'N/A'}</span>
                         </div>
                       )}
                     </div>
@@ -582,19 +582,19 @@ const DoctorDashboard = () => {
 
                     {/* Action Buttons for Pending Appointments */}
                     {appointment.status === 'pending' && (
-                      <div className="flex items-center space-x-3 pt-3 border-t border-primary-600">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 pt-3 border-t border-primary-600">
                         <button
                           onClick={() => handleAppointmentAction(appointment._id || appointment.id, 'approve')}
-                          className="flex items-center space-x-2 bg-success-600 hover:bg-success-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                          className="flex items-center justify-center space-x-2 bg-success-600 hover:bg-success-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                         >
-                          <CheckCircle className="w-4 h-4" />
+                          <CheckCircle className="w-4 h-4 flex-shrink-0" />
                           <span>Approve</span>
                         </button>
                         <button
                           onClick={() => handleAppointmentAction(appointment._id || appointment.id, 'reject')}
-                          className="flex items-center space-x-2 bg-error-600 hover:bg-error-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                          className="flex items-center justify-center space-x-2 bg-error-600 hover:bg-error-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                         >
-                          <XCircle className="w-4 h-4" />
+                          <XCircle className="w-4 h-4 flex-shrink-0" />
                           <span>Reject</span>
                         </button>
                       </div>

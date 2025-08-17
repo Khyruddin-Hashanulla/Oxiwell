@@ -47,19 +47,19 @@ const DoctorPrescriptionsList = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">My Prescriptions</h1>
-        <div className="flex items-center gap-3">
-          <button onClick={fetchPrescriptions} className="px-3 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+        <h1 className="text-xl sm:text-2xl font-bold text-white">My Prescriptions</h1>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <button onClick={fetchPrescriptions} className="px-3 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center gap-2 text-sm sm:text-base">
             <RefreshCw className="w-4 h-4" /> Refresh
           </button>
-          <Link to="/doctor/prescriptions/new" className="px-4 py-2 rounded-lg bg-accent-600 hover:bg-accent-700 text-white flex items-center gap-2">
+          <Link to="/doctor/prescriptions/new" className="px-4 py-2 rounded-lg bg-accent-600 hover:bg-accent-700 text-white flex items-center justify-center gap-2 text-sm sm:text-base">
             <Plus className="w-4 h-4" /> New Prescription
           </Link>
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-4 border border-primary-600">
+      <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-4 sm:p-6 border border-primary-600">
         <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
           <div className="flex items-center gap-2 flex-1 bg-primary-700 rounded-lg px-3 py-2 border border-primary-600">
             <Search className="w-4 h-4 text-gray-300" />
@@ -67,10 +67,10 @@ const DoctorPrescriptionsList = () => {
               placeholder="Search by patient, number, diagnosis"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              className="bg-transparent outline-none text-white w-full placeholder:text-gray-400"
+              className="bg-transparent outline-none text-white w-full placeholder:text-gray-400 text-sm sm:text-base"
             />
           </div>
-          <select value={status} onChange={e => setStatus(e.target.value)} className="px-3 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white">
+          <select value={status} onChange={e => setStatus(e.target.value)} className="px-3 py-2 bg-primary-700 border border-primary-600 rounded-lg text-white text-sm sm:text-base">
             <option value="">All statuses</option>
             <option value="active">Active</option>
             <option value="dispensed">Dispensed</option>

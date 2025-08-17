@@ -1163,7 +1163,7 @@ const DoctorProfileSetup = () => {
                             }
                             
                             return (
-                              <div key={day} className={`flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 p-4 rounded-lg border transition-all duration-300 ${
+                              <div key={day} className={`flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 p-4 rounded-lg border transition-all duration-300 ${
                                 daySlot.isAvailable 
                                   ? 'bg-accent-500/10 border-accent-500/30' 
                                   : 'bg-white/5 border-primary-500/30'
@@ -1208,7 +1208,7 @@ const DoctorProfileSetup = () => {
                                 </div>
                                 
                                 {daySlot.isAvailable && (
-                                  <div className="flex items-center space-x-2 w-full sm:flex-1 animate-fadeIn">
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 w-full sm:flex-1 animate-fadeIn">
                                     <input
                                       type="time"
                                       value={daySlot.startTime}

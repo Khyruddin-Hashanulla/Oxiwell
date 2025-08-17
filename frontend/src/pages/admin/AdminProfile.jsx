@@ -123,44 +123,44 @@ const AdminProfile = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+        <div className="flex items-center space-x-3 sm:space-x-4">
           <button
             onClick={() => navigate('/admin/dashboard')}
-            className="p-2 text-gray-400 hover:text-white hover:bg-primary-700 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-white hover:bg-primary-700 rounded-lg transition-colors flex-shrink-0"
           >
-            <ArrowLeft className="w-6 h-6" />
+            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
-          <div>
-            <h1 className="text-3xl font-bold text-white">My Profile</h1>
-            <p className="mt-2 text-gray-300">Manage your administrative information</p>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">My Profile</h1>
+            <p className="mt-1 sm:mt-2 text-gray-300 text-sm sm:text-base">Manage your administrative information</p>
           </div>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(true)}
-              className="flex items-center px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors"
+              className="flex items-center justify-center px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors text-sm sm:text-base"
             >
-              <Edit3 className="w-4 h-4 mr-2" />
-              Edit Profile
+              <Edit3 className="w-4 h-4 mr-2 flex-shrink-0" />
+              <span className="truncate">Edit Profile</span>
             </button>
           ) : (
-            <div className="flex space-x-2">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
               <button
                 onClick={handleCancel}
-                className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                className="flex items-center justify-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm sm:text-base"
               >
-                <X className="w-4 h-4 mr-2" />
-                Cancel
+                <X className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Cancel</span>
               </button>
               <button
                 onClick={handleSubmit(onSubmit)}
                 disabled={isLoading}
-                className="flex items-center px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors disabled:opacity-50"
+                className="flex items-center justify-center px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors disabled:opacity-50 text-sm sm:text-base"
               >
-                <Save className="w-4 h-4 mr-2" />
-                {isLoading ? 'Saving...' : 'Save Changes'}
+                <Save className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span className="truncate">{isLoading ? 'Saving...' : 'Save Changes'}</span>
               </button>
             </div>
           )}

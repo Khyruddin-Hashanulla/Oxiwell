@@ -389,18 +389,18 @@ const DoctorAppointments = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
             <div>
-              <h1 className="text-3xl font-bold text-white mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
                 My Appointments
               </h1>
-              <p className="text-gray-300">
+              <p className="text-gray-300 text-sm sm:text-base">
                 Manage and track all your patient appointments
               </p>
             </div>
             <Link
               to="/doctor/dashboard"
-              className="bg-primary-700 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+              className="bg-primary-700 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
             >
               <ChevronLeft className="w-4 h-4" />
               <span>Back to Dashboard</span>
@@ -457,16 +457,16 @@ const DoctorAppointments = () => {
                       key={appointment._id}
                       className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg hover:shadow-xl transition-all duration-300"
                     >
-                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+                      <div className="flex flex-col space-y-6">
                         {/* Patient Information */}
                         <div className="flex-1">
-                          <div className="flex items-start justify-between mb-4">
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-4 sm:space-y-0 mb-4">
                             <div className="flex items-start space-x-4">
-                              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                                 <User className="w-6 h-6 text-white" />
                               </div>
-                              <div>
-                                <h3 className="text-xl font-semibold text-white mb-1">
+                              <div className="min-w-0 flex-1">
+                                <h3 className="text-lg sm:text-xl font-semibold text-white mb-1 truncate">
                                   {typeof appointment.patient === 'object' 
                                     ? (appointment.patient?.fullName || 
                                        `${appointment.patient?.firstName || ''} ${appointment.patient?.lastName || ''}`.trim() || 
@@ -474,13 +474,13 @@ const DoctorAppointments = () => {
                                     : (appointment.patient || 'Unknown Patient')
                                   }
                                 </h3>
-                                <div className="flex items-center space-x-4 text-sm text-gray-300">
+                                <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 text-sm text-gray-300">
                                   <div className="flex items-center space-x-1">
-                                    <Calendar className="w-4 h-4" />
+                                    <Calendar className="w-4 h-4 flex-shrink-0" />
                                     <span>{formatDate(appointment.appointmentDate)}</span>
                                   </div>
                                   <div className="flex items-center space-x-1">
-                                    <Clock className="w-4 h-4" />
+                                    <Clock className="w-4 h-4 flex-shrink-0" />
                                     <span>{appointment.appointmentTime}</span>
                                   </div>
                                 </div>
@@ -488,7 +488,7 @@ const DoctorAppointments = () => {
                             </div>
                             
                             {/* Status and Urgency Badges */}
-                            <div className="flex flex-col space-y-2">
+                            <div className="flex flex-col space-y-2 sm:items-end">
                               <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(appointment.status)}`}>
                                 {getStatusIcon(appointment.status)}
                                 <span className="capitalize">{appointment.status}</span>
@@ -501,22 +501,22 @@ const DoctorAppointments = () => {
                           </div>
 
                           {/* Patient Details Grid */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                             {/* Contact Information */}
                             <div className="space-y-3">
                               {appointment.patient?.email && (
-                                <div className="flex items-center text-gray-300">
-                                  <Mail className="w-4 h-4 mr-3 text-blue-400" />
-                                  <div>
+                                <div className="flex items-start text-gray-300">
+                                  <Mail className="w-4 h-4 mr-3 text-blue-400 flex-shrink-0 mt-0.5" />
+                                  <div className="min-w-0 flex-1">
                                     <span className="font-medium text-white">Email:</span>
-                                    <p className="text-sm">{appointment.patient.email}</p>
+                                    <p className="text-sm truncate">{appointment.patient.email}</p>
                                   </div>
                                 </div>
                               )}
                               {appointment.patient?.phone && (
-                                <div className="flex items-center text-gray-300">
-                                  <Phone className="w-4 h-4 mr-3 text-green-400" />
-                                  <div>
+                                <div className="flex items-start text-gray-300">
+                                  <Phone className="w-4 h-4 mr-3 text-green-400 flex-shrink-0 mt-0.5" />
+                                  <div className="min-w-0 flex-1">
                                     <span className="font-medium text-white">Phone:</span>
                                     <p className="text-sm">{appointment.patient.phone}</p>
                                   </div>
@@ -526,16 +526,16 @@ const DoctorAppointments = () => {
 
                             {/* Medical Information */}
                             <div className="space-y-3">
-                              <div className="flex items-center text-gray-300">
-                                <Activity className="w-4 h-4 mr-3 text-purple-400" />
+                              <div className="flex items-start text-gray-300">
+                                <Activity className="w-4 h-4 mr-3 text-purple-400 flex-shrink-0 mt-0.5" />
                                 <div>
                                   <span className="font-medium text-white">Age:</span>
                                   <p className="text-sm">{patientAge} years</p>
                                 </div>
                               </div>
                               {appointment.patient?.bloodGroup && (
-                                <div className="flex items-center text-gray-300">
-                                  <Heart className="w-4 h-4 mr-3 text-red-400" />
+                                <div className="flex items-start text-gray-300">
+                                  <Heart className="w-4 h-4 mr-3 text-red-400 flex-shrink-0 mt-0.5" />
                                   <div>
                                     <span className="font-medium text-white">Blood Group:</span>
                                     <p className="text-sm">{appointment.patient.bloodGroup}</p>
@@ -546,13 +546,13 @@ const DoctorAppointments = () => {
                           </div>
 
                           {/* Appointment Details */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                             <div className="bg-success-500/10 rounded-lg p-3 border border-success-500/20">
                               <h4 className="text-white font-medium mb-1 text-sm flex items-center">
-                                <Stethoscope className="w-4 h-4 mr-2" />
+                                <Stethoscope className="w-4 h-4 mr-2 flex-shrink-0" />
                                 Reason for Visit
                               </h4>
-                              <p className="text-gray-300 text-sm">{appointment.reason || 'Not specified'}</p>
+                              <p className="text-gray-300 text-sm break-words">{appointment.reason || 'Not specified'}</p>
                             </div>
                             <div className="bg-primary-500/10 rounded-lg p-3 border border-primary-500/20">
                               <h4 className="text-white font-medium mb-1 text-sm">Consultation Fee</h4>
@@ -564,10 +564,10 @@ const DoctorAppointments = () => {
                           {appointment.patientNotes && (
                             <div className="mt-4 p-3 bg-primary-500/10 rounded-lg border border-primary-500/20">
                               <h4 className="text-white font-medium mb-2 text-sm flex items-center">
-                                <MessageSquare className="w-4 h-4 mr-2" />
+                                <MessageSquare className="w-4 h-4 mr-2 flex-shrink-0" />
                                 Patient Notes
                               </h4>
-                              <p className="text-gray-300 text-sm">{appointment.patientNotes}</p>
+                              <p className="text-gray-300 text-sm break-words">{appointment.patientNotes}</p>
                             </div>
                           )}
 
@@ -575,26 +575,26 @@ const DoctorAppointments = () => {
                           {appointment.doctorNotes && (
                             <div className="mt-4 p-3 bg-warning-500/10 rounded-lg border border-warning-500/20">
                               <h4 className="text-white font-medium mb-2 text-sm flex items-center">
-                                <FileText className="w-4 h-4 mr-2" />
+                                <FileText className="w-4 h-4 mr-2 flex-shrink-0" />
                                 Doctor Notes
                               </h4>
-                              <p className="text-gray-300 text-sm">{appointment.doctorNotes}</p>
+                              <p className="text-gray-300 text-sm break-words">{appointment.doctorNotes}</p>
                             </div>
                           )}
 
                           {/* Appointment ID */}
                           <div className="mt-4 pt-3 border-t border-gray-600">
-                            <p className="text-xs text-gray-400">
+                            <p className="text-xs text-gray-400 break-all">
                               Appointment ID: <span className="font-mono">{appointment._id}</span>
                             </p>
                           </div>
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="lg:ml-6 flex flex-col gap-2 lg:w-48">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap lg:flex-col lg:w-48 lg:flex-shrink-0">
                           {/* Status Update Actions */}
                           {appointment.status === 'pending' && (
-                            <div className="flex flex-col space-y-2">
+                            <div className="flex flex-col sm:flex-row lg:flex-col space-y-2 sm:space-y-0 sm:space-x-2 lg:space-x-0 lg:space-y-2">
                               <button
                                 onClick={() => handleStatusUpdate(appointment._id, 'confirmed')}
                                 className="flex items-center justify-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
@@ -613,7 +613,7 @@ const DoctorAppointments = () => {
                           )}
                           
                           {appointment.status === 'confirmed' && (
-                            <div className="flex flex-col space-y-2">
+                            <div className="flex flex-col sm:flex-row lg:flex-col space-y-2 sm:space-y-0 sm:space-x-2 lg:space-x-0 lg:space-y-2">
                               <button
                                 onClick={() => handleStatusUpdate(appointment._id, 'completed')}
                                 className="flex items-center justify-center space-x-2 bg-success-600 hover:bg-success-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
@@ -632,29 +632,31 @@ const DoctorAppointments = () => {
                           )}
 
                           {/* Additional Actions */}
-                          <button
-                            onClick={() => handleAddNotes(appointment)}
-                            className="flex items-center justify-center space-x-2 bg-accent-600 hover:bg-accent-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                            <span>Add Notes</span>
-                          </button>
-                          
-                          <button
-                            onClick={() => handleViewHistory(appointment)}
-                            className="flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                          >
-                            <Eye className="w-4 h-4" />
-                            <span>View History</span>
-                          </button>
-                          
-                          <button
-                            onClick={() => handleDownloadReport(appointment)}
-                            className="flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                          >
-                            <Download className="w-4 h-4" />
-                            <span>Download Report</span>
-                          </button>
+                          <div className="flex flex-col sm:flex-row lg:flex-col space-y-2 sm:space-y-0 sm:space-x-2 lg:space-x-0 lg:space-y-2">
+                            <button
+                              onClick={() => handleAddNotes(appointment)}
+                              className="flex items-center justify-center space-x-2 bg-accent-600 hover:bg-accent-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                            >
+                              <Edit3 className="w-4 h-4" />
+                              <span>Add Notes</span>
+                            </button>
+                            
+                            <button
+                              onClick={() => handleViewHistory(appointment)}
+                              className="flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                            >
+                              <Eye className="w-4 h-4" />
+                              <span>View History</span>
+                            </button>
+                            
+                            <button
+                              onClick={() => handleDownloadReport(appointment)}
+                              className="flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                            >
+                              <Download className="w-4 h-4" />
+                              <span>Download Report</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>

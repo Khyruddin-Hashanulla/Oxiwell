@@ -569,49 +569,49 @@ const DoctorProfile = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900 p-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 mb-8">
           <button
             onClick={() => navigate('/doctor/dashboard')}
-            className="flex items-center text-white hover:text-success-400 transition-colors"
+            className="flex items-center text-white hover:text-success-400 transition-colors flex-shrink-0"
           >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Dashboard
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+            <span className="text-sm sm:text-base">Back to Dashboard</span>
           </button>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
             {!isEditing ? (
               <button
                 onClick={() => setIsEditing(!isEditing)}
-                className="flex items-center px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors"
+                className="flex items-center justify-center px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors text-sm sm:text-base"
               >
-                <Edit className="w-4 h-4 mr-2" />
-                {isEditing ? 'Cancel Edit' : 'Edit Profile'}
+                <Edit className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span className="truncate">{isEditing ? 'Cancel Edit' : 'Edit Profile'}</span>
               </button>
             ) : (
-              <div className="flex space-x-3">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
-                  className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                  className="flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base"
                 >
-                  <X className="w-4 h-4 mr-2" />
-                  Cancel
+                  <X className="w-4 h-4 mr-2 flex-shrink-0" />
+                  <span className="truncate">Cancel</span>
                 </button>
                 <button
                   type="button"
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="flex items-center px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors disabled:opacity-50"
+                  className="flex items-center justify-center px-4 py-2 bg-success-600 text-white rounded-lg hover:bg-success-700 transition-colors disabled:opacity-50 text-sm sm:text-base"
                 >
                   {loading ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Saving...
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 flex-shrink-0"></div>
+                      <span className="truncate">Saving...</span>
                     </>
                   ) : (
                     <>
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Changes
+                      <Save className="w-4 h-4 mr-2 flex-shrink-0" />
+                      <span className="truncate">Save Changes</span>
                     </>
                   )}
                 </button>
@@ -1214,7 +1214,7 @@ const DoctorProfile = () => {
                           console.log('🔍 Edit mode - formData.workplaces[', index, ']:', JSON.stringify(formData.workplaces?.[index], null, 2));
                           
                           return (
-                            <div key={day} className="flex items-center space-x-4 p-3 bg-white/10 rounded-lg border border-gray-600">
+                            <div key={day} className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 p-3 bg-white/10 rounded-lg border border-gray-600">
                               <div className="flex items-center min-w-[120px]">
                                 <input
                                   type="checkbox"
@@ -1262,7 +1262,7 @@ const DoctorProfile = () => {
                               </div>
                               
                               {daySlot.isAvailable ? (
-                                <div className="flex items-center space-x-2 flex-1">
+                                <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 flex-1">
                                   <input
                                     type="time"
                                     value={daySlot.startTime || '09:00'}
@@ -1280,9 +1280,9 @@ const DoctorProfile = () => {
                                         handleArrayNestedInputChange('workplaces', index, 'availableSlots', newSlots)
                                       }
                                     }}
-                                    className="px-3 py-2 bg-white/10 border border-gray-600 rounded-md text-sm text-white"
+                                    className="flex-1 px-2 py-2 bg-white/10 border border-gray-600 rounded-md text-sm text-white"
                                   />
-                                  <span className="text-gray-300">to</span>
+                                  <span className="text-gray-300 text-sm">to</span>
                                   <input
                                     type="time"
                                     value={daySlot.endTime || '17:00'}
@@ -1300,7 +1300,7 @@ const DoctorProfile = () => {
                                         handleArrayNestedInputChange('workplaces', index, 'availableSlots', newSlots)
                                       }
                                     }}
-                                    className="px-3 py-2 bg-white/10 border border-gray-600 rounded-md text-sm text-white"
+                                    className="flex-1 px-2 py-2 bg-white/10 border border-gray-600 rounded-md text-sm text-white"
                                   />
                                 </div>
                               ) : null}

@@ -202,19 +202,19 @@ const PatientDetails = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
             <div className="flex items-center space-x-4">
               <Link
                 to="/doctor/patients"
-                className="bg-primary-700 hover:bg-primary-600 text-white p-2 rounded-lg transition-colors"
+                className="bg-primary-700 hover:bg-primary-600 text-white p-2 rounded-lg transition-colors flex-shrink-0"
               >
                 <ChevronLeft className="w-5 h-5" />
               </Link>
-              <div>
-                <h1 className="text-3xl font-bold text-white mb-2">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
                   Patient Details
                 </h1>
-                <p className="text-gray-300">
+                <p className="text-gray-300 text-sm sm:text-base">
                   Comprehensive patient information and medical history
                 </p>
               </div>
@@ -224,30 +224,30 @@ const PatientDetails = () => {
 
         {/* Patient Header Card */}
         <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl border border-primary-600 shadow-lg p-6 mb-6">
-          <div className="flex items-start justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center flex-shrink-0">
                 <User className="w-8 h-8 text-white" />
               </div>
-              <div>
-                <h2 className="text-2xl font-bold text-white mb-1">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 truncate">
                   {patient.fullName || `${patient.firstName || ''} ${patient.lastName || ''}`.trim() || 'Unknown Patient'}
                 </h2>
-                <div className="flex items-center space-x-4 text-gray-300">
+                <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 text-gray-300 text-sm sm:text-base">
                   <span>Age: {calculateAge(patient.dateOfBirth)}</span>
                   <span className="capitalize">{patient.gender || 'N/A'}</span>
                   {patient.bloodGroup && (
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${getBloodGroupColor(patient.bloodGroup)}`}>
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${getBloodGroupColor(patient.bloodGroup)} flex-shrink-0`}>
                       {patient.bloodGroup}
                     </span>
                   )}
                 </div>
               </div>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex justify-center sm:justify-end">
               <Link
                 to={`/doctor/patients/${patient._id}/history`}
-                className="bg-accent-600 hover:bg-accent-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                className="bg-accent-600 hover:bg-accent-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 text-sm sm:text-base"
               >
                 <FileText className="w-4 h-4" />
                 <span>View History</span>
@@ -258,7 +258,7 @@ const PatientDetails = () => {
 
         {/* Tab Navigation */}
         <div className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl border border-primary-600 shadow-lg mb-6">
-          <div className="flex border-b border-primary-600">
+          <div className="flex flex-wrap border-b border-primary-600">
             {[
               { id: 'overview', label: 'Overview', icon: User },
               { id: 'appointments', label: 'Appointments', icon: Calendar },
@@ -269,14 +269,14 @@ const PatientDetails = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 px-6 py-4 font-medium transition-colors ${
+                  className={`flex items-center space-x-2 px-4 sm:px-6 py-4 font-medium transition-colors text-sm sm:text-base flex-shrink-0 ${
                     activeTab === tab.id
                       ? 'text-accent-400 border-b-2 border-accent-400'
                       : 'text-gray-300 hover:text-white'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
-                  <span>{tab.label}</span>
+                  <span className="truncate">{tab.label}</span>
                 </button>
               )
             })}
@@ -287,28 +287,28 @@ const PatientDetails = () => {
             {activeTab === 'overview' && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Contact Information */}
-                <div className="bg-primary-700 bg-opacity-50 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center space-x-2">
-                    <Phone className="w-5 h-5" />
+                <div className="bg-primary-700 bg-opacity-50 rounded-lg p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-white mb-4 flex items-center space-x-2">
+                    <Phone className="w-4 sm:w-5 h-4 sm:h-5" />
                     <span>Contact Information</span>
                   </h3>
                   <div className="space-y-3">
                     {patient.email && (
                       <div className="flex items-center space-x-3">
-                        <Mail className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-300">{patient.email}</span>
+                        <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-300 text-sm sm:text-base break-words">{patient.email}</span>
                       </div>
                     )}
                     {patient.phone && (
                       <div className="flex items-center space-x-3">
-                        <Phone className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-300">{patient.phone}</span>
+                        <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-300 text-sm sm:text-base">{patient.phone}</span>
                       </div>
                     )}
                     {patient.address && (
                       <div className="flex items-start space-x-3">
-                        <MapPin className="w-4 h-4 text-gray-400 mt-1" />
-                        <div className="text-gray-300">
+                        <MapPin className="w-4 h-4 text-gray-400 mt-1 flex-shrink-0" />
+                        <div className="text-gray-300 text-sm sm:text-base break-words">
                           {typeof patient.address === 'string' 
                             ? patient.address 
                             : `${patient.address.street || ''} ${patient.address.city || ''} ${patient.address.state || ''} ${patient.address.country || ''}`.trim()
@@ -320,27 +320,27 @@ const PatientDetails = () => {
                 </div>
 
                 {/* Basic Information */}
-                <div className="bg-primary-700 bg-opacity-50 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center space-x-2">
-                    <User className="w-5 h-5" />
+                <div className="bg-primary-700 bg-opacity-50 rounded-lg p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-white mb-4 flex items-center space-x-2">
+                    <User className="w-4 sm:w-5 h-4 sm:h-5" />
                     <span>Basic Information</span>
                   </h3>
                   <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Date of Birth:</span>
-                      <span className="text-white">{formatDate(patient.dateOfBirth)}</span>
+                    <div className="flex flex-col sm:flex-row sm:justify-between space-y-1 sm:space-y-0">
+                      <span className="text-gray-400 text-sm sm:text-base">Date of Birth:</span>
+                      <span className="text-white text-sm sm:text-base">{formatDate(patient.dateOfBirth)}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Gender:</span>
-                      <span className="text-white capitalize">{patient.gender || 'N/A'}</span>
+                    <div className="flex flex-col sm:flex-row sm:justify-between space-y-1 sm:space-y-0">
+                      <span className="text-gray-400 text-sm sm:text-base">Gender:</span>
+                      <span className="text-white text-sm sm:text-base capitalize">{patient.gender || 'N/A'}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Blood Group:</span>
-                      <span className="text-white">{patient.bloodGroup || 'N/A'}</span>
+                    <div className="flex flex-col sm:flex-row sm:justify-between space-y-1 sm:space-y-0">
+                      <span className="text-gray-400 text-sm sm:text-base">Blood Group:</span>
+                      <span className="text-white text-sm sm:text-base">{patient.bloodGroup || 'N/A'}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Registration Date:</span>
-                      <span className="text-white">{formatDate(patient.createdAt)}</span>
+                    <div className="flex flex-col sm:flex-row sm:justify-between space-y-1 sm:space-y-0">
+                      <span className="text-gray-400 text-sm sm:text-base">Registration Date:</span>
+                      <span className="text-white text-sm sm:text-base">{formatDate(patient.createdAt)}</span>
                     </div>
                   </div>
                 </div>
@@ -378,34 +378,34 @@ const PatientDetails = () => {
                   appointments.map((appointment) => (
                     <div
                       key={appointment._id}
-                      className="bg-primary-700 bg-opacity-50 rounded-lg p-6 border border-primary-600"
+                      className="bg-primary-700 bg-opacity-50 rounded-lg p-4 sm:p-6 border border-primary-600"
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <Calendar className="w-5 h-5 text-accent-400" />
-                            <span className="text-lg font-semibold text-white">
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between space-y-4 lg:space-y-0">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-2">
+                            <Calendar className="w-4 sm:w-5 h-4 sm:h-5 text-accent-400 flex-shrink-0" />
+                            <span className="text-base sm:text-lg font-semibold text-white break-words">
                               {formatAppointmentDateTime(appointment)}
                             </span>
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(appointment.status)}`}>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(appointment.status)} flex-shrink-0`}>
                               {appointment.status}
                             </span>
                           </div>
-                          <div className="text-gray-300 mb-2">
-                            <strong>Reason:</strong> {appointment.reason || 'General consultation'}
+                          <div className="text-gray-300 mb-2 text-sm sm:text-base">
+                            <strong>Reason:</strong> <span className="break-words">{appointment.reason || 'General consultation'}</span>
                           </div>
                           {appointment.hospital && (
-                            <div className="text-gray-300 mb-2">
-                              <strong>Hospital:</strong> {appointment.hospital.name}
+                            <div className="text-gray-300 mb-2 text-sm sm:text-base">
+                              <strong>Hospital:</strong> <span className="break-words">{appointment.hospital.name}</span>
                             </div>
                           )}
                           {appointment.notes && (
-                            <div className="text-gray-300">
-                              <strong>Notes:</strong> {appointment.notes}
+                            <div className="text-gray-300 text-sm sm:text-base">
+                              <strong>Notes:</strong> <span className="break-words">{appointment.notes}</span>
                             </div>
                           )}
                         </div>
-                        <div className="flex space-x-2">
+                        <div className="flex space-x-2 flex-shrink-0">
                           {appointment.status === 'completed' && (
                             <button className="bg-accent-600 hover:bg-accent-700 text-white px-3 py-1 rounded text-sm transition-colors">
                               View Report
@@ -428,49 +428,49 @@ const PatientDetails = () => {
             {/* Medical Info Tab */}
             {activeTab === 'medical' && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-primary-700 bg-opacity-50 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center space-x-2">
-                    <Heart className="w-5 h-5" />
+                <div className="bg-primary-700 bg-opacity-50 rounded-lg p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-white mb-4 flex items-center space-x-2">
+                    <Heart className="w-4 sm:w-5 h-4 sm:h-5" />
                     <span>Medical Information</span>
                   </h3>
                   <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Blood Group:</span>
-                      <span className="text-white">{patient.bloodGroup || 'N/A'}</span>
+                    <div className="flex flex-col sm:flex-row sm:justify-between space-y-1 sm:space-y-0">
+                      <span className="text-gray-400 text-sm sm:text-base">Blood Group:</span>
+                      <span className="text-white text-sm sm:text-base">{patient.bloodGroup || 'N/A'}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Allergies:</span>
-                      <span className="text-white">{patient.allergies || 'None reported'}</span>
+                    <div className="flex flex-col sm:flex-row sm:justify-between space-y-1 sm:space-y-0">
+                      <span className="text-gray-400 text-sm sm:text-base">Allergies:</span>
+                      <span className="text-white text-sm sm:text-base break-words">{patient.allergies || 'None reported'}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Chronic Conditions:</span>
-                      <span className="text-white">{patient.chronicConditions || 'None reported'}</span>
+                    <div className="flex flex-col sm:flex-row sm:justify-between space-y-1 sm:space-y-0">
+                      <span className="text-gray-400 text-sm sm:text-base">Chronic Conditions:</span>
+                      <span className="text-white text-sm sm:text-base break-words">{patient.chronicConditions || 'None reported'}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-primary-700 bg-opacity-50 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center space-x-2">
-                    <Activity className="w-5 h-5" />
+                <div className="bg-primary-700 bg-opacity-50 rounded-lg p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-semibold text-white mb-4 flex items-center space-x-2">
+                    <Activity className="w-4 sm:w-5 h-4 sm:h-5" />
                     <span>Emergency Contact</span>
                   </h3>
                   {patient.emergencyContact ? (
                     <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Name:</span>
-                        <span className="text-white">{patient.emergencyContact.name || 'N/A'}</span>
+                      <div className="flex flex-col sm:flex-row sm:justify-between space-y-1 sm:space-y-0">
+                        <span className="text-gray-400 text-sm sm:text-base">Name:</span>
+                        <span className="text-white text-sm sm:text-base break-words">{patient.emergencyContact.name || 'N/A'}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Relationship:</span>
-                        <span className="text-white">{patient.emergencyContact.relationship || 'N/A'}</span>
+                      <div className="flex flex-col sm:flex-row sm:justify-between space-y-1 sm:space-y-0">
+                        <span className="text-gray-400 text-sm sm:text-base">Relationship:</span>
+                        <span className="text-white text-sm sm:text-base">{patient.emergencyContact.relationship || 'N/A'}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Phone:</span>
-                        <span className="text-white">{patient.emergencyContact.phone || 'N/A'}</span>
+                      <div className="flex flex-col sm:flex-row sm:justify-between space-y-1 sm:space-y-0">
+                        <span className="text-gray-400 text-sm sm:text-base">Phone:</span>
+                        <span className="text-white text-sm sm:text-base">{patient.emergencyContact.phone || 'N/A'}</span>
                       </div>
                     </div>
                   ) : (
-                    <p className="text-gray-300">No emergency contact information available.</p>
+                    <p className="text-gray-300 text-sm sm:text-base">No emergency contact information available.</p>
                   )}
                 </div>
               </div>

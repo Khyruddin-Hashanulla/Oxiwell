@@ -319,23 +319,23 @@ const Appointments = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-white">My Appointments</h1>
-          <p className="mt-2 text-gray-300">Manage your upcoming and past appointments</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">My Appointments</h1>
+          <p className="mt-2 text-gray-300 text-sm sm:text-base">Manage your upcoming and past appointments</p>
         </div>
         <Link
           to="/patient/appointments/book"
-          className="mt-4 sm:mt-0 inline-flex items-center px-6 py-3 bg-gradient-to-r from-accent-600 to-accent-700 text-white font-medium rounded-lg hover:from-accent-700 hover:to-accent-800 transition-all duration-200 shadow-lg hover:shadow-xl"
+          className="inline-flex items-center justify-center px-4 sm:px-6 py-3 bg-gradient-to-r from-accent-600 to-accent-700 text-white font-medium rounded-lg hover:from-accent-700 hover:to-accent-800 transition-all duration-200 shadow-lg hover:shadow-xl text-sm sm:text-base"
         >
-          <Plus className="w-5 h-5 mr-2" />
-          Book New Appointment
+          <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+          <span className="truncate">Book New Appointment</span>
         </Link>
       </div>
 
       {/* Filters and Search */}
       <div className="bg-gradient-to-r from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4">
           {/* Search */}
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -349,7 +349,7 @@ const Appointments = () => {
           </div>
 
           {/* Filter Buttons */}
-          <div className="flex flex-wrap gap-2 sm:gap-3">
+          <div className="flex flex-wrap gap-2">
             {[
               { key: 'all', label: 'All', count: appointments.length },
               { key: 'upcoming', label: 'Upcoming', count: appointments.filter(apt => apt.status === 'confirmed' || apt.status === 'pending').length },
@@ -359,14 +359,14 @@ const Appointments = () => {
               <button
                 key={filterOption.key}
                 onClick={() => setFilter(filterOption.key)}
-                className={`px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base flex-shrink-0 ${
+                className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 text-sm flex-shrink-0 ${
                   filter === filterOption.key
                     ? 'bg-accent-600 text-white shadow-lg'
                     : 'bg-primary-600 text-gray-300 hover:bg-primary-500 hover:text-white'
                 }`}
               >
                 <span className="truncate">{filterOption.label}</span>
-                <span className="ml-1 sm:ml-2 text-xs bg-white bg-opacity-20 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full flex-shrink-0">
+                <span className="ml-2 text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full flex-shrink-0">
                   {filterOption.count}
                 </span>
               </button>
@@ -400,22 +400,22 @@ const Appointments = () => {
               key={appointment.id}
               className="bg-gradient-to-br from-primary-800 to-primary-700 rounded-xl p-6 border border-primary-600 shadow-lg hover:shadow-xl transition-all duration-300"
             >
-              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+              <div className="flex flex-col space-y-6">
                 <div className="flex-1">
                   {/* Header Section */}
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-4 sm:space-y-0 mb-4">
                     <div className="flex items-start space-x-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                         <User className="w-6 h-6 text-white" />
                       </div>
-                      <div>
-                        <h3 className="text-xl font-semibold text-white mb-1">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-lg sm:text-xl font-semibold text-white mb-1 truncate">
                           Dr. {appointment.doctorName}
                         </h3>
                         <p className="text-primary-300 text-sm font-medium mb-1">
                           {appointment.specialization}
                         </p>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                           {getStatusBadge(appointment.status)}
                           {isUpcoming(appointment.date) && appointment.status === 'confirmed' && (
                             <span className="px-2 py-1 bg-success-500/20 text-success-400 text-xs rounded-full">
@@ -428,13 +428,13 @@ const Appointments = () => {
                   </div>
 
                   {/* Appointment Details Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                     {/* Date & Time */}
                     <div className="space-y-3">
-                      <div className="flex items-center text-gray-300">
-                        <Calendar className="w-4 h-4 mr-3 text-primary-400" />
-                        <div>
-                          <p className="text-white font-medium">
+                      <div className="flex items-start text-gray-300">
+                        <Calendar className="w-4 h-4 mr-3 text-primary-400 flex-shrink-0 mt-0.5" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-white font-medium break-words">
                             {new Date(appointment.date).toLocaleDateString('en-US', {
                               weekday: 'long',
                               year: 'numeric',
@@ -444,8 +444,8 @@ const Appointments = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center text-gray-300">
-                        <Clock className="w-4 h-4 mr-3 text-success-400" />
+                      <div className="flex items-start text-gray-300">
+                        <Clock className="w-4 h-4 mr-3 text-success-400 flex-shrink-0 mt-0.5" />
                         <div>
                           <p className="text-white font-medium">
                             {appointment.time}
@@ -456,16 +456,16 @@ const Appointments = () => {
 
                     {/* Location & Contact */}
                     <div className="space-y-3">
-                      <div className="flex items-center text-gray-300">
-                        <MapPin className="w-4 h-4 mr-3 text-purple-400" />
-                        <div>
-                          <p className="text-white font-medium">
+                      <div className="flex items-start text-gray-300">
+                        <MapPin className="w-4 h-4 mr-3 text-purple-400 flex-shrink-0 mt-0.5" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-white font-medium break-words">
                             {appointment.location}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center text-gray-300">
-                        <Phone className="w-4 h-4 mr-3 text-warning-400" />
+                      <div className="flex items-start text-gray-300">
+                        <Phone className="w-4 h-4 mr-3 text-warning-400 flex-shrink-0 mt-0.5" />
                         <div>
                           <p className="text-white font-medium">
                             {appointment.phone}
@@ -476,14 +476,14 @@ const Appointments = () => {
                   </div>
 
                   {/* Reason & Fee Section */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                     <div className="bg-success-500/10 rounded-lg p-3 border border-success-500/20">
                       <p className="text-sm text-gray-300 mb-1">Consultation Fee</p>
                       <p className="text-success-400 font-bold text-lg">₹{appointment.fee}</p>
                     </div>
                     <div className="bg-primary-500/10 rounded-lg p-3 border border-primary-500/20">
                       <p className="text-sm text-gray-300 mb-1">Hospital Address</p>
-                      <p className="text-primary-400 text-sm">{appointment.hospitalAddress}</p>
+                      <p className="text-primary-400 text-sm break-words">{appointment.hospitalAddress}</p>
                     </div>
                   </div>
 
@@ -491,20 +491,20 @@ const Appointments = () => {
                   {appointment.reason && (
                     <div className="mt-4 p-3 bg-primary-500/10 rounded-lg border border-primary-500/20">
                       <p className="text-sm text-gray-300 mb-1">Reason for Visit</p>
-                      <p className="text-white text-sm">{appointment.reason}</p>
+                      <p className="text-white text-sm break-words">{appointment.reason}</p>
                     </div>
                   )}
 
                   {/* Appointment ID */}
                   <div className="mt-4 pt-3 border-t border-gray-600">
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-400 break-all">
                       Appointment ID: <span className="font-mono">{appointment.id}</span>
                     </p>
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="lg:ml-6 flex flex-row lg:flex-col gap-2 lg:w-40">
+                <div className="flex flex-col sm:flex-row lg:flex-col gap-2 lg:w-40 lg:flex-shrink-0">
                   {appointment.status === 'pending' && (
                     <>
                       <button 

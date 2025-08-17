@@ -132,18 +132,18 @@ const DoctorPatients = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
             <div>
-              <h1 className="text-3xl font-bold text-white mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
                 My Patients
               </h1>
-              <p className="text-gray-300">
+              <p className="text-gray-300 text-sm sm:text-base">
                 Manage and view all your registered patients
               </p>
             </div>
             <Link
               to="/doctor/dashboard"
-              className="bg-primary-700 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+              className="bg-primary-700 hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
             >
               <ChevronLeft className="w-4 h-4" />
               <span>Back to Dashboard</span>
@@ -205,13 +205,13 @@ const DoctorPatients = () => {
                     className="bg-primary-700 bg-opacity-50 rounded-lg p-6 hover:bg-opacity-70 transition-all border border-primary-600"
                   >
                     {/* Patient Header */}
-                    <div className="flex items-start justify-between mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0 mb-4">
                       <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center">
+                        <div className="w-12 h-12 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center flex-shrink-0">
                           <User className="w-6 h-6 text-white" />
                         </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-white">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-lg font-semibold text-white truncate">
                             {patient.fullName || `${patient.firstName || ''} ${patient.lastName || ''}`.trim() || 'Unknown Patient'}
                           </h3>
                           <p className="text-sm text-gray-300">
@@ -220,7 +220,7 @@ const DoctorPatients = () => {
                         </div>
                       </div>
                       {patient.bloodGroup && (
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${getBloodGroupColor(patient.bloodGroup)}`}>
+                        <span className={`px-2 py-1 rounded text-xs font-medium flex-shrink-0 ${getBloodGroupColor(patient.bloodGroup)}`}>
                           {patient.bloodGroup}
                         </span>
                       )}
@@ -229,25 +229,25 @@ const DoctorPatients = () => {
                     {/* Patient Details */}
                     <div className="space-y-3 mb-4">
                       {patient.email && (
-                        <div className="flex items-center space-x-2 text-sm text-gray-300">
-                          <Mail className="w-4 h-4" />
-                          <span>{patient.email}</span>
+                        <div className="flex items-start space-x-2 text-sm text-gray-300">
+                          <Mail className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                          <span className="truncate">{patient.email}</span>
                         </div>
                       )}
                       {patient.phone && (
-                        <div className="flex items-center space-x-2 text-sm text-gray-300">
-                          <Phone className="w-4 h-4" />
+                        <div className="flex items-start space-x-2 text-sm text-gray-300">
+                          <Phone className="w-4 h-4 flex-shrink-0 mt-0.5" />
                           <span>{patient.phone}</span>
                         </div>
                       )}
                       {patient.gender && (
-                        <div className="flex items-center space-x-2 text-sm text-gray-300">
-                          <User className="w-4 h-4" />
+                        <div className="flex items-start space-x-2 text-sm text-gray-300">
+                          <User className="w-4 h-4 flex-shrink-0 mt-0.5" />
                           <span className="capitalize">{patient.gender}</span>
                         </div>
                       )}
-                      <div className="flex items-center space-x-2 text-sm text-gray-300">
-                        <Clock className="w-4 h-4" />
+                      <div className="flex items-start space-x-2 text-sm text-gray-300">
+                        <Clock className="w-4 h-4 flex-shrink-0 mt-0.5" />
                         <span>Last visit: {formatDate(patient.lastVisit)}</span>
                       </div>
                     </div>
@@ -269,7 +269,7 @@ const DoctorPatients = () => {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex space-x-2">
+                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                       <Link
                         to={`/doctor/patients/${patient._id}`}
                         className="flex-1 bg-accent-600 hover:bg-accent-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-1"
