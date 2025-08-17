@@ -791,8 +791,8 @@ const AppointmentBooking = () => {
 
   const renderStep5 = () => {
     const consultationFee = selectedDoctor?.workplaces?.find(w => 
-      w.hospital.toString() === selectedHospital._id
-    )?.consultationFee || 500
+      w.hospitalId === selectedHospital._id || w.hospital?._id === selectedHospital._id
+    )?.consultationFee || selectedHospital?.consultationFee || 0
 
     return (
       <div className="space-y-6">

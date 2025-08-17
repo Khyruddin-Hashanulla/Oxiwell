@@ -30,17 +30,17 @@ const BookingConfirmation = ({ appointment, onClose, onViewAppointments, isResch
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900 rounded-2xl p-8 max-w-2xl w-full border border-primary-700 shadow-2xl">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+      <div className="bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900 rounded-2xl p-6 sm:p-8 max-w-2xl w-full border border-primary-700 shadow-2xl my-4 max-h-[90vh] overflow-y-auto">
         {/* Success Icon */}
         <div className="text-center mb-6">
           <div className="w-20 h-20 bg-success-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-12 h-12 text-white" />
           </div>
-          <h2 className="text-3xl font-bold text-white mb-2">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
             {isReschedule ? 'Appointment Rescheduled!' : 'Booking Confirmed!'}
           </h2>
-          <p className="text-primary-300">
+          <p className="text-primary-300 text-sm sm:text-base">
             {isReschedule 
               ? 'Your appointment has been successfully rescheduled' 
               : 'Your appointment has been successfully scheduled'
@@ -49,40 +49,40 @@ const BookingConfirmation = ({ appointment, onClose, onViewAppointments, isResch
         </div>
 
         {/* Appointment Details */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-6 border border-primary-600">
-          <h3 className="text-xl font-semibold text-white mb-4">Appointment Details</h3>
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 mb-6 border border-primary-600">
+          <h3 className="text-lg sm:text-xl font-semibold text-white mb-4">Appointment Details</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Doctor Info */}
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-accent-600 rounded-full flex items-center justify-center">
-                  <User className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-primary-500 to-accent-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
-                <div>
-                  <p className="text-primary-300 text-sm">Doctor</p>
-                  <p className="text-white font-semibold">
+                <div className="min-w-0 flex-1">
+                  <p className="text-primary-300 text-xs sm:text-sm">Doctor</p>
+                  <p className="text-white font-semibold text-sm sm:text-base truncate">
                     Dr. {appointment.doctor?.firstName} {appointment.doctor?.lastName}
                   </p>
-                  <p className="text-accent-300 text-sm">{appointment.doctor?.specialization}</p>
+                  <p className="text-accent-300 text-xs sm:text-sm">{appointment.doctor?.specialization}</p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-3">
-                <Calendar className="w-5 h-5 text-primary-400" />
-                <div>
-                  <p className="text-primary-300 text-sm">Date</p>
-                  <p className="text-white font-semibold">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-primary-400 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-primary-300 text-xs sm:text-sm">Date</p>
+                  <p className="text-white font-semibold text-sm sm:text-base">
                     {formatDate(appointment.appointmentDate)}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-3">
-                <Clock className="w-5 h-5 text-primary-400" />
-                <div>
-                  <p className="text-primary-300 text-sm">Time</p>
-                  <p className="text-white font-semibold">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary-400 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-primary-300 text-xs sm:text-sm">Time</p>
+                  <p className="text-white font-semibold text-sm sm:text-base">
                     {formatTime(appointment.appointmentTime)}
                   </p>
                 </div>
@@ -92,29 +92,29 @@ const BookingConfirmation = ({ appointment, onClose, onViewAppointments, isResch
             {/* Hospital Info */}
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
-                <MapPin className="w-5 h-5 text-primary-400" />
-                <div>
-                  <p className="text-primary-300 text-sm">Hospital</p>
-                  <p className="text-white font-semibold">{appointment.hospital?.name}</p>
-                  <p className="text-primary-300 text-sm">
+                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-primary-400 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-primary-300 text-xs sm:text-sm">Hospital</p>
+                  <p className="text-white font-semibold text-sm sm:text-base">{appointment.hospital?.name}</p>
+                  <p className="text-primary-300 text-xs sm:text-sm">
                     {appointment.hospital?.address?.street}, {appointment.hospital?.address?.city}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-3">
-                <Phone className="w-5 h-5 text-primary-400" />
-                <div>
-                  <p className="text-primary-300 text-sm">Contact</p>
-                  <p className="text-white font-semibold">{appointment.hospital?.phone}</p>
+                <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-primary-400 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-primary-300 text-xs sm:text-sm">Contact</p>
+                  <p className="text-white font-semibold text-sm sm:text-base">{appointment.hospital?.phone}</p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-3">
-                <CreditCard className="w-5 h-5 text-primary-400" />
-                <div>
-                  <p className="text-primary-300 text-sm">Consultation Fee</p>
-                  <p className="text-success-400 font-semibold text-lg">₹{appointment.consultationFee}</p>
+                <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary-400 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-primary-300 text-xs sm:text-sm">Consultation Fee</p>
+                  <p className="text-success-400 font-semibold text-base sm:text-lg">₹{appointment.consultationFee}</p>
                 </div>
               </div>
             </div>
@@ -123,20 +123,20 @@ const BookingConfirmation = ({ appointment, onClose, onViewAppointments, isResch
           {/* Appointment Reason */}
           {appointment.reason && (
             <div className="mt-4 pt-4 border-t border-primary-600">
-              <p className="text-primary-300 text-sm mb-1">Reason for Visit</p>
-              <p className="text-white">{appointment.reason}</p>
+              <p className="text-primary-300 text-xs sm:text-sm mb-1">Reason for Visit</p>
+              <p className="text-white text-sm sm:text-base">{appointment.reason}</p>
             </div>
           )}
 
           {/* Symptoms */}
           {appointment.symptoms && appointment.symptoms.length > 0 && (
             <div className="mt-3">
-              <p className="text-primary-300 text-sm mb-1">Symptoms</p>
+              <p className="text-primary-300 text-xs sm:text-sm mb-1">Symptoms</p>
               <div className="flex flex-wrap gap-2">
                 {appointment.symptoms.map((symptom, index) => (
                   <span
                     key={index}
-                    className="px-3 py-1 bg-primary-500/20 text-primary-300 rounded-full text-sm"
+                    className="px-2 py-1 sm:px-3 sm:py-1 bg-primary-500/20 text-primary-300 rounded-full text-xs sm:text-sm"
                   >
                     {symptom}
                   </span>
@@ -147,9 +147,9 @@ const BookingConfirmation = ({ appointment, onClose, onViewAppointments, isResch
         </div>
 
         {/* Important Notes */}
-        <div className="bg-warning-500/10 border border-warning-500/30 rounded-xl p-4 mb-6">
-          <h4 className="text-warning-400 font-semibold mb-2">Important Notes</h4>
-          <ul className="text-warning-200 text-sm space-y-1">
+        <div className="bg-warning-500/10 border border-warning-500/30 rounded-xl p-3 sm:p-4 mb-6">
+          <h4 className="text-warning-400 font-semibold mb-2 text-sm sm:text-base">Important Notes</h4>
+          <ul className="text-warning-200 text-xs sm:text-sm space-y-1">
             <li>• Please arrive 15 minutes before your appointment time</li>
             <li>• Bring a valid ID and any relevant medical documents</li>
             <li>• You can reschedule or cancel up to 2 hours before the appointment</li>
@@ -158,16 +158,16 @@ const BookingConfirmation = ({ appointment, onClose, onViewAppointments, isResch
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col space-y-3 mt-6">
           <button
             onClick={onViewAppointments}
-            className="flex-1 px-6 py-3 bg-gradient-to-r from-primary-500 to-accent-600 text-white rounded-lg hover:from-primary-600 hover:to-accent-700 transition-all duration-200 font-semibold"
+            className="w-full px-4 py-3 sm:px-6 sm:py-3 bg-gradient-to-r from-primary-500 to-accent-600 text-white rounded-lg hover:from-primary-600 hover:to-accent-700 transition-all duration-200 font-semibold text-sm sm:text-base"
           >
             View My Appointments
           </button>
           <button
             onClick={onClose}
-            className="flex-1 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors duration-200 font-semibold"
+            className="w-full px-4 py-3 sm:px-6 sm:py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors duration-200 font-semibold text-sm sm:text-base"
           >
             Close
           </button>
