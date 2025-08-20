@@ -43,7 +43,7 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: https://oxiwell-backend.onrender.com
+        value: https://oxiwell-backend.onrender.com/api
 
 databases:
   - name: oxiwell-db
