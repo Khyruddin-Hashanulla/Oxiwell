@@ -7,7 +7,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://oxiwell-backend.onrender.com"
+      "destination": "https://oxiwell-backend.onrender.com/api/$1"
     },
     {
       "source": "/((?!api/).*)",
@@ -43,6 +43,6 @@
     }
   ],
   "env": {
-    "VITE_API_URL": "https://oxiwell-backend.onrender.com"
+    "VITE_API_URL": "https://oxiwell-backend.onrender.com/api"
   }
 }
