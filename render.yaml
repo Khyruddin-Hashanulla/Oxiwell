@@ -35,10 +35,10 @@ services:
   - type: static
     name: oxiwell
     buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
+    staticPublishPath: dist
     rootDir: frontend
     routes:
-      - source: /*
+      - source: /.*
         destination: /index.html
     envVars:
       - key: VITE_API_URL
