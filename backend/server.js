@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const path = require('path'); // Added path module
 require('dotenv').config();
 
 // Import routes
@@ -82,6 +83,9 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
+// Serve static files from frontend build
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
 // Database connection
 mongoose.connect(process.env.MONGODB_URL || 'mongodb://localhost:27017/oxiwell', {
   useNewUrlParser: true,
@@ -89,16 +93,6 @@ mongoose.connect(process.env.MONGODB_URL || 'mongodb://localhost:27017/oxiwell',
 })
 .then(() => console.log('✅ MongoDB connected successfully'))
 .catch(err => console.error('❌ MongoDB connection error:', err));
-
-// Health check route
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'success',
-    message: 'Oxiwell API is running',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV
-  });
-});
 
 // API routes
 app.use('/api/auth', authRoutes);
@@ -109,6 +103,20 @@ app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/settings', settingsRoutes);
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  })
+});
+
+// Catch-all handler: send back React's index.html file for SPA routing
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'))
+});
 
 // 404 handler
 app.use('*', (req, res) => {
