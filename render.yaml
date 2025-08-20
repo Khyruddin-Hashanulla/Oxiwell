@@ -2,9 +2,9 @@ services:
   - type: web
     name: oxiwell
     env: node
-    rootDir: .
-    buildCommand: cd frontend && npm install && npm run build && cd ../backend && npm install
-    startCommand: cd backend && npm start
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
     plan: free
     envVars:
       - key: NODE_ENV
@@ -29,8 +29,6 @@ services:
         value: 2000
       - key: FRONTEND_URL
         value: https://oxiwell.onrender.com
-      - key: VITE_API_URL
-        value: https://oxiwell.onrender.com/api
 
 databases:
   - name: oxiwell-db

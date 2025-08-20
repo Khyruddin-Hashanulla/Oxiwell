@@ -99,9 +99,6 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
 
-// Serve static files from frontend build
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
-
 // Database connection
 mongoose.connect(process.env.MONGODB_URL || 'mongodb://localhost:27017/oxiwell', {
   useNewUrlParser: true,
@@ -131,20 +128,13 @@ app.get('/health', (req, res) => {
 
 // Catch-all handler: send back React's index.html file for SPA routing
 app.get('*', (req, res) => {
-  const indexPath = path.join(__dirname, '../frontend/dist/index.html')
-  
-  // Check if file exists before serving
-  const fs = require('fs')
-  if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath)
-  } else {
-    // Fallback for when frontend dist doesn't exist
-    res.status(404).json({
-      status: 'error',
-      message: 'Frontend build not found. Please ensure frontend is built properly.',
-      path: indexPath
-    })
-  }
+  // For now, just return a simple message since frontend isn't built
+  res.json({
+    status: 'success',
+    message: 'Oxiwell API is running',
+    note: 'Frontend will be added separately',
+    timestamp: new Date().toISOString()
+  })
 });
 
 // Global error handler
