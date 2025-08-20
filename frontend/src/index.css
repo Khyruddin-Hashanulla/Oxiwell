@@ -6,30 +6,37 @@
 @layer base {
   html {
     font-family: 'Inter', system-ui, sans-serif;
-    overscroll-behavior: none;
-    -webkit-overflow-scrolling: touch;
-    overflow-x: hidden;
-    background-color: #0f172a; /* Match your dark theme */
-    position: fixed;
-    height: 100%;
-    overflow: hidden;
+    background-color: #0f172a !important;
+    overscroll-behavior: none !important;
+    -webkit-overscroll-behavior: none !important;
+    touch-action: pan-x pan-y !important;
+    -webkit-overflow-scrolling: touch !important;
+    position: fixed !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   
   body {
     @apply bg-gray-50 text-gray-900 antialiased;
-    overscroll-behavior-y: contain;
-    -webkit-overscroll-behavior: none;
-    overscroll-behavior: none;
-    touch-action: pan-x pan-y;
-    position: relative;
-    height: 100vh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    background-color: #0f172a !important;
+    overscroll-behavior: none !important;
+    -webkit-overscroll-behavior: none !important;
+    overscroll-behavior-y: contain !important;
+    touch-action: pan-x pan-y !important;
+    position: relative !important;
+    height: 100vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   
   * {
     @apply border-gray-200;
-    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent !important;
   }
   
   input[type="number"]::-webkit-outer-spin-button,
