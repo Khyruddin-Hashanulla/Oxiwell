@@ -69,6 +69,7 @@ const corsOptions = {
       'http://localhost:5173',
       'http://127.0.0.1:3000',
       'http://127.0.0.1:5173',
+      'https://oxiwell.onrender.com',
       process.env.FRONTEND_URL
     ].filter(Boolean)
     
@@ -130,7 +131,20 @@ app.get('/health', (req, res) => {
 
 // Catch-all handler: send back React's index.html file for SPA routing
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'))
+  const indexPath = path.join(__dirname, '../frontend/dist/index.html')
+  
+  // Check if file exists before serving
+  const fs = require('fs')
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath)
+  } else {
+    // Fallback for when frontend dist doesn't exist
+    res.status(404).json({
+      status: 'error',
+      message: 'Frontend build not found. Please ensure frontend is built properly.',
+      path: indexPath
+    })
+  }
 });
 
 // Global error handler
