@@ -6,11 +6,16 @@
 @layer base {
   html {
     font-family: 'Inter', system-ui, sans-serif;
+    overscroll-behavior: none;
+    overflow-x: hidden;
   }
   
   body {
     @apply bg-gray-50 text-gray-900 antialiased;
     margin: 0;
+    overscroll-behavior: none;
+    overflow-x: hidden;
+    position: relative;
   }
   
   * {
@@ -182,6 +187,11 @@
   .bg-gradient-to-br {
     background-attachment: fixed;
   }
+  
+  .no-overscroll {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* Animation styles */
@@ -223,4 +233,5 @@
 #root {
   min-height: 100vh;
   background-color: #0f172a;
+  overscroll-behavior: none;
 }
