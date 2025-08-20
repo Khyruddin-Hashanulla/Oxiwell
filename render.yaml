@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: oxiwell-backend
+    name: oxiwell
     env: node
     rootDir: backend
     buildCommand: npm install
@@ -29,21 +29,6 @@ services:
         value: 2000
       - key: FRONTEND_URL
         value: https://oxiwell.onrender.com
-
-  - type: web
-    name: oxiwell
-    env: static
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
-    plan: free
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: VITE_API_URL
-        value: https://oxiwell-backend.onrender.com/api
 
 databases:
   - name: oxiwell-db
