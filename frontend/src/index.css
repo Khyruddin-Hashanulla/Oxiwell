@@ -6,14 +6,30 @@
 @layer base {
   html {
     font-family: 'Inter', system-ui, sans-serif;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+    background-color: #0f172a; /* Match your dark theme */
+    position: fixed;
+    height: 100%;
+    overflow: hidden;
   }
   
   body {
     @apply bg-gray-50 text-gray-900 antialiased;
+    overscroll-behavior-y: contain;
+    -webkit-overscroll-behavior: none;
+    overscroll-behavior: none;
+    touch-action: pan-x pan-y;
+    position: relative;
+    height: 100vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   
   * {
     @apply border-gray-200;
+    -webkit-tap-highlight-color: transparent;
   }
   
   input[type="number"]::-webkit-outer-spin-button,
@@ -176,6 +192,10 @@
   .gradient-medical {
     background: linear-gradient(135deg, theme('colors.medical.500'), theme('colors.medical.700'));
   }
+  
+  .bg-gradient-to-br {
+    background-attachment: fixed;
+  }
 }
 
 /* Animation styles */
@@ -212,4 +232,10 @@
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
   @apply bg-gray-400 rounded-full hover:bg-gray-500;
+}
+
+#root {
+  min-height: 100vh;
+  background-color: #0f172a;
+  overscroll-behavior: none;
 }
