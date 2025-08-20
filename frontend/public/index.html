@@ -1,63 +1,10 @@
 <!doctype html>
-<html lang="en" style="background-color: #0f172a; overscroll-behavior: none;">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#0f172a" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Oxiwell Health Center</title>
-    <style>
-      /* Prevent overscroll immediately - applied before any content loads */
-      html {
-        background-color: #0f172a !important;
-        overscroll-behavior: none !important;
-        -webkit-overscroll-behavior: none !important;
-        touch-action: pan-x pan-y !important;
-        -webkit-overflow-scrolling: touch !important;
-        position: fixed !important;
-        height: 100% !important;
-        overflow: hidden !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-      
-      body {
-        background-color: #0f172a !important;
-        overscroll-behavior: none !important;
-        -webkit-overscroll-behavior: none !important;
-        overscroll-behavior-y: contain !important;
-        touch-action: pan-x pan-y !important;
-        position: relative !important;
-        height: 100vh !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-      
-      /* Ensure root loads with dark background immediately */
-      #root {
-        background-color: #0f172a !important;
-        min-height: 100vh !important;
-        overscroll-behavior: none !important;
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-
-      /* Loading state styling */
-      .loading-container {
-        background-color: #0f172a !important;
-        color: #64748b;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        font-family: system-ui, -apple-system, sans-serif;
-      }
-    </style>
     <script>
       // Handle client-side routing for SPA
       (function() {

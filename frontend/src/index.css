@@ -6,37 +6,16 @@
 @layer base {
   html {
     font-family: 'Inter', system-ui, sans-serif;
-    background-color: #0f172a !important;
-    overscroll-behavior: none !important;
-    -webkit-overscroll-behavior: none !important;
-    touch-action: pan-x pan-y !important;
-    -webkit-overflow-scrolling: touch !important;
-    position: fixed !important;
-    height: 100% !important;
-    overflow: hidden !important;
-    margin: 0 !important;
-    padding: 0 !important;
   }
   
   body {
     @apply bg-gray-50 text-gray-900 antialiased;
-    background-color: #0f172a !important;
-    overscroll-behavior: none !important;
-    -webkit-overscroll-behavior: none !important;
-    overscroll-behavior-y: contain !important;
-    touch-action: pan-x pan-y !important;
-    position: relative !important;
-    height: 100vh !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    margin: 0;
   }
   
   * {
     @apply border-gray-200;
     box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent !important;
   }
   
   input[type="number"]::-webkit-outer-spin-button,
@@ -244,5 +223,4 @@
 #root {
   min-height: 100vh;
   background-color: #0f172a;
-  overscroll-behavior: none;
 }
