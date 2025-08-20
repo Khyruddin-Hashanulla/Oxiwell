@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
-// Custom plugin to handle SPA routing
+// Custom plugin to handle SPA routing for dashboard routes only
 const spaFallbackPlugin = () => {
   return {
     name: 'spa-fallback',
@@ -12,13 +12,16 @@ const spaFallbackPlugin = () => {
         if (req.url.startsWith('/@') ||           // Vite internal files
             req.url.startsWith('/api') ||         // API routes
             req.url.includes('.') ||              // Static files
-            req.url === '/' ||                    // Root
-            req.headers.accept?.includes('application/json')) { // API requests
+            req.url === '/') {                    // Root
           return next()
         }
         
-        // Only handle HTML navigation requests
-        if (req.headers.accept?.includes('text/html')) {
+        // Only handle dashboard routes that need SPA fallback
+        const dashboardRoutes = ['/patient', '/doctor', '/admin']
+        const isDashboardRoute = dashboardRoutes.some(route => req.url.startsWith(route))
+        
+        // Only redirect dashboard routes and only for HTML requests
+        if (isDashboardRoute && req.headers.accept?.includes('text/html')) {
           req.url = '/'
         }
         next()
