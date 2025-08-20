@@ -1,85 +1,100 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
+const express = require('express')
+const cors = require('cors')
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-const path = require('path'); // Added path module
+const path = require('path'); 
 require('dotenv').config();
 
 // Import routes
-const authRoutes = require('./routes/auth');
-const appointmentRoutes = require('./routes/appointments');
-const doctorRoutes = require('./routes/doctors');
-const patientRoutes = require('./routes/patients');
-const prescriptionRoutes = require('./routes/prescriptions');
-const reportRoutes = require('./routes/reports');
-const adminRoutes = require('./routes/admin');
-const settingsRoutes = require('./routes/settings');
+const authRoutes = require('./routes/auth')
+const doctorRoutes = require('./routes/doctors')
+const patientRoutes = require('./routes/patients')
+const appointmentRoutes = require('./routes/appointments')
+const prescriptionRoutes = require('./routes/prescriptions')
+const reportRoutes = require('./routes/reports')
+const adminRoutes = require('./routes/admin')
+const settingsRoutes = require('./routes/settings')
 
 // Import middleware
-const { errorHandler } = require('./middleware/errorHandler');
+const { errorHandler } = require('./middleware/errorHandler')
 
-const app = express();
+// Import database connection
+const mongoose = require('mongoose')
 
-// Trust proxy for deployment platforms (Render, Heroku, etc.)
-app.set('trust proxy', 1);
+const app = express()
+const PORT = process.env.PORT || 8080
 
-// CORS configuration - MUST come before helmet()
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  'https://oxiwell.onrender.com',
-  'https://oxiwell-frontend.onrender.com',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:3000',
-  'http://127.0.0.1:3000'
-].filter(Boolean);
+// Trust proxy for rate limiting behind reverse proxy
+app.set('trust proxy', 1)
 
+// Rate limiting configuration
+const limiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
+  message: {
+    status: 'error',
+    message: 'Too many requests from this IP, please try again later.',
+    retryAfter: Math.ceil((parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000) / 1000)
+  },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  // Skip rate limiting for health check
+  skip: (req) => req.path === '/health'
+})
+
+// Apply rate limiting to all requests
+app.use(limiter)
+
+// Security middleware
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
+      scriptSrc: ["'self'"],
+      connectSrc: ["'self'", process.env.FRONTEND_URL || "http://localhost:3000"]
+    },
+  },
+}))
+
+// CORS configuration
 const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow mobile apps or curl with no origin
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error(`CORS blocked: ${origin} not allowed`));
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:5173',
+      process.env.FRONTEND_URL
+    ].filter(Boolean)
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true)
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      console.warn(`CORS blocked origin: ${origin}`)
+      callback(new Error('Not allowed by CORS'))
+    }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: [
-    'Origin',
-    'X-Requested-With',
-    'Content-Type',
-    'Accept',
-    'Authorization',
-    'Cache-Control',
-    'Pragma'
-  ],
-  exposedHeaders: ['Authorization'],
-  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
-};
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}
 
-app.use(cors(corsOptions));
-
-// Explicitly handle preflight OPTIONS requests for all routes
-app.options('*', cors(corsOptions));
-
-// Security middleware - comes after CORS
-app.use(helmet());
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 2000, // Increased from 500 to 2000 for development
-  message: 'Too many requests from this IP, please try again later.'
-});
-app.use(limiter);
+app.use(cors(corsOptions))
 
 // Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 
 // Logging middleware
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
 
@@ -118,30 +133,12 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/dist/index.html'))
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    status: 'error',
-    message: `Route ${req.originalUrl} not found`
-  });
-});
-
 // Global error handler
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 8080;
-
-// Global process-level error handlers to prevent server crashes
-process.on('uncaughtException', (err) => {
-  console.error(' Uncaught Exception:', err);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error(' Unhandled Rejection at:', promise, 'reason:', reason);
-});
-
+// Start server
 app.listen(PORT, () => {
-  console.log(` Oxiwell server running on port ${PORT}`);
-  console.log(` Environment: ${process.env.NODE_ENV}`);
-  console.log(` Health check: http://localhost:${PORT}/health`);
-});
+  console.log(`🚀 Oxiwell server running on port ${PORT}`)
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`)
+  console.log(`🏥 Health check: http://localhost:${PORT}/health`)
+})
