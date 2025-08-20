@@ -475,14 +475,19 @@ const Register = () => {
                         required: 'Email is required',
                         pattern: {
                           value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                          message: 'Invalid email address'
+                          message: 'Please enter a valid email address (e.g., user@example.com)'
                         }
                       })}
                       className="w-full px-4 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all duration-200"
-                      placeholder="Enter your email address"
+                      placeholder="Enter your email address (e.g., user@example.com)"
                     />
                     {errors.email && (
-                      <p className="mt-1 text-sm text-red-300">{errors.email.message}</p>
+                      <p className="mt-1 text-sm text-red-300 flex items-center">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {errors.email.message}
+                      </p>
                     )}
                   </div>
                   <div>
@@ -512,14 +517,21 @@ const Register = () => {
                         minLength: {
                           value: 8,
                           message: 'Password must be at least 8 characters'
+                        },
+                        pattern: {
+                          value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+                          message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
                         }
                       })}
                       className="w-full px-4 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 transition-all duration-200"
-                      placeholder="Create a strong password"
+                      placeholder="Create a strong password (8+ chars, A-z, 0-9)"
                     />
                     {errors.password && (
                       <p className="mt-1 text-sm text-red-300">{errors.password.message}</p>
                     )}
+                    <p className="mt-1 text-xs text-gray-400">
+                      Must contain at least 8 characters with uppercase, lowercase, and number
+                    </p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>

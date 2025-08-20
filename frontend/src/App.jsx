@@ -72,7 +72,7 @@ function App() {
   return (
     <>
       <Helmet>
-        <title>Oxiwell Health Center</title>
+        <title>Oxiwell</title>
         <meta name="description" content="Modern healthcare management system" />
       </Helmet>
 
