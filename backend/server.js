@@ -21,6 +21,9 @@ const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 
+// Trust proxy for deployment platforms (Render, Heroku, etc.)
+app.set('trust proxy', 1);
+
 // CORS configuration - MUST come before helmet()
 const allowedOrigins = [
   process.env.FRONTEND_URL,
