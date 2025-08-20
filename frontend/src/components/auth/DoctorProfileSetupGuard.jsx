@@ -99,8 +99,8 @@ const DoctorProfileSetupGuard = ({ children }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" text="Checking profile status..." />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <LoadingSpinner size="lg" text="Checking profile status..." color="white" />
       </div>
     )
   }

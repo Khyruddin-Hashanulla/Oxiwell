@@ -63,8 +63,8 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" text="Loading Oxiwell..." />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <LoadingSpinner size="lg" text="Loading Oxiwell..." color="white" />
       </div>
     )
   }
@@ -188,11 +188,11 @@ function App() {
         <Route path="/dashboard" element={<DashboardRedirect />} />
         <Route path="/profile" element={<ProfileRedirect />} />
         <Route path="*" element={
-          <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
             <div className="text-center">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">404</h1>
-              <p className="text-gray-600 mb-4">Page not found</p>
-              <a href="/" className="text-primary-600 hover:text-primary-700">
+              <h1 className="text-4xl font-bold text-white mb-4">404</h1>
+              <p className="text-gray-300 mb-4">Page not found</p>
+              <a href="/" className="text-primary-400 hover:text-primary-300">
                 Go back home
               </a>
             </div>
