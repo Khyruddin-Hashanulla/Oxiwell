@@ -37,8 +37,18 @@ services:
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     rootDir: frontend
+    pullRequestPreviewsEnabled: false
+    headers:
+      - path: /*
+        headers:
+          - key: X-Frame-Options
+            value: DENY
+          - key: X-Content-Type-Options
+            value: nosniff
     routes:
-      - source: /.*
+      - source: /api/*
+        destination: https://oxiwell-backend.onrender.com/api/:splat
+      - source: /*
         destination: /index.html
     envVars:
       - key: VITE_API_URL
