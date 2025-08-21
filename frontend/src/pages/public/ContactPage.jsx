@@ -38,8 +38,8 @@ const ContactPage = () => {
       icon: MapPin,
       title: 'Visit Us',
       details: [
-        'Kolkata',
-        'Park Circus, 700019',
+        'Healthcare District',
+        'Main Street, City 700001',
         'India'
       ]
     },
@@ -47,9 +47,9 @@ const ContactPage = () => {
       icon: Phone,
       title: 'Call Us',
       details: [
-        'Main: (555) 123-4567',
-        'Emergency: (555) 911-HELP',
-        'Fax: (555) 123-4568'
+        'Main: +91-XXXX-XXXX-XX',
+        'Emergency: +91-XXXX-XXXX-XX',
+        'Support: +91-XXXX-XXXX-XX'
       ]
     },
     {
@@ -246,7 +246,7 @@ const ContactPage = () => {
                   <MapPin className="w-5 h-5 text-accent-400 mt-1" />
                   <div>
                     <p className="text-white font-medium">Address</p>
-                    <p className="text-gray-300 text-sm">41/A, Park Circus<br />Medical District, 700019</p>
+                    <p className="text-gray-300 text-sm">Main Street<br />Healthcare District, City 700001</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
@@ -333,7 +333,7 @@ const ContactPage = () => {
               </p>
               <div className="bg-error-600 bg-opacity-50 rounded-lg p-4">
                 <p className="text-white font-bold text-lg">
-                  24/7 Emergency Line: (555) 911-HELP
+                  24/7 Emergency Line: +91-XXXX-XXXX-XX
                 </p>
               </div>
             </motion.div>

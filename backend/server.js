@@ -15,6 +15,7 @@ const prescriptionRoutes = require('./routes/prescriptions')
 const reportRoutes = require('./routes/reports')
 const adminRoutes = require('./routes/admin')
 const settingsRoutes = require('./routes/settings')
+const newsletterRoutes = require('./routes/newsletter')
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorHandler')
@@ -116,6 +117,7 @@ app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/newsletter', newsletterRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

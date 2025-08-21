@@ -22,6 +22,13 @@ import ResetPassword from './pages/auth/ResetPassword'
 import LandingPage from './pages/public/LandingPage'
 import AboutPage from './pages/public/AboutPage'
 import ContactPage from './pages/public/ContactPage'
+import ServicesPage from './pages/public/ServicesPage'
+import HelpPage from './pages/public/HelpPage'
+import SupportPage from './pages/public/SupportPage'
+import PrivacyPage from './pages/public/PrivacyPage'
+import TermsPage from './pages/public/TermsPage'
+import FindDoctorsPage from './pages/public/FindDoctorsPage'
+import NewsletterUnsubscribePage from './pages/public/NewsletterUnsubscribePage'
 
 // Dashboard pages (using the ones that exist)
 import PatientDashboard from './pages/patient/PatientDashboard'
@@ -82,6 +89,13 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/services" element={<ServicesPage />} />
+          <Route path="/help" element={<HelpPage />} />
+          <Route path="/support" element={<SupportPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/find-doctors" element={<FindDoctorsPage />} />
+          <Route path="/newsletter/unsubscribe" element={<NewsletterUnsubscribePage />} />
         </Route>
 
         {/* Auth Routes - only for unauthenticated users */}

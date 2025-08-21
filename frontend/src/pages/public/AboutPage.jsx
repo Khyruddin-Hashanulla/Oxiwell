@@ -242,21 +242,21 @@ const AboutPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
-                name: 'Dr. Sarah Johnson',
-                role: 'Chief Executive Officer',
-                bio: 'Former practicing physician with 15+ years in healthcare administration and digital health innovation.',
+                name: 'Healthcare Leadership',
+                role: 'Executive Team',
+                bio: 'Experienced healthcare professionals dedicated to improving patient care through technology.',
                 image: null
               },
               {
-                name: 'Michael Chen',
-                role: 'Chief Technology Officer',
-                bio: 'Software architect with expertise in healthcare systems, security, and scalable platform development.',
+                name: 'Technology Experts',
+                role: 'Development Team',
+                bio: 'Software engineers and architects specializing in secure healthcare systems and user experience.',
                 image: null
               },
               {
-                name: 'Dr. Emily Rodriguez',
-                role: 'Chief Medical Officer',
-                bio: 'Board-certified physician specializing in internal medicine and healthcare quality improvement.',
+                name: 'Medical Professionals',
+                role: 'Clinical Advisory',
+                bio: 'Board-certified physicians providing clinical guidance and ensuring medical accuracy.',
                 image: null
               }
             ].map((member, index) => (
