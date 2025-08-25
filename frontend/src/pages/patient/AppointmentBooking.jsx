@@ -233,16 +233,29 @@ const AppointmentBooking = () => {
   const loadAvailableDates = async () => {
     try {
       setIsLoading(true)
+      
+      // Get hospital ID - use selectedHospital._id if available, otherwise use first workplace hospital ID
+      let hospitalId = selectedHospital?._id;
+      if (!hospitalId && selectedDoctor?.workplaces?.length > 0) {
+        // Find first workplace with a valid hospital ID
+        const workplaceWithHospital = selectedDoctor.workplaces.find(wp => wp.hospital?._id);
+        hospitalId = workplaceWithHospital?.hospital?._id;
+      }
+      
+      if (!hospitalId) {
+        throw new Error('No valid hospital ID found for this doctor');
+      }
+      
       console.log('📅 Loading available dates for:', {
         doctorId: selectedDoctor._id,
-        hospitalId: selectedHospital._id,
+        hospitalId: hospitalId,
         doctorName: `${selectedDoctor.firstName} ${selectedDoctor.lastName}`,
-        hospitalName: selectedHospital.name
+        hospitalName: selectedHospital?.name || 'Doctor Clinic'
       })
       
       const response = await appointmentsAPI.getAvailableDates(
         selectedDoctor._id, 
-        selectedHospital._id
+        hospitalId
       )
       
       console.log('📅 Available dates API response:', response.data)
@@ -271,18 +284,32 @@ const AppointmentBooking = () => {
   const loadAvailableSlots = async () => {
     try {
       setIsLoading(true)
+      
+      // Get hospital ID - use selectedHospital._id if available, otherwise use first workplace hospital ID
+      let hospitalId = selectedHospital?._id;
+      if (!hospitalId && selectedDoctor?.workplaces?.length > 0) {
+        // Find first workplace with a valid hospital ID
+        const workplaceWithHospital = selectedDoctor.workplaces.find(wp => wp.hospital?._id);
+        hospitalId = workplaceWithHospital?.hospital?._id;
+      }
+      
+      if (!hospitalId) {
+        throw new Error('No valid hospital ID found for this doctor');
+      }
+      
       console.log('🕐 Loading available slots for:', {
         doctor: selectedDoctor.firstName + ' ' + selectedDoctor.lastName,
-        hospital: selectedHospital.name,
+        hospital: selectedHospital?.name || 'Doctor Clinic',
+        hospitalId: hospitalId,
         date: selectedDate
       })
       
-      // Add cache-busting timestamp to ensure fresh data
+      // Add cache-busting timestamp to prevent stale data
       const timestamp = new Date().getTime()
       const response = await appointmentsAPI.getAvailableSlots(
         selectedDoctor._id,
-        selectedHospital._id,
-        selectedDate // Remove the timestamp from here - it should be in query params
+        hospitalId,
+        selectedDate
       )
       
       console.log('🕐 Available slots API response:', response.data)
@@ -377,19 +404,31 @@ const AppointmentBooking = () => {
 
   const handleBookingSubmit = async (e) => {
     e.preventDefault()
-    setIsLoading(true)
-
+    
     try {
+      // Get hospital ID - use selectedHospital._id if available, otherwise use first workplace hospital ID
+      let hospitalId = selectedHospital?._id;
+      if (!hospitalId && selectedDoctor?.workplaces?.length > 0) {
+        // Find first workplace with a valid hospital ID
+        const workplaceWithHospital = selectedDoctor.workplaces.find(wp => wp.hospital?._id);
+        hospitalId = workplaceWithHospital?.hospital?._id;
+      }
+      
+      if (!hospitalId) {
+        throw new Error('No valid hospital ID found for this doctor');
+      }
+      
       const appointmentData = {
         doctor: selectedDoctor._id,
-        hospital: selectedHospital._id,
+        hospital: hospitalId,
         appointmentDate: selectedDate,
         appointmentTime: selectedTime,
         reason: bookingData.reason === 'Other' ? bookingData.customReason : bookingData.reason,
-        symptoms: bookingData.symptoms.filter(s => s.trim()),
-        notes: bookingData.notes
+        symptoms: bookingData.symptoms,
+        notes: bookingData.notes,
+        urgency: bookingData.urgency
       }
-
+      
       let response;
       
       // Check if this is a reschedule operation

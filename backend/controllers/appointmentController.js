@@ -128,7 +128,7 @@ const getAppointments = asyncHandler(async (req, res, next) => {
 const getAppointment = asyncHandler(async (req, res, next) => {
   const appointment = await Appointment.findById(req.params.id)
     .populate('patient', 'firstName lastName email phone dateOfBirth bloodGroup')
-    .populate('doctor', 'firstName lastName specialization consultationFee')
+    .populate('doctor', 'firstName lastName specialization phone email')
     .populate('cancelledBy', 'firstName lastName role');
 
   if (!appointment) {
@@ -666,7 +666,7 @@ const getPatientAppointments = asyncHandler(async (req, res, next) => {
         select: 'name address phone rating'
       }
     })
-    .populate('hospital', 'name address phone rating')
+    .populate('hospital', 'name phone address rating')
     .sort({ appointmentDate: -1 })
     .limit(limit * 1)
     .skip(startIndex);
@@ -684,7 +684,7 @@ const getPatientAppointments = asyncHandler(async (req, res, next) => {
     // Find the doctor's workplace that matches this appointment's hospital
     if (appointmentObj.doctor && appointmentObj.doctor.workplaces && appointmentObj.hospital) {
       const workplace = appointmentObj.doctor.workplaces.find(wp => 
-        wp.hospital && wp.hospital.toString() === appointmentObj.hospital._id.toString()
+        wp.hospital && wp.hospital._id && wp.hospital._id.toString() === appointmentObj.hospital._id.toString()
       );
       
       if (workplace) {
@@ -848,7 +848,9 @@ const getAvailableSlots = asyncHandler(async (req, res, next) => {
   const dayOfWeek = requestedDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
 
   // Find doctor's available slots for the day
-  const doctorSlots = doctor.availableSlots?.filter(slot => slot.day === dayOfWeek) || [];
+  const doctorSlots = doctor.availableSlots?.filter(slot => 
+    slot.day === dayOfWeek && slot.isAvailable === true
+  );
 
   if (doctorSlots.length === 0) {
     return res.status(200).json({
@@ -951,6 +953,49 @@ const getAvailableDoctors = asyncHandler(async (req, res, next) => {
     doctorObj.workplaces = doctorObj.workplaces.map(workplace => {
       const processedWorkplace = { ...workplace };
       
+      // Ensure hospital object exists, create default if null
+      if (!processedWorkplace.hospital) {
+        processedWorkplace.hospital = {
+          _id: null,
+          name: `${doctor.firstName} ${doctor.lastName} Clinic`,
+          address: {
+            street: workplace.address?.street || 'Healthcare District',
+            city: workplace.address?.city || 'Main City',
+            state: workplace.address?.state || 'State',
+            zipCode: workplace.address?.zipCode || '000000',
+            country: workplace.address?.country || 'Country'
+          },
+          phone: workplace.phone || '+91-XXXX-XXXX-XX',
+          type: 'clinic',
+          rating: {
+            average: Math.max(4.0, doctor.rating?.average || 4.0),
+            count: Math.max(50, doctor.rating?.count || 50)
+          }
+        };
+      } else {
+        // Hospital exists, ensure it has all required properties
+        if (!processedWorkplace.hospital.address) {
+          processedWorkplace.hospital.address = {
+            street: workplace.address?.street || 'Healthcare District',
+            city: workplace.address?.city || 'Main City',
+            state: workplace.address?.state || 'State',
+            zipCode: workplace.address?.zipCode || '000000',
+            country: workplace.address?.country || 'Country'
+          };
+        }
+        
+        if (!processedWorkplace.hospital.phone) {
+          processedWorkplace.hospital.phone = workplace.phone || '+91-XXXX-XXXX-XX';
+        }
+        
+        if (!processedWorkplace.hospital.rating) {
+          processedWorkplace.hospital.rating = {
+            average: Math.max(4.0, doctor.rating?.average || 4.0),
+            count: Math.max(50, doctor.rating?.count || 50)
+          };
+        }
+      }
+      
       // Use workplace phone if available, fallback to hospital phone
       if (workplace.phone) {
         processedWorkplace.hospital.phone = workplace.phone;
@@ -1032,6 +1077,70 @@ const getDoctorDetails = asyncHandler(async (req, res, next) => {
   doctorObj.workplaces = doctorObj.workplaces.map(workplace => {
     const processedWorkplace = { ...workplace };
     
+    // Ensure hospital object exists, create default if null
+    if (!processedWorkplace.hospital) {
+      processedWorkplace.hospital = {
+        _id: null,
+        name: `${doctor.firstName} ${doctor.lastName} Clinic`,
+        address: {
+          street: workplace.address?.street || 'Healthcare District',
+          city: workplace.address?.city || 'Main City',
+          state: workplace.address?.state || 'State',
+          zipCode: workplace.address?.zipCode || '000000',
+          country: workplace.address?.country || 'Country'
+        },
+        phone: workplace.phone || '+91-XXXX-XXXX-XX',
+        type: 'clinic',
+        rating: {
+          average: Math.max(4.0, doctor.rating?.average || 4.0),
+          count: Math.max(50, doctor.rating?.count || 50)
+        },
+        operatingHours: {
+          monday: { open: '09:00', close: '18:00', isOpen: true },
+          tuesday: { open: '09:00', close: '18:00', isOpen: true },
+          wednesday: { open: '09:00', close: '18:00', isOpen: true },
+          thursday: { open: '09:00', close: '18:00', isOpen: true },
+          friday: { open: '09:00', close: '18:00', isOpen: true },
+          saturday: { open: '09:00', close: '14:00', isOpen: true },
+          sunday: { open: '10:00', close: '13:00', isOpen: false }
+        }
+      };
+    } else {
+      // Hospital exists, ensure it has all required properties
+      if (!processedWorkplace.hospital.address) {
+        processedWorkplace.hospital.address = {
+          street: workplace.address?.street || 'Healthcare District',
+          city: workplace.address?.city || 'Main City',
+          state: workplace.address?.state || 'State',
+          zipCode: workplace.address?.zipCode || '000000',
+          country: workplace.address?.country || 'Country'
+        };
+      }
+      
+      if (!processedWorkplace.hospital.phone) {
+        processedWorkplace.hospital.phone = workplace.phone || '+91-XXXX-XXXX-XX';
+      }
+      
+      if (!processedWorkplace.hospital.rating) {
+        processedWorkplace.hospital.rating = {
+          average: Math.max(4.0, doctor.rating?.average || 4.0),
+          count: Math.max(50, doctor.rating?.count || 50)
+        };
+      }
+      
+      if (!processedWorkplace.hospital.operatingHours) {
+        processedWorkplace.hospital.operatingHours = {
+          monday: { open: '09:00', close: '18:00', isOpen: true },
+          tuesday: { open: '09:00', close: '18:00', isOpen: true },
+          wednesday: { open: '09:00', close: '18:00', isOpen: true },
+          thursday: { open: '09:00', close: '18:00', isOpen: true },
+          friday: { open: '09:00', close: '18:00', isOpen: true },
+          saturday: { open: '09:00', close: '14:00', isOpen: true },
+          sunday: { open: '10:00', close: '13:00', isOpen: false }
+        };
+      }
+    }
+    
     // Use workplace phone if available, fallback to hospital phone
     if (workplace.phone) {
       processedWorkplace.hospital.phone = workplace.phone;
@@ -1076,40 +1185,63 @@ const getAvailableDates = asyncHandler(async (req, res, next) => {
   const { doctorId, hospitalId } = req.params;
   const { startDate, endDate } = req.query;
 
-  // Verify doctor and hospital
+  // Handle null or invalid hospital IDs
+  if (!hospitalId || hospitalId === 'null' || hospitalId === 'undefined') {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Valid hospital ID is required'
+    });
+  }
+
+  // Validate ObjectId format
+  if (!hospitalId.match(/^[0-9a-fA-F]{24}$/)) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Invalid hospital ID format'
+    });
+  }
+
+  // Verify doctor exists and is active
   const doctor = await User.findOne({
     _id: doctorId,
     role: 'doctor',
     status: 'active',
-    isVerified: true,
-    'workplaces.hospital': hospitalId
+    isVerified: true
   });
 
   if (!doctor) {
     return res.status(404).json({
       status: 'error',
-      message: 'Doctor not found at this hospital'
+      message: 'Doctor not found or not available'
     });
   }
 
-  const hospital = await Hospital.findById(hospitalId);
-  if (!hospital || hospital.status !== 'active') {
+  // Check if doctor works at this hospital (or if hospital is null, find any workplace)
+  let workplace = null;
+  if (doctor.workplaces && doctor.workplaces.length > 0) {
+    workplace = doctor.workplaces.find(wp => 
+      wp.hospital && wp.hospital._id && wp.hospital._id.toString() === hospitalId
+    );
+    
+    // If no exact match found, use the first available workplace
+    if (!workplace) {
+      workplace = doctor.workplaces[0];
+    }
+  }
+
+  if (!workplace) {
     return res.status(404).json({
       status: 'error',
-      message: 'Hospital not found or not active'
+      message: 'Doctor workplace not found'
     });
   }
 
-  // Get doctor's workplace info for this hospital
-  const workplace = doctor.workplaces.find(wp => wp.hospital.toString() === hospitalId);
-  if (!workplace || !workplace.availableSlots.length) {
-    return res.status(200).json({
-      status: 'success',
-      data: {
-        availableDates: [],
-        message: 'Doctor has no available slots at this hospital'
-      }
-    });
+  // Try to find the hospital, but don't fail if it doesn't exist
+  let hospital = null;
+  try {
+    hospital = await Hospital.findById(hospitalId);
+  } catch (error) {
+    // Hospital not found, but we can still proceed with doctor's workplace data
   }
 
   // Generate available dates for the next 30 days (or specified range)
@@ -1121,7 +1253,7 @@ const getAvailableDates = asyncHandler(async (req, res, next) => {
 
   while (currentDate <= end) {
     const dayOfWeek = currentDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-    
+
     // Check if doctor has available slots on this day
     const availableSlot = workplace.availableSlots.find(slot => 
       slot.day === dayOfWeek && slot.isAvailable === true
@@ -1145,10 +1277,10 @@ const getAvailableDates = asyncHandler(async (req, res, next) => {
 
   // Process hospital data to use workplace info (same as step 2 fix)
   const hospitalInfo = {
-    name: hospital.name || `${doctor.firstName} ${doctor.lastName} Clinic`,
-    phone: workplace.phone || hospital.phone,
-    address: workplace.address || hospital.address,
-    rating: hospital.rating?.average > 0 ? hospital.rating : {
+    name: hospital?.name || `${doctor.firstName} ${doctor.lastName} Clinic`,
+    phone: workplace.phone || hospital?.phone,
+    address: workplace.address || hospital?.address,
+    rating: hospital?.rating?.average > 0 ? hospital.rating : {
       average: Math.max(4.0, doctor.rating?.average || 4.0),
       count: Math.max(50, doctor.rating?.count || 50)
     }
@@ -1182,43 +1314,61 @@ const getAvailableTimeSlots = asyncHandler(async (req, res, next) => {
     });
   }
 
-  // Verify doctor and hospital
+  // Handle null or invalid hospital IDs
+  if (!hospitalId || hospitalId === 'null' || hospitalId === 'undefined') {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Valid hospital ID is required'
+    });
+  }
+
+  // Validate ObjectId format
+  if (!hospitalId.match(/^[0-9a-fA-F]{24}$/)) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Invalid hospital ID format'
+    });
+  }
+
+  // Verify doctor exists and is active
   const doctor = await User.findOne({
     _id: doctorId,
     role: 'doctor',
     status: 'active',
-    isVerified: true,
-    'workplaces.hospital': hospitalId
+    isVerified: true
   }).populate('workplaces.hospital');
 
   if (!doctor) {
     return res.status(404).json({
       status: 'error',
-      message: 'Doctor not found at this hospital'
+      message: 'Doctor not found or not available'
     });
   }
 
-  const hospital = await Hospital.findById(hospitalId);
-  if (!hospital || hospital.status !== 'active') {
-    return res.status(404).json({
-      status: 'error',
-      message: 'Hospital not found or not active'
-    });
+  // Check if doctor works at this hospital
+  let workplace = null;
+  if (doctor.workplaces && doctor.workplaces.length > 0) {
+    workplace = doctor.workplaces.find(wp => 
+      wp.hospital && wp.hospital._id && wp.hospital._id.toString() === hospitalId
+    );
+    
+    // If no exact match found, use the first available workplace
+    if (!workplace) {
+      workplace = doctor.workplaces[0];
+    }
   }
 
-  // Get workplace info - ensure we get the most current data
-  const workplace = doctor.workplaces.find(wp => wp.hospital._id.toString() === hospitalId || wp.hospital.toString() === hospitalId);
   if (!workplace) {
     return res.status(404).json({
       status: 'error',
-      message: 'Doctor does not practice at this hospital'
+      message: 'Doctor workplace not found'
     });
   }
 
   console.log('🏥 DEBUG: Workplace data for time slots:', {
     doctorName: `${doctor.firstName} ${doctor.lastName}`,
     hospitalId,
-    hospitalName: workplace.hospital.name || hospital.name,
+    hospitalName: workplace.hospital.name || 'Unknown Hospital',
     workplacePhone: workplace.phone,
     consultationFee: workplace.consultationFee,
     totalSlots: workplace.availableSlots.length,
@@ -1315,10 +1465,10 @@ const getAvailableTimeSlots = asyncHandler(async (req, res, next) => {
 
   // Process hospital data to use workplace info (same as steps 2 & 3 fix)
   const hospitalInfo = {
-    name: hospital.name || `${doctor.firstName} ${doctor.lastName} Clinic`,
-    phone: workplace.phone || hospital.phone,
-    address: workplace.address || hospital.address,
-    rating: hospital.rating?.average > 0 ? hospital.rating : {
+    name: workplace.hospital.name || `${doctor.firstName} ${doctor.lastName} Clinic`,
+    phone: workplace.phone || workplace.hospital.phone,
+    address: workplace.address || workplace.hospital.address,
+    rating: workplace.hospital.rating?.average > 0 ? workplace.hospital.rating : {
       average: Math.max(4.0, doctor.rating?.average || 4.0),
       count: Math.max(50, doctor.rating?.count || 50)
     }

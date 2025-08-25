@@ -133,23 +133,50 @@ const getDoctor = asyncHandler(async (req, res, next) => {
       professionalBio: doctorData.professionalBio
     });
     
-    // Check if the Medical Registration Number is stored in licenseNumber field by mistake
-    if (!doctorData.medicalRegistrationNumber && doctorData.licenseNumber && doctorData.licenseNumber.match(/^[A-Z]{2}\d{10}$/)) {
-      // If licenseNumber looks like a Medical Registration Number (e.g., WB2021002025), swap them
-      console.log('🔄 Detected Medical Registration Number in licenseNumber field, fixing mapping...');
-      doctorData.medicalRegistrationNumber = doctorData.licenseNumber;
-      doctorData.licenseNumber = null; // Clear the incorrect field
-      console.log('✅ Fixed field mapping:', {
-        medicalRegistrationNumber: doctorData.medicalRegistrationNumber,
-        licenseNumber: doctorData.licenseNumber
-      });
+    // Fix data mapping issue: Medical Registration Numbers stored in licenseNumber field
+    // Indian Medical Registration Numbers typically follow pattern: STATE_CODE + YEAR + NUMBER (e.g., WB2021002025)
+    if (doctorData.licenseNumber && !doctorData.medicalRegistrationNumber) {
+      // Check if licenseNumber looks like a Medical Registration Number
+      const mrnPattern = /^[A-Z]{2}\d{4}\d{6}$/; // State code (2 letters) + Year (4 digits) + Number (6 digits)
+      
+      if (mrnPattern.test(doctorData.licenseNumber)) {
+        console.log('🔄 Detected Medical Registration Number in licenseNumber field, fixing mapping...');
+        console.log('🔄 Moving from licenseNumber to medicalRegistrationNumber:', doctorData.licenseNumber);
+        
+        // Move the value to the correct field
+        doctorData.medicalRegistrationNumber = doctorData.licenseNumber;
+        doctorData.licenseNumber = null; // Clear the incorrect field
+        
+        console.log('✅ Fixed field mapping:', {
+          medicalRegistrationNumber: doctorData.medicalRegistrationNumber,
+          licenseNumber: doctorData.licenseNumber
+        });
+        
+        // Update the database to fix the data permanently
+        try {
+          await User.findByIdAndUpdate(doctorData._id, {
+            medicalRegistrationNumber: doctorData.medicalRegistrationNumber,
+            $unset: { licenseNumber: 1 } // Remove the incorrect field
+          });
+          console.log('✅ Database updated with correct field mapping');
+        } catch (updateError) {
+          console.error('❌ Failed to update database field mapping:', updateError);
+        }
+      }
     }
     
-    // Add fallback values for missing critical fields (only if truly missing)
-    if (!doctorData.medicalRegistrationNumber && doctorData.role === 'doctor') {
+    // Only add fallback values if fields are truly empty/null/undefined
+    // Don't modify existing valid data
+    if (!doctorData.licenseNumber && !doctorData.medicalRegistrationNumber && doctorData.role === 'doctor') {
+      // Only generate fallback if both fields are completely empty
+      console.log('🔧 Both license fields empty, adding fallback Medical Registration Number');
       doctorData.medicalRegistrationNumber = `MRN${doctorData._id.toString().slice(-8).toUpperCase()}`;
-      console.log('🔧 Added fallback Medical Registration Number');
     }
+    
+    console.log('✅ Final license data:', {
+      licenseNumber: doctorData.licenseNumber,
+      medicalRegistrationNumber: doctorData.medicalRegistrationNumber
+    });
     
     console.log('✅ Using real experience data:', doctorData.experience || 'Not provided');
     
@@ -543,7 +570,7 @@ const updateDoctorProfile = asyncHandler(async (req, res, next) => {
           zipCode: '',
           country: 'India'
         },
-        consultationFee: workplace.consultationFee ? parseFloat(workplace.consultationFee) : 0,
+        consultationFee: workplace.consultationFee ? parseInt(workplace.consultationFee, 10) : 0,
         availableSlots: (workplace.availableSlots || []).map(slot => ({
           ...slot,
           // Fix: If slot has startTime and endTime, it should be available by default
