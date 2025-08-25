@@ -2,7 +2,7 @@
 
 A comprehensive full-stack healthcare management platform built with modern web technologies.
 
-![OrbitIQ Banner] (https://media.licdn.com/dms/image/v2/D562DAQEEzCzMANiPDw/profile-treasury-image-shrink_1920_1920/B56ZjBd8kcHcAs-/0/1755592511206?e=1756756800&v=beta&t=Y8dEafXcTysms3jQbUky8P9EOTuLYkxffQv_106mrLA)
+![Oxiwell Banner](https://media.licdn.com/dms/image/v2/D562DAQEEzCzMANiPDw/profile-treasury-image-shrink_1920_1920/B56ZjBd8kcHcAs-/0/1755592511206?e=1756756800&v=beta&t=Y8dEafXcTysms3jQbUky8P9EOTuLYkxffQv_106mrLA)
 
 ## 🏥 Overview
 
